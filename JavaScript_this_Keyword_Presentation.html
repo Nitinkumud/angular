@@ -335,7 +335,7 @@
   <div class="slide" id="slide-2">
     <div class="slide-tag">Contents</div>
     <h2>What We'll Cover</h2>
-    <p class="subtitle">11 topics + 10 output-based interview questions</p>
+    <p class="subtitle">20 topics + 10 output-based interview questions</p>
     <div class="toc-grid mt20">
       <div class="toc-item"><span class="toc-num">01</span><span class="toc-title">Global Context</span></div>
       <div class="toc-item"><span class="toc-num">02</span><span class="toc-title">Function Context (strict &amp; non-strict)</span></div>
@@ -345,10 +345,18 @@
       <div class="toc-item"><span class="toc-num">06</span><span class="toc-title">Constructor Functions</span></div>
       <div class="toc-item"><span class="toc-num">07</span><span class="toc-title">Class Context</span></div>
       <div class="toc-item"><span class="toc-num">08</span><span class="toc-title">call / apply / bind</span></div>
-      <div class="toc-item"><span class="toc-num">09</span><span class="toc-title">Binding Priority Rules ✦ NEW</span></div>
-      <div class="toc-item"><span class="toc-num">10</span><span class="toc-title">ES Modules &amp; globalThis ✦ NEW</span></div>
+      <div class="toc-item"><span class="toc-num">09</span><span class="toc-title">Binding Priority Rules</span></div>
+      <div class="toc-item"><span class="toc-num">10</span><span class="toc-title">ES Modules &amp; globalThis</span></div>
       <div class="toc-item"><span class="toc-num">11</span><span class="toc-title">Common Pitfalls</span></div>
       <div class="toc-item"><span class="toc-num">12</span><span class="toc-title">Interview Questions (10)</span></div>
+      <div class="toc-item"><span class="toc-num">13</span><span class="toc-title">Object Literal &amp; Scope ✦</span></div>
+      <div class="toc-item"><span class="toc-num">14</span><span class="toc-title">Explicit vs Implicit Binding ✦</span></div>
+      <div class="toc-item"><span class="toc-num">15</span><span class="toc-title">this in Array Methods ✦</span></div>
+      <div class="toc-item"><span class="toc-num">16</span><span class="toc-title">this in Promises &amp; async/await ✦</span></div>
+      <div class="toc-item"><span class="toc-num">17</span><span class="toc-title">this in IIFE ✦</span></div>
+      <div class="toc-item"><span class="toc-num">18</span><span class="toc-title">this &amp; Prototype Chain ✦</span></div>
+      <div class="toc-item"><span class="toc-num">19</span><span class="toc-title">All Ways to Lose this ✦</span></div>
+      <div class="toc-item"><span class="toc-num">20</span><span class="toc-title">Decision Flowchart ✦</span></div>
     </div>
   </div>
 
@@ -1154,17 +1162,495 @@
     </div>
   </div>
 
+  <!-- ════════════════════════════════════════
+       SLIDE 18 – Object Literal & Scope
+  ════════════════════════════════════════ -->
+  <div class="slide" id="slide-18">
+    <div class="slide-tag">13 — Object Literal &amp; Scope ✦ Deep Dive</div>
+    <h2>What is an Object Literal? Why it matters for <code>this</code></h2>
+    <div class="two-col mt16">
+      <div>
+        <h3>Object Literal = Directly Written Object</h3>
+        <p style="color:var(--text-muted); margin-bottom:10px;">You <em>literally</em> write the object in code using <code class="inline">{ }</code>. Just like <code class="inline">"hello"</code> is a string literal, <code class="inline">{ }</code> is an object literal.</p>
+        <pre><span class="cmt">// String literal</span>
+<span class="kw">const</span> <span class="vr">str</span> = <span class="str">"hello"</span>;
+
+<span class="cmt">// Number literal</span>
+<span class="kw">const</span> <span class="vr">n</span> = <span class="num">42</span>;
+
+<span class="cmt">// Object literal — same idea</span>
+<span class="kw">const</span> <span class="vr">person</span> = {
+  <span class="vr">name</span>: <span class="str">'Alice'</span>,
+  <span class="vr">age</span>: <span class="num">30</span>,
+  <span class="fn">greet</span>() { <span class="fn">console</span>.<span class="fn">log</span>(<span class="str">'Hi!'</span>); }
+};
+</pre>
+        <div class="info-box blue mt12">
+          Other ways to create objects: <code class="inline">new Fn()</code>, <code class="inline">Object.create()</code>, <code class="inline">new MyClass()</code> — but none are as concise as the literal.
+        </div>
+      </div>
+      <div>
+        <h3>The Critical Rule: Object Literals Don't Create <code>this</code> Scope</h3>
+        <p style="color:var(--text-muted); margin-bottom:10px;">Only <strong>functions</strong> and <strong>classes</strong> create a new <code class="inline">this</code> scope. A <code class="inline">{ }</code> object literal does NOT.</p>
+        <pre><span class="cmt">// Object literal — NO new this scope</span>
+<span class="kw">const</span> <span class="vr">person</span> = {
+  <span class="vr">name</span>: <span class="str">'Bob'</span>,
+
+  <span class="cmt">// ❌ Arrow captures outer this (window/undefined)</span>
+  <span class="cmt">//    because object literal is NOT a scope</span>
+  <span class="fn">greet</span>: () => {
+    <span class="fn">console</span>.<span class="fn">log</span>(<span class="kw">this</span>.<span class="vr">name</span>); <span class="cmt">// undefined</span>
+  },
+
+  <span class="cmt">// ✅ Regular method: this = person at call time</span>
+  <span class="fn">greetOk</span>() {
+    <span class="fn">console</span>.<span class="fn">log</span>(<span class="kw">this</span>.<span class="vr">name</span>); <span class="cmt">// "Bob"</span>
+  }
+};
+</pre>
+        <table style="margin-top:12px;">
+          <tr><th>Creates <code>this</code> scope?</th><th>Examples</th></tr>
+          <tr><td><span class="badge badge-green">✅ Yes</span></td><td><code class="inline">function(){}</code>, <code class="inline">class</code>, <code class="inline">constructor</code></td></tr>
+          <tr><td><span class="badge badge-red">❌ No</span></td><td>Object literal <code class="inline">{ }</code>, <code class="inline">if</code>/<code class="inline">for</code>/<code class="inline">while</code> blocks</td></tr>
+          <tr><td><span class="badge badge-purple">Inherits</span></td><td>Arrow functions — take outer scope's <code class="inline">this</code></td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       SLIDE 19 – Explicit vs Implicit
+  ════════════════════════════════════════ -->
+  <div class="slide" id="slide-19">
+    <div class="slide-tag">14 — Explicit vs Implicit Binding ✦ Deep Dive</div>
+    <h2>Explicit vs Implicit Binding</h2>
+    <p class="lead mt8">Two of the four binding rules. Understanding the difference is essential for senior-level JS.</p>
+    <div class="two-col mt16">
+      <div>
+        <h3>Implicit Binding — JS decides automatically</h3>
+        <p style="color:var(--text-muted); margin-bottom:10px;"><code class="inline">this</code> = object to the left of the dot at call time. You never said what <code class="inline">this</code> is — JS figured it out.</p>
+        <pre><span class="kw">const</span> <span class="vr">car</span> = {
+  <span class="vr">brand</span>: <span class="str">'Toyota'</span>,
+  <span class="fn">drive</span>() {
+    <span class="kw">return</span> <span class="kw">this</span>.<span class="vr">brand</span>; <span class="cmt">// implicitly = car</span>
+  }
+};
+<span class="fn">console</span>.<span class="fn">log</span>(<span class="vr">car</span>.<span class="fn">drive</span>()); <span class="cmt">// "Toyota"</span>
+
+<span class="cmt">// ⚠️ Implicit binding can be LOST</span>
+<span class="kw">const</span> <span class="vr">fn</span> = <span class="vr">car</span>.<span class="fn">drive</span>;
+<span class="fn">fn</span>(); <span class="cmt">// undefined — no object before dot!</span>
+</pre>
+        <div class="info-box orange mt12">
+          ⚠️ Implicit binding is <strong>fragile</strong> — the moment you extract the method from the object, the binding is lost.
+        </div>
+      </div>
+      <div>
+        <h3>Explicit Binding — You decide</h3>
+        <p style="color:var(--text-muted); margin-bottom:10px;">You directly tell JS: <em>"use THIS as <code class="inline">this</code>"</em> via <code class="inline">call</code>, <code class="inline">apply</code>, or <code class="inline">bind</code>.</p>
+        <pre><span class="kw">function</span> <span class="fn">drive</span>() {
+  <span class="kw">return</span> <span class="kw">this</span>.<span class="vr">brand</span>;
+}
+
+<span class="kw">const</span> <span class="vr">car</span>   = { <span class="vr">brand</span>: <span class="str">'Toyota'</span> };
+<span class="kw">const</span> <span class="vr">bike</span>  = { <span class="vr">brand</span>: <span class="str">'Honda'</span>  };
+
+<span class="cmt">// Reuse same function with different contexts</span>
+<span class="fn">drive</span>.<span class="fn">call</span>(<span class="vr">car</span>);   <span class="cmt">// "Toyota"</span>
+<span class="fn">drive</span>.<span class="fn">call</span>(<span class="vr">bike</span>);  <span class="cmt">// "Honda"</span>
+
+<span class="cmt">// Permanent bind</span>
+<span class="kw">const</span> <span class="vr">driveCar</span> = <span class="fn">drive</span>.<span class="fn">bind</span>(<span class="vr">car</span>);
+<span class="fn">driveCar</span>(); <span class="cmt">// always "Toyota"</span>
+</pre>
+        <div class="info-box green mt12">
+          ✅ Explicit binding is <strong>reliable</strong> — you always know exactly what <code class="inline">this</code> will be.
+        </div>
+      </div>
+    </div>
+    <div class="card-grid cols-2 mt16">
+      <div class="info-box blue" style="margin:0;">
+        <strong>Implicit</strong> — Who decides: JavaScript | How: Object before dot | Risk: Can be lost
+      </div>
+      <div class="info-box purple" style="margin:0;">
+        <strong>Explicit</strong> — Who decides: You | How: call/apply/bind | Risk: None (hard-bound)
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       SLIDE 20 – this in Array Methods
+  ════════════════════════════════════════ -->
+  <div class="slide" id="slide-20">
+    <div class="slide-tag">15 — this in Array Methods ✦ Deep Dive</div>
+    <h2><code>this</code> in Array Methods</h2>
+    <p class="lead mt8"><code class="inline">forEach</code>, <code class="inline">map</code>, <code class="inline">filter</code>, <code class="inline">find</code>, <code class="inline">some</code>, <code class="inline">every</code> — all accept an optional <strong><code class="inline">thisArg</code></strong> second parameter.</p>
+    <div class="two-col mt16">
+      <div>
+        <h3>Without thisArg — this is lost</h3>
+        <pre><span class="kw">const</span> <span class="vr">processor</span> = {
+  <span class="vr">multiplier</span>: <span class="num">3</span>,
+  <span class="fn">process</span>(<span class="vr">arr</span>) {
+    <span class="cmt">// ❌ regular function: this = undefined (strict)</span>
+    <span class="kw">return</span> <span class="vr">arr</span>.<span class="fn">map</span>(<span class="kw">function</span>(<span class="vr">n</span>) {
+      <span class="kw">return</span> <span class="vr">n</span> * <span class="kw">this</span>.<span class="vr">multiplier</span>; <span class="cmt">// TypeError!</span>
+    });
+  }
+};
+</pre>
+        <h3 style="margin-top:14px;">Fix Option 1 — Arrow Function</h3>
+        <pre><span class="fn">process</span>(<span class="vr">arr</span>) {
+  <span class="cmt">// ✅ arrow inherits this from process()</span>
+  <span class="kw">return</span> <span class="vr">arr</span>.<span class="fn">map</span>(<span class="vr">n</span> => <span class="vr">n</span> * <span class="kw">this</span>.<span class="vr">multiplier</span>);
+}
+<span class="cmt">// Result: [3, 6, 9] for [1, 2, 3]</span>
+</pre>
+      </div>
+      <div>
+        <h3>Fix Option 2 — thisArg parameter</h3>
+        <pre><span class="fn">process</span>(<span class="vr">arr</span>) {
+  <span class="cmt">// ✅ pass `this` as second arg to map</span>
+  <span class="kw">return</span> <span class="vr">arr</span>.<span class="fn">map</span>(<span class="kw">function</span>(<span class="vr">n</span>) {
+    <span class="kw">return</span> <span class="vr">n</span> * <span class="kw">this</span>.<span class="vr">multiplier</span>;
+  }, <span class="kw">this</span>); <span class="cmt">// ← thisArg</span>
+}
+</pre>
+        <h3 style="margin-top:14px;">Array Methods with thisArg</h3>
+        <table>
+          <tr><th>Method</th><th>thisArg Position</th></tr>
+          <tr><td><code class="inline">arr.forEach(fn, thisArg)</code></td><td>2nd arg</td></tr>
+          <tr><td><code class="inline">arr.map(fn, thisArg)</code></td><td>2nd arg</td></tr>
+          <tr><td><code class="inline">arr.filter(fn, thisArg)</code></td><td>2nd arg</td></tr>
+          <tr><td><code class="inline">arr.find(fn, thisArg)</code></td><td>2nd arg</td></tr>
+          <tr><td><code class="inline">arr.some(fn, thisArg)</code></td><td>2nd arg</td></tr>
+          <tr><td><code class="inline">arr.every(fn, thisArg)</code></td><td>2nd arg</td></tr>
+          <tr><td><code class="inline">arr.reduce(fn)</code></td><td>❌ No thisArg</td></tr>
+        </table>
+        <div class="info-box orange mt12">
+          ⚠️ <code class="inline">thisArg</code> is <strong>ignored</strong> if you pass an arrow function — arrows don't bind <code class="inline">this</code>.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       SLIDE 21 – this in Promises & async/await
+  ════════════════════════════════════════ -->
+  <div class="slide" id="slide-21">
+    <div class="slide-tag">16 — this in Promises &amp; async/await ✦ Deep Dive</div>
+    <h2><code>this</code> in Promises &amp; async/await</h2>
+    <p class="lead mt8">Async code is one of the most common places where <code class="inline">this</code> gets lost. Knowing the patterns is essential.</p>
+    <div class="two-col mt16">
+      <div>
+        <h3>Problem — this lost in .then()</h3>
+        <pre><span class="kw">class</span> <span class="fn">DataService</span> {
+  <span class="kw">constructor</span>() { <span class="kw">this</span>.<span class="vr">data</span> = []; }
+
+  <span class="fn">fetchData</span>() {
+    <span class="fn">fetch</span>(<span class="str">'/api/data'</span>)
+      .<span class="fn">then</span>(<span class="kw">function</span>(<span class="vr">res</span>) { <span class="kw">return</span> <span class="vr">res</span>.<span class="fn">json</span>(); })
+      .<span class="fn">then</span>(<span class="kw">function</span>(<span class="vr">json</span>) {
+        <span class="cmt">// ❌ this is undefined (strict class context)</span>
+        <span class="kw">this</span>.<span class="vr">data</span> = <span class="vr">json</span>;
+      });
+  }
+}
+</pre>
+        <h3 style="margin-top:14px;">Fix — Arrow in .then()</h3>
+        <pre><span class="fn">fetchData</span>() {
+  <span class="fn">fetch</span>(<span class="str">'/api/data'</span>)
+    .<span class="fn">then</span>(<span class="vr">res</span> => <span class="vr">res</span>.<span class="fn">json</span>())
+    .<span class="fn">then</span>(<span class="vr">json</span> => {
+      <span class="cmt">// ✅ arrow: this = DataService instance</span>
+      <span class="kw">this</span>.<span class="vr">data</span> = <span class="vr">json</span>;
+    });
+}
+</pre>
+      </div>
+      <div>
+        <h3>async/await — this is preserved ✅</h3>
+        <pre><span class="kw">class</span> <span class="fn">DataService</span> {
+  <span class="kw">constructor</span>() { <span class="kw">this</span>.<span class="vr">data</span> = []; }
+
+  <span class="cmt">// ✅ async method: this works perfectly</span>
+  <span class="kw">async</span> <span class="fn">fetchData</span>() {
+    <span class="kw">const</span> <span class="vr">res</span>  = <span class="kw">await</span> <span class="fn">fetch</span>(<span class="str">'/api/data'</span>);
+    <span class="kw">const</span> <span class="vr">json</span> = <span class="kw">await</span> <span class="vr">res</span>.<span class="fn">json</span>();
+    <span class="kw">this</span>.<span class="vr">data</span> = <span class="vr">json</span>; <span class="cmt">// ✅ this = instance</span>
+  }
+}
+</pre>
+        <div class="info-box green mt12">
+          💡 <strong>async/await</strong> preserves <code class="inline">this</code> correctly because the <code class="inline">async</code> keyword makes the method act like a regular method — <code class="inline">this</code> is set by the call site.
+        </div>
+        <h3 style="margin-top:14px;">⚠️ Detach async method = same problem</h3>
+        <pre><span class="kw">const</span> <span class="vr">svc</span> = <span class="kw">new</span> <span class="fn">DataService</span>();
+<span class="kw">const</span> <span class="vr">fn</span> = <span class="vr">svc</span>.<span class="fn">fetchData</span>; <span class="cmt">// extracted</span>
+<span class="kw">await</span> <span class="fn">fn</span>(); <span class="cmt">// ❌ this is undefined</span>
+<span class="kw">await</span> <span class="vr">svc</span>.<span class="fn">fetchData</span>(); <span class="cmt">// ✅ this = svc</span>
+</pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       SLIDE 22 – this in IIFE
+  ════════════════════════════════════════ -->
+  <div class="slide" id="slide-22">
+    <div class="slide-tag">17 — this in IIFE ✦ Deep Dive</div>
+    <h2><code>this</code> in IIFE (Immediately Invoked Function Expressions)</h2>
+    <p class="lead mt8">An IIFE is called immediately at definition — with no object prefix, so <strong>default binding</strong> applies.</p>
+    <div class="two-col mt16">
+      <div>
+        <h3>What is an IIFE?</h3>
+        <pre><span class="cmt">// Regular function — called later</span>
+<span class="kw">function</span> <span class="fn">greet</span>() { <span class="fn">console</span>.<span class="fn">log</span>(<span class="str">'hi'</span>); }
+<span class="fn">greet</span>();
+
+<span class="cmt">// IIFE — called immediately, no name</span>
+(<span class="kw">function</span>() {
+  <span class="fn">console</span>.<span class="fn">log</span>(<span class="str">'hi'</span>); <span class="cmt">// runs instantly</span>
+})();
+
+<span class="cmt">// Arrow IIFE</span>
+(() => {
+  <span class="fn">console</span>.<span class="fn">log</span>(<span class="str">'hi'</span>);
+})();
+</pre>
+        <div class="info-box blue mt12">
+          IIFEs were heavily used before ES6 modules to avoid polluting the global scope. Still seen in legacy code.
+        </div>
+      </div>
+      <div>
+        <h3><code>this</code> inside IIFE</h3>
+        <pre><span class="cmt">// Non-strict: this = window</span>
+(<span class="kw">function</span>() {
+  <span class="fn">console</span>.<span class="fn">log</span>(<span class="kw">this</span>); <span class="cmt">// Window</span>
+})();
+
+<span class="cmt">// Strict: this = undefined</span>
+(<span class="kw">function</span>() {
+  <span class="str">'use strict'</span>;
+  <span class="fn">console</span>.<span class="fn">log</span>(<span class="kw">this</span>); <span class="cmt">// undefined</span>
+})();
+
+<span class="cmt">// Inside a method — regular IIFE loses this</span>
+<span class="kw">const</span> <span class="vr">obj</span> = {
+  <span class="vr">val</span>: <span class="num">42</span>,
+  <span class="fn">run</span>() {
+    (<span class="kw">function</span>() {
+      <span class="fn">console</span>.<span class="fn">log</span>(<span class="kw">this</span>.<span class="vr">val</span>); <span class="cmt">// ❌ undefined</span>
+    })();
+
+    <span class="cmt">// Fix: arrow IIFE inherits this</span>
+    (() => {
+      <span class="fn">console</span>.<span class="fn">log</span>(<span class="kw">this</span>.<span class="vr">val</span>); <span class="cmt">// ✅ 42</span>
+    })();
+  }
+};
+<span class="vr">obj</span>.<span class="fn">run</span>();
+</pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       SLIDE 23 – this & Prototype Chain
+  ════════════════════════════════════════ -->
+  <div class="slide" id="slide-23">
+    <div class="slide-tag">18 — this &amp; Prototype Chain ✦ Deep Dive</div>
+    <h2><code>this</code> &amp; the Prototype Chain</h2>
+    <p class="lead mt8">When a method is found on the <strong>prototype</strong>, <code class="inline">this</code> still refers to the <strong>original instance</strong> — not the prototype object.</p>
+    <div class="two-col mt16">
+      <div>
+        <h3>Prototype Method — this = Instance</h3>
+        <pre><span class="kw">function</span> <span class="fn">Animal</span>(<span class="vr">name</span>) {
+  <span class="kw">this</span>.<span class="vr">name</span> = <span class="vr">name</span>;
+}
+
+<span class="fn">Animal</span>.<span class="vr">prototype</span>.<span class="fn">speak</span> = <span class="kw">function</span>() {
+  <span class="cmt">// this = the instance, NOT Animal.prototype</span>
+  <span class="kw">return</span> <span class="kw">this</span>.<span class="vr">name</span> + <span class="str">' speaks'</span>;
+};
+
+<span class="kw">const</span> <span class="vr">dog</span> = <span class="kw">new</span> <span class="fn">Animal</span>(<span class="str">'Rex'</span>);
+<span class="fn">console</span>.<span class="fn">log</span>(<span class="vr">dog</span>.<span class="fn">speak</span>()); <span class="cmt">// "Rex speaks"</span>
+<span class="cmt">// JS looks up speak on prototype,</span>
+<span class="cmt">// but calls it with dog as `this`</span>
+</pre>
+        <div class="info-box blue mt12">
+          💡 The prototype lookup chain finds the method, but <strong>the call site decides <code>this</code></strong>. The object used to call is always the receiver.
+        </div>
+      </div>
+      <div>
+        <h3>Inheritance Chain — this is always the leaf instance</h3>
+        <pre><span class="kw">class</span> <span class="fn">Vehicle</span> {
+  <span class="fn">type</span>() { <span class="kw">return</span> <span class="kw">this</span>.<span class="vr">brand</span>; }
+}
+
+<span class="kw">class</span> <span class="fn">Car</span> <span class="kw">extends</span> <span class="fn">Vehicle</span> {
+  <span class="kw">constructor</span>() {
+    <span class="kw">super</span>();
+    <span class="kw">this</span>.<span class="vr">brand</span> = <span class="str">'Toyota'</span>;
+  }
+}
+
+<span class="kw">const</span> <span class="vr">c</span> = <span class="kw">new</span> <span class="fn">Car</span>();
+<span class="fn">console</span>.<span class="fn">log</span>(<span class="vr">c</span>.<span class="fn">type</span>()); <span class="cmt">// "Toyota"</span>
+<span class="cmt">// type() is on Vehicle.prototype</span>
+<span class="cmt">// but this = c (Car instance)</span>
+</pre>
+        <h3 style="margin-top:14px;">Object.create() — same rule</h3>
+        <pre><span class="kw">const</span> <span class="vr">proto</span> = {
+  <span class="fn">greet</span>() { <span class="kw">return</span> <span class="kw">this</span>.<span class="vr">name</span>; }
+};
+<span class="kw">const</span> <span class="vr">obj</span> = <span class="vr">Object</span>.<span class="fn">create</span>(<span class="vr">proto</span>);
+<span class="vr">obj</span>.<span class="vr">name</span> = <span class="str">'Alice'</span>;
+<span class="fn">console</span>.<span class="fn">log</span>(<span class="vr">obj</span>.<span class="fn">greet</span>()); <span class="cmt">// "Alice"</span>
+<span class="cmt">// greet is on proto, this = obj</span>
+</pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       SLIDE 24 – All Ways to Lose this
+  ════════════════════════════════════════ -->
+  <div class="slide" id="slide-24">
+    <div class="slide-tag">19 — All Ways to Lose <code>this</code> ✦ Deep Dive</div>
+    <h2>All Ways to Lose <code>this</code> — and How to Fix Each</h2>
+    <div class="card-grid cols-2 mt16">
+      <div class="card">
+        <span class="badge badge-red">Way 1</span>
+        <h3 style="margin-top:8px;">Method Extraction / Destructuring</h3>
+        <pre style="font-size:12px"><span class="kw">const</span> { <span class="vr">greet</span> } = <span class="vr">person</span>; <span class="fn">greet</span>(); <span class="cmt">// ❌</span>
+<span class="cmt">// Fix:</span>
+<span class="kw">const</span> <span class="vr">greet</span> = <span class="vr">person</span>.<span class="fn">greet</span>.<span class="fn">bind</span>(<span class="vr">person</span>); <span class="cmt">// ✅</span></pre>
+      </div>
+      <div class="card">
+        <span class="badge badge-red">Way 2</span>
+        <h3 style="margin-top:8px;">Regular Function in setTimeout</h3>
+        <pre style="font-size:12px"><span class="fn">setTimeout</span>(<span class="kw">function</span>() { <span class="kw">this</span>.<span class="fn">run</span>(); }, <span class="num">0</span>); <span class="cmt">// ❌</span>
+<span class="cmt">// Fix:</span>
+<span class="fn">setTimeout</span>(() => { <span class="kw">this</span>.<span class="fn">run</span>(); }, <span class="num">0</span>); <span class="cmt">// ✅</span></pre>
+      </div>
+      <div class="card">
+        <span class="badge badge-orange">Way 3</span>
+        <h3 style="margin-top:8px;">Callback passed to another function</h3>
+        <pre style="font-size:12px"><span class="vr">emitter</span>.<span class="fn">on</span>(<span class="str">'event'</span>, <span class="vr">obj</span>.<span class="fn">handler</span>); <span class="cmt">// ❌</span>
+<span class="cmt">// Fix:</span>
+<span class="vr">emitter</span>.<span class="fn">on</span>(<span class="str">'event'</span>, <span class="vr">obj</span>.<span class="fn">handler</span>.<span class="fn">bind</span>(<span class="vr">obj</span>)); <span class="cmt">// ✅</span>
+<span class="vr">emitter</span>.<span class="fn">on</span>(<span class="str">'event'</span>, (...<span class="vr">a</span>) => <span class="vr">obj</span>.<span class="fn">handler</span>(...<span class="vr">a</span>)); <span class="cmt">// ✅</span></pre>
+      </div>
+      <div class="card">
+        <span class="badge badge-orange">Way 4</span>
+        <h3 style="margin-top:8px;">Arrow as Object Method</h3>
+        <pre style="font-size:12px"><span class="kw">const</span> <span class="vr">o</span> = { <span class="fn">fn</span>: () => <span class="kw">this</span> }; <span class="cmt">// ❌ outer this</span>
+<span class="cmt">// Fix:</span>
+<span class="kw">const</span> <span class="vr">o</span> = { <span class="fn">fn</span>() { <span class="kw">return</span> <span class="kw">this</span>; } }; <span class="cmt">// ✅</span></pre>
+      </div>
+      <div class="card">
+        <span class="badge badge-purple">Way 5</span>
+        <h3 style="margin-top:8px;">Nested Regular Function Inside Method</h3>
+        <pre style="font-size:12px"><span class="fn">outer</span>() {
+  <span class="kw">function</span> <span class="fn">inner</span>() { <span class="kw">return</span> <span class="kw">this</span>.<span class="vr">x</span>; } <span class="cmt">// ❌</span>
+  <span class="cmt">// Fix 1 — arrow:</span>
+  <span class="kw">const</span> <span class="fn">inner</span> = () => <span class="kw">this</span>.<span class="vr">x</span>; <span class="cmt">// ✅</span>
+  <span class="cmt">// Fix 2 — self/that pattern:</span>
+  <span class="kw">const</span> <span class="vr">self</span> = <span class="kw">this</span>; <span class="kw">function</span> <span class="fn">inner</span>() { <span class="kw">return</span> <span class="vr">self</span>.<span class="vr">x</span>; } <span class="cmt">// ✅</span>
+}</pre>
+      </div>
+      <div class="card">
+        <span class="badge badge-purple">Way 6</span>
+        <h3 style="margin-top:8px;">Regular fn in .then() / array methods</h3>
+        <pre style="font-size:12px"><span class="vr">arr</span>.<span class="fn">map</span>(<span class="kw">function</span>(<span class="vr">x</span>) { <span class="kw">return</span> <span class="kw">this</span>.<span class="vr">mul</span> * <span class="vr">x</span>; }); <span class="cmt">// ❌</span>
+<span class="cmt">// Fix 1 — arrow:</span>
+<span class="vr">arr</span>.<span class="fn">map</span>(<span class="vr">x</span> => <span class="kw">this</span>.<span class="vr">mul</span> * <span class="vr">x</span>); <span class="cmt">// ✅</span>
+<span class="cmt">// Fix 2 — thisArg:</span>
+<span class="vr">arr</span>.<span class="fn">map</span>(<span class="kw">function</span>(<span class="vr">x</span>) { <span class="kw">return</span> <span class="kw">this</span>.<span class="vr">mul</span> * <span class="vr">x</span>; }, <span class="kw">this</span>); <span class="cmt">// ✅</span></pre>
+      </div>
+    </div>
+    <div class="info-box green mt16">
+      🎯 <strong>Universal Fix:</strong> Whenever you need to pass a method as a callback and it uses <code class="inline">this</code> — use either an <strong>arrow wrapper</strong>, <strong>.bind()</strong>, or a <strong>class field arrow</strong>.
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       SLIDE 25 – Decision Flowchart
+  ════════════════════════════════════════ -->
+  <div class="slide" id="slide-25">
+    <div class="slide-tag">20 — Decision Flowchart ✦ Deep Dive</div>
+    <h2>How to Determine <code>this</code> — Decision Tree</h2>
+    <p class="lead mt8">When you see <code class="inline">this</code> anywhere in code, ask these questions in order:</p>
+    <div style="margin-top:20px; display:flex; flex-direction:column; gap:12px; max-width:860px;">
+      <div style="display:flex; align-items:center; gap:16px;">
+        <div style="background:var(--accent2); color:#000; border-radius:50%; width:32px; height:32px; display:flex; align-items:center; justify-content:center; font-weight:800; flex-shrink:0;">1</div>
+        <div class="card" style="flex:1; padding:14px 18px;">
+          <strong>Is it an arrow function?</strong>
+          <span style="color:var(--text-muted); margin-left:8px;">→ Yes:</span> <code class="inline">this</code> = enclosing scope's <code class="inline">this</code>. Stop here. Ignore all other rules.
+        </div>
+      </div>
+      <div style="display:flex; align-items:center; gap:16px;">
+        <div style="background:var(--accent4); color:#000; border-radius:50%; width:32px; height:32px; display:flex; align-items:center; justify-content:center; font-weight:800; flex-shrink:0;">2</div>
+        <div class="card" style="flex:1; padding:14px 18px;">
+          <strong>Is it called with <code>new</code>?</strong>
+          <span style="color:var(--text-muted); margin-left:8px;">→ Yes:</span> <code class="inline">this</code> = the newly created object.
+        </div>
+      </div>
+      <div style="display:flex; align-items:center; gap:16px;">
+        <div style="background:var(--accent5); color:#000; border-radius:50%; width:32px; height:32px; display:flex; align-items:center; justify-content:center; font-weight:800; flex-shrink:0;">3</div>
+        <div class="card" style="flex:1; padding:14px 18px;">
+          <strong>Is it called with <code>.call()</code>, <code>.apply()</code>, or <code>.bind()</code>?</strong>
+          <span style="color:var(--text-muted); margin-left:8px;">→ Yes:</span> <code class="inline">this</code> = the explicitly passed context.
+        </div>
+      </div>
+      <div style="display:flex; align-items:center; gap:16px;">
+        <div style="background:var(--accent3); color:#000; border-radius:50%; width:32px; height:32px; display:flex; align-items:center; justify-content:center; font-weight:800; flex-shrink:0;">4</div>
+        <div class="card" style="flex:1; padding:14px 18px;">
+          <strong>Is there an object before the dot?</strong> e.g. <code class="inline">obj.fn()</code>
+          <span style="color:var(--text-muted); margin-left:8px;">→ Yes:</span> <code class="inline">this</code> = that object (implicit binding).
+        </div>
+      </div>
+      <div style="display:flex; align-items:center; gap:16px;">
+        <div style="background:var(--text-muted); color:#000; border-radius:50%; width:32px; height:32px; display:flex; align-items:center; justify-content:center; font-weight:800; flex-shrink:0;">5</div>
+        <div class="card" style="flex:1; padding:14px 18px;">
+          <strong>None of the above — plain call <code>fn()</code>?</strong>
+          <span style="color:var(--text-muted); margin-left:8px;">→ Default binding:</span> <code class="inline">window</code> (non-strict) or <code class="inline">undefined</code> (strict / ES module / class).
+        </div>
+      </div>
+    </div>
+    <div class="two-col mt20">
+      <div class="info-box purple" style="margin:0;">
+        <strong>Special cases that override everything:</strong><br>
+        • <strong>ES Module top-level</strong> → always <code class="inline">undefined</code><br>
+        • <strong>Class body</strong> → always strict mode<br>
+        • <strong>Bound function (.bind)</strong> → cannot be re-bound by call/apply
+      </div>
+      <pre style="font-size:12px;"><span class="cmt">// Quick check template:</span>
+<span class="cmt">// 1. Arrow?        → lexical this</span>
+<span class="cmt">// 2. new?          → new object</span>
+<span class="cmt">// 3. call/apply/bind? → passed ctx</span>
+<span class="cmt">// 4. obj.fn()?     → obj</span>
+<span class="cmt">// 5. fn()?         → window / undefined</span>
+
+<span class="cmt">// Golden rule:</span>
+<span class="cmt">// Look at the CALL SITE, not the definition.</span>
+<span class="cmt">// (Arrow functions are the only exception)</span>
+</pre>
+    </div>
+  </div>
+
 </div>
 
 <!-- Navigation -->
 <div class="nav">
   <button id="prevBtn" onclick="changeSlide(-1)" disabled>← Prev</button>
-  <span class="slide-counter" id="slideCounter">1 / 17</span>
+  <span class="slide-counter" id="slideCounter">1 / 25</span>
   <button id="nextBtn" onclick="changeSlide(1)">Next →</button>
 </div>
 
 <script>
-  const totalSlides = 17;
+  const totalSlides = 25;
   let current = 1;
 
   function changeSlide(dir) {
