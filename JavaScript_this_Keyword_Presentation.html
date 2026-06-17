@@ -869,6 +869,10 @@
 
 <span class="cmt">// Fix: use arrow function</span>
 <span class="fn">setTimeout</span>(() => <span class="fn">console</span>.<span class="fn">log</span>(<span class="kw">this</span>.<span class="vr">name</span>), <span class="num">100</span>); <span class="cmt">// ✓</span></pre>
+        <div class="info-box orange" style="margin-top:10px; font-size:12px;">
+          <strong>❌ Why it breaks:</strong> <code class="inline">setTimeout</code> invokes the callback as a plain function call — not as <code class="inline">obj.something()</code>. So <strong>Default Binding</strong> kicks in: <code class="inline">this</code> becomes <code class="inline">window</code> (or <code class="inline">undefined</code> in strict mode).<br><br>
+          <strong>✅ Why the fix works:</strong> Arrow functions have <strong>no own <code>this</code></strong>. They inherit <code class="inline">this</code> lexically from where they are <em>written</em> — inside <code class="inline">greet()</code>, where <code class="inline">this</code> is <code class="inline">obj</code>. That value is captured at definition time and never changes.
+        </div>
       </div>
       <div class="card">
         <span class="badge badge-red">Pitfall 2</span>
@@ -884,6 +888,10 @@
 
 <span class="cmt">// Fix: use shorthand method</span>
 <span class="fn">greet</span>() { <span class="fn">console</span>.<span class="fn">log</span>(<span class="kw">this</span>.<span class="vr">name</span>); } <span class="cmt">// ✓</span></pre>
+        <div class="info-box orange" style="margin-top:10px; font-size:12px;">
+          <strong>❌ Why it breaks:</strong> Arrow functions capture <code class="inline">this</code> from their <em>enclosing lexical scope</em>. Here the arrow is defined at the top level (outside any function), so <code class="inline">this</code> = <code class="inline">window</code> / <code class="inline">undefined</code> — <strong>never</strong> <code class="inline">person</code>, even when called as <code class="inline">person.greet()</code>.<br><br>
+          <strong>✅ Why the fix works:</strong> A <strong>shorthand method</strong> (<code class="inline">greet() {}</code>) is a regular function. It follows <strong>Implicit Binding</strong> — <code class="inline">this</code> is set to the object to the left of the dot (<code class="inline">person</code>) at call time.
+        </div>
       </div>
       <div class="card">
         <span class="badge badge-orange">Pitfall 3</span>
@@ -899,6 +907,11 @@
 <span class="cmt">// Fix options:</span>
 <span class="vr">setInterval</span>(() => <span class="vr">t</span>.<span class="fn">tick</span>(), <span class="num">1000</span>);        <span class="cmt">// ✓</span>
 <span class="vr">setInterval</span>(<span class="vr">t</span>.<span class="fn">tick</span>.<span class="fn">bind</span>(<span class="vr">t</span>), <span class="num">1000</span>);         <span class="cmt">// ✓</span></pre>
+        <div class="info-box orange" style="margin-top:10px; font-size:12px;">
+          <strong>❌ Why it breaks:</strong> <code class="inline">t.tick</code> passes only the <em>function reference</em> — the link to <code class="inline">t</code> is lost. When <code class="inline">setInterval</code> calls it later, there's no receiver, so <strong>Default Binding</strong> applies: <code class="inline">this</code> becomes <code class="inline">window</code> / <code class="inline">undefined</code>. <code class="inline">this.ticks++</code> modifies nothing on the instance.<br><br>
+          <strong>✅ Fix 1 — Arrow wrapper:</strong> <code class="inline">() => t.tick()</code> calls the method <em>on</em> <code class="inline">t</code> each time, so Implicit Binding applies.<br>
+          <strong>✅ Fix 2 — bind:</strong> <code class="inline">t.tick.bind(t)</code> hard-binds <code class="inline">this</code> to <code class="inline">t</code> permanently (Explicit Binding).
+        </div>
       </div>
       <div class="card">
         <span class="badge badge-orange">Pitfall 4</span>
@@ -916,6 +929,10 @@
 
 <span class="cmt">// Fix: arrow function</span>
 <span class="kw">const</span> <span class="fn">inner</span> = () => <span class="kw">this</span>.<span class="vr">val</span>; <span class="cmt">// ✓</span></pre>
+        <div class="info-box orange" style="margin-top:10px; font-size:12px;">
+          <strong>❌ Why it breaks:</strong> Even though <code class="inline">inner</code> is defined <em>inside</em> <code class="inline">outer()</code>, it is called as a plain function — <strong>not</strong> as <code class="inline">obj.inner()</code>. Every regular function gets its own <code class="inline">this</code> based on how it is called. Plain call → Default Binding → <code class="inline">this</code> = <code class="inline">window</code> / <code class="inline">undefined</code>.<br><br>
+          <strong>✅ Why the fix works:</strong> Replacing <code class="inline">function inner()</code> with an arrow <code class="inline">const inner = () =></code> means <code class="inline">inner</code> has <strong>no own <code>this</code></strong>. It looks up to the enclosing <code class="inline">outer()</code> scope, where <code class="inline">this</code> = <code class="inline">obj</code> (set by Implicit Binding when <code class="inline">obj.outer()</code> was called).
+        </div>
       </div>
     </div>
   </div>
