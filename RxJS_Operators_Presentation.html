@@ -1,0 +1,1359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RxJS Operators – Interview Deep Dive</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; overflow: hidden; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #0d1117;
+      color: #e6edf3;
+    }
+
+    #deck { width: 100vw; height: 100vh; position: relative; }
+
+    .slide {
+      display: none;
+      flex-direction: column;
+      justify-content: flex-start;
+      padding: 48px 60px 80px;
+      width: 100%;
+      height: 100%;
+      overflow-y: auto;
+      gap: 18px;
+      animation: fadeIn .35s ease;
+    }
+    .slide.active { display: flex; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+
+    .slide-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      border-bottom: 2px solid #21262d;
+      padding-bottom: 14px;
+      flex-shrink: 0;
+    }
+    .topic-badge {
+      background: #7c3aed;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: 20px;
+      white-space: nowrap;
+    }
+
+    h1 { font-size: 28px; font-weight: 700; color: #ff6b6b; }
+    h2 { font-size: 20px; font-weight: 600; color: #ffa657; margin-bottom: 6px; }
+    h3 { font-size: 15px; font-weight: 600; color: #ffa657; margin-bottom: 4px; }
+
+    .title-slide {
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      background: radial-gradient(ellipse at 50% 0%, #1a0a2e 0%, #0d1117 70%);
+    }
+    .title-slide h1 { font-size: 46px; margin-bottom: 10px; color: #d2a8ff; }
+    .title-slide .subtitle { font-size: 17px; color: #8b949e; max-width: 680px; line-height: 1.6; }
+    .rxjs-logo { font-size: 64px; margin-bottom: 16px; }
+    .topic-chips { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 22px; }
+    .chip {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 20px;
+      padding: 5px 14px;
+      font-size: 13px;
+      color: #8b949e;
+    }
+
+    .content { flex: 1; display: flex; flex-direction: column; gap: 16px; }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+
+    .card {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 10px;
+      padding: 16px 18px;
+    }
+    .card.accent-red    { border-left: 4px solid #f85149; }
+    .card.accent-blue   { border-left: 4px solid #1f6feb; }
+    .card.accent-green  { border-left: 4px solid #3fb950; }
+    .card.accent-orange { border-left: 4px solid #f78166; }
+    .card.accent-purple { border-left: 4px solid #d2a8ff; }
+    .card.accent-yellow { border-left: 4px solid #e3b341; }
+    .card.accent-pink   { border-left: 4px solid #ff6eb4; }
+    .card.accent-cyan   { border-left: 4px solid #39d0d8; }
+
+    p  { font-size: 14px; line-height: 1.75; color: #c9d1d9; }
+    li { font-size: 13.5px; line-height: 1.85; color: #c9d1d9; margin-left: 18px; }
+    ul { padding-left: 4px; }
+    strong { color: #f0f6fc; }
+    code {
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 12.5px;
+      background: #1c2128;
+      color: #79c0ff;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .code-block {
+      background: #1c2128;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 16px 18px;
+      overflow-x: auto;
+      flex-shrink: 0;
+    }
+    .code-block pre {
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 13px;
+      line-height: 1.7;
+      color: #e6edf3;
+      white-space: pre;
+      margin: 0;
+    }
+    .kw  { color: #ff7b72; }
+    .fn  { color: #d2a8ff; }
+    .str { color: #a5d6ff; }
+    .num { color: #79c0ff; }
+    .cmt { color: #8b949e; font-style: italic; }
+    .var { color: #ffa657; }
+    .dec { color: #ff6b6b; }
+    .cls { color: #f0c674; }
+    .int { color: #39d0d8; }
+    .op  { color: #7ee787; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th {
+      background: #161b22;
+      color: #d2a8ff;
+      text-align: left;
+      padding: 9px 13px;
+      border-bottom: 2px solid #30363d;
+      font-weight: 600;
+    }
+    td {
+      padding: 8px 13px;
+      border-bottom: 1px solid #21262d;
+      color: #c9d1d9;
+      vertical-align: top;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #161b22; }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 9px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .badge-red    { background: #3a1818; color: #f85149; }
+    .badge-green  { background: #1a3c1a; color: #3fb950; }
+    .badge-blue   { background: #0d2340; color: #58a6ff; }
+    .badge-orange { background: #3a2000; color: #ffa657; }
+    .badge-purple { background: #2a1a3e; color: #d2a8ff; }
+    .badge-yellow { background: #2e2200; color: #e3b341; }
+    .badge-cyan   { background: #0a2e2e; color: #39d0d8; }
+
+    .marble {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-family: 'Consolas', monospace;
+      font-size: 13px;
+      padding: 8px 0;
+    }
+    .marble-label { color: #8b949e; min-width: 80px; font-size: 12px; }
+    .marble-line  { color: #484f58; }
+    .marble-val   { display: inline-block; background: #1f6feb; color: #fff; border-radius: 50%; width: 24px; height: 24px; line-height: 24px; text-align: center; font-size: 11px; font-weight: 700; }
+    .marble-val.red    { background: #f85149; }
+    .marble-val.green  { background: #3fb950; }
+    .marble-val.purple { background: #d2a8ff; color: #0d1117; }
+    .marble-val.yellow { background: #e3b341; color: #0d1117; }
+    .marble-val.orange { background: #f78166; }
+    .marble-arrow { color: #484f58; font-size: 18px; }
+
+    .op-title-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 2px;
+    }
+    .op-name {
+      font-family: 'Consolas', monospace;
+      font-size: 22px;
+      font-weight: 700;
+      color: #d2a8ff;
+    }
+    .op-category {
+      font-family: 'Consolas', monospace;
+      font-size: 13px;
+      color: #39d0d8;
+      background: #1c2128;
+      padding: 3px 10px;
+      border-radius: 12px;
+      border: 1px solid #30363d;
+    }
+
+    .iq-item {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 14px 16px;
+    }
+    .iq-q { font-size: 14px; font-weight: 600; color: #f0f6fc; margin-bottom: 6px; }
+    .iq-a { font-size: 13px; color: #c9d1d9; line-height: 1.7; }
+
+    #nav {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: #161b22cc;
+      backdrop-filter: blur(8px);
+      border: 1px solid #30363d;
+      border-radius: 40px;
+      padding: 10px 24px;
+      z-index: 1000;
+    }
+    #nav button {
+      background: none;
+      border: none;
+      color: #8b949e;
+      cursor: pointer;
+      font-size: 20px;
+      padding: 4px 8px;
+      border-radius: 6px;
+      transition: color .2s, background .2s;
+    }
+    #nav button:hover:not(:disabled) { color: #e6edf3; background: #21262d; }
+    #nav button:disabled { opacity: 0.3; cursor: default; }
+    #counter { font-size: 13px; color: #8b949e; min-width: 64px; text-align: center; }
+
+    #progress-bar {
+      position: fixed;
+      top: 0; left: 0;
+      height: 3px;
+      background: #7c3aed;
+      transition: width .3s ease;
+      z-index: 999;
+    }
+
+    #hint { position: fixed; bottom: 20px; right: 24px; font-size: 11px; color: #484f58; }
+    .slide::-webkit-scrollbar { width: 6px; }
+    .slide::-webkit-scrollbar-track { background: transparent; }
+    .slide::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+<div id="progress-bar"></div>
+<div id="deck">
+
+  <!-- ══════ SLIDE 0 — TITLE ══════ -->
+  <div class="slide title-slide active" id="s0">
+    <div class="rxjs-logo">⚡</div>
+    <h1>RxJS Operators</h1>
+    <p class="subtitle">Most asked interview operators — marble diagrams, real-world examples, when to use which, and senior-level Q&amp;A.</p>
+    <div class="topic-chips">
+      <span class="chip">map</span>
+      <span class="chip">filter</span>
+      <span class="chip">tap</span>
+      <span class="chip">mergeMap</span>
+      <span class="chip">switchMap</span>
+      <span class="chip">concatMap</span>
+      <span class="chip">exhaustMap</span>
+      <span class="chip">combineLatest</span>
+      <span class="chip">forkJoin</span>
+      <span class="chip">debounceTime</span>
+      <span class="chip">distinctUntilChanged</span>
+      <span class="chip">takeUntil</span>
+      <span class="chip">catchError</span>
+      <span class="chip">retry</span>
+      <span class="chip">Subject</span>
+      <span class="chip">BehaviorSubject</span>
+      <span class="chip">ReplaySubject</span>
+      <span class="chip">Interview Q&amp;A</span>
+    </div>
+  </div>
+
+  <!-- ══════ SLIDE 1 — WHAT IS RxJS ══════ -->
+  <div class="slide" id="s1">
+    <div class="slide-header">
+      <span class="topic-badge">01</span>
+      <h1>What is RxJS?</h1>
+    </div>
+    <div class="content">
+      <div class="two-col">
+        <div class="card accent-purple">
+          <h3>Definition</h3>
+          <p><strong>RxJS (Reactive Extensions for JavaScript)</strong> is a library for composing asynchronous and event-based programs using <strong>Observables</strong>. It provides a powerful set of operators to transform, filter, combine and control streams of data over time.</p>
+        </div>
+        <div class="card accent-cyan">
+          <h3>Core Concepts</h3>
+          <ul>
+            <li><strong>Observable</strong> — a stream of values over time (lazy, not started until subscribed)</li>
+            <li><strong>Observer</strong> — consumes values: <code>next</code>, <code>error</code>, <code>complete</code></li>
+            <li><strong>Subscription</strong> — the connection between Observable and Observer</li>
+            <li><strong>Operator</strong> — pure function that transforms an Observable into another Observable</li>
+            <li><strong>Subject</strong> — both Observable and Observer (multicast)</li>
+          </ul>
+        </div>
+      </div>
+      <div class="card accent-yellow">
+        <h3>Operator Categories</h3>
+        <table style="margin-top:8px;">
+          <thead><tr><th>Category</th><th>Operators</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td><span class="badge badge-blue">Transformation</span></td><td><code>map</code>, <code>mergeMap</code>, <code>switchMap</code>, <code>concatMap</code>, <code>exhaustMap</code></td><td>Transform emitted values</td></tr>
+            <tr><td><span class="badge badge-green">Filtering</span></td><td><code>filter</code>, <code>debounceTime</code>, <code>distinctUntilChanged</code>, <code>take</code>, <code>skip</code></td><td>Control which values pass through</td></tr>
+            <tr><td><span class="badge badge-purple">Combination</span></td><td><code>combineLatest</code>, <code>forkJoin</code>, <code>zip</code>, <code>merge</code>, <code>concat</code></td><td>Combine multiple Observables</td></tr>
+            <tr><td><span class="badge badge-orange">Utility</span></td><td><code>tap</code>, <code>delay</code>, <code>timeout</code>, <code>finalize</code></td><td>Side effects, debugging</td></tr>
+            <tr><td><span class="badge badge-red">Error Handling</span></td><td><code>catchError</code>, <code>retry</code>, <code>retryWhen</code></td><td>Handle errors gracefully</td></tr>
+            <tr><td><span class="badge badge-cyan">Multicasting</span></td><td><code>Subject</code>, <code>BehaviorSubject</code>, <code>ReplaySubject</code></td><td>Share a single subscription</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="code-block">
+        <pre><span class="kw">import</span> { <span class="cls">Observable</span>, <span class="fn">of</span> } <span class="kw">from</span> <span class="str">'rxjs'</span>;
+<span class="kw">import</span> { <span class="fn">map</span>, <span class="fn">filter</span> } <span class="kw">from</span> <span class="str">'rxjs/operators'</span>;
+
+<span class="cmt">// Create an observable</span>
+<span class="kw">const</span> <span class="var">numbers$</span> = <span class="fn">of</span>(<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>, <span class="num">4</span>, <span class="num">5</span>);
+
+<span class="cmt">// Apply operators via pipe()</span>
+<span class="var">numbers$</span>.<span class="fn">pipe</span>(
+  <span class="fn">filter</span>(<span class="var">n</span> => <span class="var">n</span> % <span class="num">2</span> === <span class="num">0</span>),   <span class="cmt">// keep even: 2, 4</span>
+  <span class="fn">map</span>(<span class="var">n</span> => <span class="var">n</span> * <span class="num">10</span>)             <span class="cmt">// multiply: 20, 40</span>
+).<span class="fn">subscribe</span>(<span class="var">val</span> => console.<span class="fn">log</span>(<span class="var">val</span>));
+<span class="cmt">// Output: 20, 40</span></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════ SLIDE 2 — map, filter, tap ══════ -->
+  <div class="slide" id="s2">
+    <div class="slide-header">
+      <span class="topic-badge">02</span>
+      <div>
+        <div class="op-title-bar">
+          <span class="op-name">map / filter / tap</span>
+          <span class="op-category">Transformation &amp; Utility</span>
+          <span class="badge badge-green">Most Basic</span>
+        </div>
+      </div>
+    </div>
+    <div class="content">
+      <div class="three-col">
+        <div class="card accent-blue">
+          <h3>map</h3>
+          <p>Transforms each emitted value. Like <code>Array.map()</code> but for streams.</p>
+          <div class="marble" style="margin-top:8px;">
+            <span class="marble-label">Input:</span>
+            <span class="marble-val">1</span>
+            <span class="marble-line">──</span>
+            <span class="marble-val">2</span>
+            <span class="marble-line">──</span>
+            <span class="marble-val">3</span>
+          </div>
+          <div class="marble">
+            <span class="marble-label">map(x*10):</span>
+            <span class="marble-val green">10</span>
+            <span class="marble-line">─</span>
+            <span class="marble-val green">20</span>
+            <span class="marble-line">─</span>
+            <span class="marble-val green">30</span>
+          </div>
+        </div>
+        <div class="card accent-orange">
+          <h3>filter</h3>
+          <p>Only passes values that satisfy the predicate. Like <code>Array.filter()</code> for streams.</p>
+          <div class="marble" style="margin-top:8px;">
+            <span class="marble-label">Input:</span>
+            <span class="marble-val">1</span>
+            <span class="marble-line">──</span>
+            <span class="marble-val">2</span>
+            <span class="marble-line">──</span>
+            <span class="marble-val">3</span>
+            <span class="marble-line">──</span>
+            <span class="marble-val">4</span>
+          </div>
+          <div class="marble">
+            <span class="marble-label">filter(even):</span>
+            <span class="marble-line">────</span>
+            <span class="marble-val orange">2</span>
+            <span class="marble-line">────</span>
+            <span class="marble-val orange">4</span>
+          </div>
+        </div>
+        <div class="card accent-yellow">
+          <h3>tap</h3>
+          <p>Side-effect only — does NOT modify the stream. Used for logging or debugging.</p>
+          <div class="marble" style="margin-top:8px;">
+            <span class="marble-label">Input:</span>
+            <span class="marble-val">1</span>
+            <span class="marble-line">──</span>
+            <span class="marble-val">2</span>
+            <span class="marble-line">──</span>
+            <span class="marble-val">3</span>
+          </div>
+          <div class="marble">
+            <span class="marble-label">tap(log):</span>
+            <span class="marble-val yellow">1</span>
+            <span class="marble-line">──</span>
+            <span class="marble-val yellow">2</span>
+            <span class="marble-line">──</span>
+            <span class="marble-val yellow">3</span>
+            <span class="marble-line"> ← unchanged</span>
+          </div>
+        </div>
+      </div>
+      <div class="code-block">
+        <pre><span class="kw">import</span> { <span class="fn">map</span>, <span class="fn">filter</span>, <span class="fn">tap</span> } <span class="kw">from</span> <span class="str">'rxjs/operators'</span>;
+
+<span class="kw">this</span>.<span class="var">userService</span>.<span class="fn">getUsers</span>().<span class="fn">pipe</span>(
+
+  <span class="fn">tap</span>(<span class="var">users</span> => console.<span class="fn">log</span>(<span class="str">'Raw API response:'</span>, <span class="var">users</span>)),
+  <span class="cmt">// ↑ log without modifying the stream</span>
+
+  <span class="fn">filter</span>(<span class="var">users</span> => <span class="var">users</span>.length > <span class="num">0</span>),
+  <span class="cmt">// ↑ only continue if array is not empty</span>
+
+  <span class="fn">map</span>(<span class="var">users</span> => <span class="var">users</span>.<span class="fn">map</span>(<span class="var">u</span> => ({ ...<span class="var">u</span>, fullName: <span class="str">`</span><span class="var">${u.firstName} ${u.lastName}</span><span class="str">`</span> }))),
+  <span class="cmt">// ↑ transform: add fullName property to each user</span>
+
+  <span class="fn">tap</span>(<span class="var">users</span> => console.<span class="fn">log</span>(<span class="str">'Transformed:'</span>, <span class="var">users</span>))
+  <span class="cmt">// ↑ log the final result before subscribe</span>
+
+).<span class="fn">subscribe</span>(<span class="var">users</span> => <span class="kw">this</span>.<span class="var">users</span> = <span class="var">users</span>);</pre>
+      </div>
+      <div class="card accent-red">
+        <h3>Key Difference — tap vs map</h3>
+        <table style="margin-top:8px;">
+          <thead><tr><th>Operator</th><th>Modifies stream?</th><th>Use for</th></tr></thead>
+          <tbody>
+            <tr><td><code>map</code></td><td>✅ Yes — returns new value</td><td>Transform data</td></tr>
+            <tr><td><code>tap</code></td><td>❌ No — passes value through unchanged</td><td>Logging, side effects, analytics</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════ SLIDE 3 — switchMap ══════ -->
+  <div class="slide" id="s3">
+    <div class="slide-header">
+      <span class="topic-badge">03</span>
+      <div>
+        <div class="op-title-bar">
+          <span class="op-name">switchMap</span>
+          <span class="op-category">Higher-Order Mapping</span>
+          <span class="badge badge-red">Most Asked ⭐</span>
+        </div>
+      </div>
+    </div>
+    <div class="content">
+      <div class="two-col">
+        <div class="card accent-purple">
+          <h3>What it does</h3>
+          <ul>
+            <li>Maps each value to an inner Observable</li>
+            <li><strong>Cancels</strong> the previous inner Observable when a new value arrives</li>
+            <li>Only the <strong>latest</strong> inner Observable's result is used</li>
+            <li>Perfect for: <strong>search-as-you-type, route params, dropdown selections</strong></li>
+          </ul>
+        </div>
+        <div class="card accent-red">
+          <h3>Marble Diagram</h3>
+          <div class="marble" style="margin-top:8px;">
+            <span class="marble-label">Source:</span>
+            <span class="marble-val">A</span>
+            <span class="marble-line">────</span>
+            <span class="marble-val red">B</span>
+            <span class="marble-line">────</span>
+            <span class="marble-val purple">C</span>
+          </div>
+          <div class="marble">
+            <span class="marble-label">A inner:</span>
+            <span class="marble-val">a1</span>
+            <span class="marble-line">─</span>
+            <span class="marble-val red" style="opacity:0.3">a2❌</span>
+            <span style="color:#8b949e;font-size:11px;"> cancelled when B arrives</span>
+          </div>
+          <div class="marble">
+            <span class="marble-label">B inner:</span>
+            <span class="marble-line">────</span>
+            <span class="marble-val red">b1</span>
+            <span class="marble-val red" style="opacity:0.3">b2❌</span>
+            <span style="color:#8b949e;font-size:11px;"> cancelled when C arrives</span>
+          </div>
+          <div class="marble">
+            <span class="marble-label">Output:</span>
+            <span class="marble-val">a1</span>
+            <span class="marble-line">────</span>
+            <span class="marble-val red">b1</span>
+            <span class="marble-line">──</span>
+            <span class="marble-val purple">c1</span>
+          </div>
+        </div>
+      </div>
+      <div class="code-block">
+        <pre><span class="kw">import</span> { <span class="fn">switchMap</span> } <span class="kw">from</span> <span class="str">'rxjs/operators'</span>;
+
+<span class="cmt">// ── Search as you type ───────────────────────────────────────</span>
+<span class="kw">this</span>.<span class="var">searchControl</span>.valueChanges.<span class="fn">pipe</span>(
+  <span class="fn">debounceTime</span>(<span class="num">300</span>),
+  <span class="fn">distinctUntilChanged</span>(),
+  <span class="fn">switchMap</span>(<span class="var">term</span> => <span class="kw">this</span>.<span class="var">api</span>.<span class="fn">search</span>(<span class="var">term</span>))
+  <span class="cmt">// ↑ if user types 'n', 'ni', 'nit' rapidly:</span>
+  <span class="cmt">//   cancels request for 'n', cancels request for 'ni'</span>
+  <span class="cmt">//   only keeps the latest request for 'nit'</span>
+).<span class="fn">subscribe</span>(<span class="var">results</span> => <span class="kw">this</span>.<span class="var">results</span> = <span class="var">results</span>);
+
+<span class="cmt">// ── Route param change ───────────────────────────────────────</span>
+<span class="kw">this</span>.<span class="var">route</span>.params.<span class="fn">pipe</span>(
+  <span class="fn">switchMap</span>(<span class="var">params</span> => <span class="kw">this</span>.<span class="var">api</span>.<span class="fn">getUser</span>(<span class="var">params</span>[<span class="str">'id'</span>]))
+  <span class="cmt">// ↑ if user navigates from /user/1 → /user/2</span>
+  <span class="cmt">//   cancels request for user 1, fetches user 2</span>
+).<span class="fn">subscribe</span>(<span class="var">user</span> => <span class="kw">this</span>.<span class="var">user</span> = <span class="var">user</span>);</pre>
+      </div>
+      <div class="card accent-yellow">
+        <h3>⚠️ When NOT to use switchMap</h3>
+        <p>Do NOT use <code>switchMap</code> for <strong>write operations</strong> (POST, PUT, DELETE). If the user clicks "Save" twice, the first request gets cancelled — data may not be saved. Use <code>concatMap</code> or <code>exhaustMap</code> instead.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════ SLIDE 4 — mergeMap ══════ -->
+  <div class="slide" id="s4">
+    <div class="slide-header">
+      <span class="topic-badge">04</span>
+      <div>
+        <div class="op-title-bar">
+          <span class="op-name">mergeMap</span>
+          <span class="op-category">Higher-Order Mapping</span>
+          <span class="badge badge-orange">Parallel Execution</span>
+        </div>
+      </div>
+    </div>
+    <div class="content">
+      <div class="two-col">
+        <div class="card accent-orange">
+          <h3>What it does</h3>
+          <ul>
+            <li>Maps each value to an inner Observable</li>
+            <li><strong>Does NOT cancel</strong> previous inner Observables</li>
+            <li>All inner Observables run <strong>concurrently</strong></li>
+            <li>Results arrive in the order they <strong>complete</strong> (not necessarily the source order)</li>
+            <li>Use for: <strong>parallel API calls, file uploads, independent tasks</strong></li>
+          </ul>
+        </div>
+        <div class="card accent-blue">
+          <h3>Marble Diagram</h3>
+          <div class="marble" style="margin-top:8px;">
+            <span class="marble-label">Source:</span>
+            <span class="marble-val">A</span>
+            <span class="marble-line">────</span>
+            <span class="marble-val red">B</span>
+          </div>
+          <div class="marble">
+            <span class="marble-label">A inner:</span>
+            <span class="marble-val">a1</span>
+            <span class="marble-line">──</span>
+            <span class="marble-val">a2</span>
+            <span style="color:#3fb950;font-size:11px;"> ← still running ✅</span>
+          </div>
+          <div class="marble">
+            <span class="marble-label">B inner:</span>
+            <span class="marble-line">────</span>
+            <span class="marble-val red">b1</span>
+            <span style="color:#3fb950;font-size:11px;"> ← runs in parallel ✅</span>
+          </div>
+          <div class="marble">
+            <span class="marble-label">Output:</span>
+            <span class="marble-val">a1</span>
+            <span class="marble-line">─</span>
+            <span class="marble-val red">b1</span>
+            <span class="marble-line">─</span>
+            <span class="marble-val">a2</span>
+          </div>
+        </div>
+      </div>
+      <div class="code-block">
+        <pre><span class="kw">import</span> { <span class="fn">mergeMap</span> } <span class="kw">from</span> <span class="str">'rxjs/operators'</span>;
+
+<span class="cmt">// ── Upload multiple files in parallel ────────────────────────</span>
+<span class="kw">const</span> <span class="var">files$</span> = <span class="fn">from</span>([<span class="var">file1</span>, <span class="var">file2</span>, <span class="var">file3</span>]);
+
+<span class="var">files$</span>.<span class="fn">pipe</span>(
+  <span class="fn">mergeMap</span>(<span class="var">file</span> => <span class="kw">this</span>.<span class="var">uploadService</span>.<span class="fn">upload</span>(<span class="var">file</span>))
+  <span class="cmt">// ↑ all 3 uploads start simultaneously</span>
+  <span class="cmt">//   results arrive as each upload completes</span>
+).<span class="fn">subscribe</span>(<span class="var">result</span> => console.<span class="fn">log</span>(<span class="str">'Uploaded:'</span>, <span class="var">result</span>));
+
+<span class="cmt">// ── Parallel API calls for each item ─────────────────────────</span>
+<span class="fn">from</span>(<span class="var">userIds</span>).<span class="fn">pipe</span>(
+  <span class="fn">mergeMap</span>(<span class="var">id</span> => <span class="kw">this</span>.<span class="var">api</span>.<span class="fn">getUser</span>(<span class="var">id</span>))
+  <span class="cmt">// ↑ all requests fire at once — fastest possible</span>
+).<span class="fn">subscribe</span>(<span class="var">user</span> => <span class="kw">this</span>.<span class="var">users</span>.<span class="fn">push</span>(<span class="var">user</span>));</pre>
+      </div>
+      <div class="card accent-red">
+        <h3>⚠️ Risk — too many concurrent requests</h3>
+        <p>If your source emits 1000 items, <code>mergeMap</code> fires 1000 HTTP requests simultaneously. Use the <strong>concurrent</strong> parameter to limit: <code>mergeMap(fn, 3)</code> — max 3 at a time.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════ SLIDE 5 — concatMap ══════ -->
+  <div class="slide" id="s5">
+    <div class="slide-header">
+      <span class="topic-badge">05</span>
+      <div>
+        <div class="op-title-bar">
+          <span class="op-name">concatMap</span>
+          <span class="op-category">Higher-Order Mapping</span>
+          <span class="badge badge-blue">Sequential / Ordered</span>
+        </div>
+      </div>
+    </div>
+    <div class="content">
+      <div class="two-col">
+        <div class="card accent-blue">
+          <h3>What it does</h3>
+          <ul>
+            <li>Maps each value to an inner Observable</li>
+            <li>Waits for each inner Observable to <strong>complete</strong> before subscribing to the next</li>
+            <li>Preserves the <strong>order</strong> of emissions</li>
+            <li>Queues requests — nothing is dropped or cancelled</li>
+            <li>Use for: <strong>sequential saves, ordered operations, step-by-step wizards</strong></li>
+          </ul>
+        </div>
+        <div class="card accent-green">
+          <h3>Marble Diagram</h3>
+          <div class="marble" style="margin-top:8px;">
+            <span class="marble-label">Source:</span>
+            <span class="marble-val">A</span>
+            <span class="marble-line">──</span>
+            <span class="marble-val red">B</span>
+            <span class="marble-line">──</span>
+            <span class="marble-val green">C</span>
+          </div>
+          <div class="marble">
+            <span class="marble-label">Output:</span>
+            <span class="marble-val">a1</span>
+            <span class="marble-val">a2</span>
+            <span class="marble-line">─</span>
+            <span class="marble-val red">b1</span>
+            <span class="marble-val red">b2</span>
+            <span class="marble-line">─</span>
+            <span class="marble-val green">c1</span>
+          </div>
+          <p style="margin-top:8px;font-size:12px;color:#8b949e;">B waits for A to complete, C waits for B to complete</p>
+        </div>
+      </div>
+      <div class="code-block">
+        <pre><span class="kw">import</span> { <span class="fn">concatMap</span> } <span class="kw">from</span> <span class="str">'rxjs/operators'</span>;
+
+<span class="cmt">// ── Save form steps in order ─────────────────────────────────</span>
+<span class="kw">const</span> <span class="var">steps$</span> = <span class="fn">from</span>([<span class="var">step1Data</span>, <span class="var">step2Data</span>, <span class="var">step3Data</span>]);
+
+<span class="var">steps$</span>.<span class="fn">pipe</span>(
+  <span class="fn">concatMap</span>(<span class="var">step</span> => <span class="kw">this</span>.<span class="var">api</span>.<span class="fn">saveStep</span>(<span class="var">step</span>))
+  <span class="cmt">// ↑ step2 only saves AFTER step1 completes</span>
+  <span class="cmt">//   step3 only saves AFTER step2 completes</span>
+  <span class="cmt">//   order is guaranteed ✅</span>
+).<span class="fn">subscribe</span>(<span class="var">res</span> => console.<span class="fn">log</span>(<span class="str">'Step saved:'</span>, <span class="var">res</span>));
+
+<span class="cmt">// ── Queue button clicks (don't drop any) ─────────────────────</span>
+<span class="kw">this</span>.<span class="var">saveClick$</span>.<span class="fn">pipe</span>(
+  <span class="fn">concatMap</span>(() => <span class="kw">this</span>.<span class="var">api</span>.<span class="fn">save</span>(<span class="kw">this</span>.<span class="var">formData</span>))
+  <span class="cmt">// ↑ every click is queued and processed in order</span>
+  <span class="cmt">//   no click is lost (unlike exhaustMap)</span>
+).<span class="fn">subscribe</span>();</pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════ SLIDE 6 — exhaustMap ══════ -->
+  <div class="slide" id="s6">
+    <div class="slide-header">
+      <span class="topic-badge">06</span>
+      <div>
+        <div class="op-title-bar">
+          <span class="op-name">exhaustMap</span>
+          <span class="op-category">Higher-Order Mapping</span>
+          <span class="badge badge-yellow">Ignore while busy</span>
+        </div>
+      </div>
+    </div>
+    <div class="content">
+      <div class="two-col">
+        <div class="card accent-yellow">
+          <h3>What it does</h3>
+          <ul>
+            <li>Maps each value to an inner Observable</li>
+            <li><strong>Ignores</strong> new source values while an inner Observable is still running</li>
+            <li>Once the inner Observable completes, it accepts the next value</li>
+            <li>Use for: <strong>login button, submit button, prevent double-submit</strong></li>
+          </ul>
+        </div>
+        <div class="card accent-pink">
+          <h3>Marble Diagram</h3>
+          <div class="marble" style="margin-top:8px;">
+            <span class="marble-label">Clicks:</span>
+            <span class="marble-val">C1</span>
+            <span class="marble-line">──</span>
+            <span class="marble-val red" style="opacity:0.4">C2❌</span>
+            <span class="marble-line">──</span>
+            <span class="marble-val red" style="opacity:0.4">C3❌</span>
+            <span class="marble-line">──</span>
+            <span class="marble-val green">C4</span>
+          </div>
+          <div class="marble">
+            <span class="marble-label">Output:</span>
+            <span class="marble-val">r1</span>
+            <span class="marble-line">────────────</span>
+            <span class="marble-val green">r4</span>
+          </div>
+          <p style="margin-top:8px;font-size:12px;color:#8b949e;">C2 and C3 ignored while C1's request is in-flight. C4 accepted after C1 completes.</p>
+        </div>
+      </div>
+      <div class="code-block">
+        <pre><span class="kw">import</span> { <span class="fn">exhaustMap</span> } <span class="kw">from</span> <span class="str">'rxjs/operators'</span>;
+
+<span class="cmt">// ── Login button — prevent double submit ─────────────────────</span>
+<span class="fn">fromEvent</span>(<span class="kw">this</span>.<span class="var">loginBtn</span>.nativeElement, <span class="str">'click'</span>).<span class="fn">pipe</span>(
+  <span class="fn">exhaustMap</span>(() => <span class="kw">this</span>.<span class="var">authService</span>.<span class="fn">login</span>(<span class="kw">this</span>.<span class="var">credentials</span>))
+  <span class="cmt">// ↑ user clicks login button 3 times rapidly:</span>
+  <span class="cmt">//   1st click fires the login request</span>
+  <span class="cmt">//   2nd and 3rd clicks are IGNORED while request is in-flight</span>
+  <span class="cmt">//   no duplicate login requests ✅</span>
+).<span class="fn">subscribe</span>(<span class="var">user</span> => <span class="kw">this</span>.<span class="fn">navigateToHome</span>());
+
+<span class="cmt">// ── Form submit button ───────────────────────────────────────</span>
+<span class="kw">this</span>.<span class="var">submitClick$</span>.<span class="fn">pipe</span>(
+  <span class="fn">exhaustMap</span>(() => <span class="kw">this</span>.<span class="var">api</span>.<span class="fn">saveForm</span>(<span class="kw">this</span>.<span class="var">form</span>.value))
+).<span class="fn">subscribe</span>();</pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════ SLIDE 7 — Comparison: 4 mapping operators ══════ -->
+  <div class="slide" id="s7">
+    <div class="slide-header">
+      <span class="topic-badge">07</span>
+      <h1>switchMap vs mergeMap vs concatMap vs exhaustMap</h1>
+    </div>
+    <div class="content">
+      <div class="card accent-purple">
+        <h3>Side-by-side Comparison</h3>
+        <table style="margin-top:10px;">
+          <thead>
+            <tr>
+              <th>Operator</th>
+              <th>Previous request</th>
+              <th>Concurrency</th>
+              <th>Order</th>
+              <th>Best for</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>switchMap</code></td>
+              <td><span class="badge badge-red">❌ Cancelled</span></td>
+              <td>One at a time</td>
+              <td>Only latest</td>
+              <td>Search, route params, dropdowns</td>
+            </tr>
+            <tr>
+              <td><code>mergeMap</code></td>
+              <td><span class="badge badge-green">✅ Kept running</span></td>
+              <td>All parallel</td>
+              <td>Completion order</td>
+              <td>Parallel file uploads, parallel GET requests</td>
+            </tr>
+            <tr>
+              <td><code>concatMap</code></td>
+              <td><span class="badge badge-blue">⏳ Queued</span></td>
+              <td>One at a time</td>
+              <td>Source order</td>
+              <td>Sequential saves, ordered steps, wizard</td>
+            </tr>
+            <tr>
+              <td><code>exhaustMap</code></td>
+              <td><span class="badge badge-yellow">🚫 Ignored</span></td>
+              <td>One at a time</td>
+              <td>First wins</td>
+              <td>Login, submit button, prevent double-click</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card accent-cyan">
+        <h3>Decision Guide — which one to pick?</h3>
+        <div class="code-block" style="margin-top:10px;">
+          <pre><span class="cmt">// Ask yourself: "What should happen if a NEW value arrives while a request is in-flight?"</span>
+<span class="cmt">//</span>
+<span class="cmt">// "Cancel the old request, only care about the latest"</span>
+<span class="cmt">//   → switchMap   (search, route params)</span>
+<span class="cmt">//</span>
+<span class="cmt">// "Keep all requests running at the same time, I don't care about order"</span>
+<span class="cmt">//   → mergeMap    (parallel uploads, independent GETs)</span>
+<span class="cmt">//</span>
+<span class="cmt">// "Queue all requests, process them one by one in order"</span>
+<span class="cmt">//   → concatMap   (step-by-step saves, sequential mutations)</span>
+<span class="cmt">//</span>
+<span class="cmt">// "Ignore new requests until the current one finishes"</span>
+<span class="cmt">//   → exhaustMap  (login button, form submit, prevent double-click)</span></pre>
+        </div>
+      </div>
+      <div class="two-col">
+        <div class="card accent-green">
+          <h3>✅ Use switchMap for GET (read)</h3>
+          <div class="code-block" style="margin-top:8px;">
+            <pre><span class="cmt">// Search — cancel old, use latest</span>
+<span class="var">search$</span>.<span class="fn">pipe</span>(
+  <span class="fn">switchMap</span>(<span class="var">q</span> => <span class="var">api</span>.<span class="fn">search</span>(<span class="var">q</span>))
+)</pre>
+          </div>
+        </div>
+        <div class="card accent-red">
+          <h3>❌ Avoid switchMap for POST (write)</h3>
+          <div class="code-block" style="margin-top:8px;">
+            <pre><span class="cmt">// Submit — use exhaustMap instead!</span>
+<span class="var">submit$</span>.<span class="fn">pipe</span>(
+  <span class="fn">exhaustMap</span>(() => <span class="var">api</span>.<span class="fn">save</span>(<span class="var">data</span>))
+)</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════ SLIDE 8 — combineLatest & forkJoin ══════ -->
+  <div class="slide" id="s8">
+    <div class="slide-header">
+      <span class="topic-badge">08</span>
+      <div>
+        <div class="op-title-bar">
+          <span class="op-name">combineLatest / forkJoin</span>
+          <span class="op-category">Combination</span>
+          <span class="badge badge-purple">Combine Streams</span>
+        </div>
+      </div>
+    </div>
+    <div class="content">
+      <div class="two-col">
+        <div class="card accent-purple">
+          <h3>combineLatest</h3>
+          <ul>
+            <li>Emits whenever <strong>any</strong> source Observable emits</li>
+            <li>Requires <strong>all</strong> sources to have emitted at least once before emitting</li>
+            <li>Always emits the <strong>latest</strong> value from each source</li>
+            <li>Works with <strong>ongoing</strong> streams</li>
+            <li>Use for: <strong>filters + data, form fields combined, live config</strong></li>
+          </ul>
+          <div class="marble" style="margin-top:10px;">
+            <span class="marble-label">A:</span>
+            <span class="marble-val">1</span><span class="marble-line">────</span><span class="marble-val">2</span>
+          </div>
+          <div class="marble">
+            <span class="marble-label">B:</span>
+            <span class="marble-line">──</span><span class="marble-val red">X</span><span class="marble-line">──────</span><span class="marble-val red">Y</span>
+          </div>
+          <div class="marble">
+            <span class="marble-label">Output:</span>
+            <span class="marble-line">────</span><span class="marble-val">[1,X]</span><span class="marble-line">─</span><span class="marble-val">[2,X]</span><span class="marble-line">─</span><span class="marble-val red">[2,Y]</span>
+          </div>
+        </div>
+        <div class="card accent-cyan">
+          <h3>forkJoin</h3>
+          <ul>
+            <li>Waits for <strong>all</strong> Observables to <strong>complete</strong></li>
+            <li>Emits a <strong>single array</strong> of the last values</li>
+            <li>Works only with <strong>finite</strong> Observables (HTTP calls)</li>
+            <li>If any Observable errors, the whole forkJoin errors</li>
+            <li>Use for: <strong>parallel HTTP calls that must all finish first</strong></li>
+          </ul>
+          <div class="marble" style="margin-top:10px;">
+            <span class="marble-label">A (HTTP):</span>
+            <span class="marble-val">─</span><span class="marble-val green">A|</span>
+          </div>
+          <div class="marble">
+            <span class="marble-label">B (HTTP):</span>
+            <span class="marble-line">────</span><span class="marble-val red">B|</span>
+          </div>
+          <div class="marble">
+            <span class="marble-label">Output:</span>
+            <span class="marble-line">────────</span><span class="marble-val purple">[A,B]</span>
+          </div>
+        </div>
+      </div>
+      <div class="code-block">
+        <pre><span class="kw">import</span> { <span class="fn">combineLatest</span>, <span class="fn">forkJoin</span> } <span class="kw">from</span> <span class="str">'rxjs'</span>;
+
+<span class="cmt">// ── combineLatest: filter + paginator + data ─────────────────</span>
+<span class="fn">combineLatest</span>([
+  <span class="kw">this</span>.<span class="var">filterControl</span>.valueChanges,
+  <span class="kw">this</span>.<span class="var">pageControl</span>.valueChanges,
+]).<span class="fn">pipe</span>(
+  <span class="fn">switchMap</span>(([<span class="var">filter</span>, <span class="var">page</span>]) => <span class="kw">this</span>.<span class="var">api</span>.<span class="fn">getUsers</span>({ <span class="var">filter</span>, <span class="var">page</span> }))
+  <span class="cmt">// ↑ re-fetches whenever filter OR page changes</span>
+).<span class="fn">subscribe</span>(<span class="var">users</span> => <span class="kw">this</span>.<span class="var">users</span> = <span class="var">users</span>);
+
+<span class="cmt">// ── forkJoin: load dashboard data (all required) ─────────────</span>
+<span class="fn">forkJoin</span>({
+  <span class="var">users</span>:    <span class="kw">this</span>.<span class="var">api</span>.<span class="fn">getUsers</span>(),
+  <span class="var">products</span>: <span class="kw">this</span>.<span class="var">api</span>.<span class="fn">getProducts</span>(),
+  <span class="var">stats</span>:    <span class="kw">this</span>.<span class="var">api</span>.<span class="fn">getStats</span>(),
+}).<span class="fn">subscribe</span>(({ <span class="var">users</span>, <span class="var">products</span>, <span class="var">stats</span> }) => {
+  <span class="kw">this</span>.<span class="var">users</span>    = <span class="var">users</span>;
+  <span class="kw">this</span>.<span class="var">products</span> = <span class="var">products</span>;
+  <span class="kw">this</span>.<span class="var">stats</span>    = <span class="var">stats</span>;
+  <span class="cmt">// ↑ only runs when ALL three HTTP calls complete</span>
+});</pre>
+      </div>
+      <div class="card accent-red">
+        <h3>combineLatest vs forkJoin</h3>
+        <table style="margin-top:8px;">
+          <thead><tr><th>Feature</th><th>combineLatest</th><th>forkJoin</th></tr></thead>
+          <tbody>
+            <tr><td>Emits</td><td>Every time any source emits</td><td>Only once — when all complete</td></tr>
+            <tr><td>Works with</td><td>Ongoing streams (subjects, controls)</td><td>Finite streams (HTTP calls)</td></tr>
+            <tr><td>If one source never emits</td><td>Never emits</td><td>Never emits</td></tr>
+            <tr><td>Use case</td><td>Reactive filters, live form state</td><td>Dashboard load, parallel API calls</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════ SLIDE 9 — debounceTime & distinctUntilChanged ══════ -->
+  <div class="slide" id="s9">
+    <div class="slide-header">
+      <span class="topic-badge">09</span>
+      <div>
+        <div class="op-title-bar">
+          <span class="op-name">debounceTime / distinctUntilChanged</span>
+          <span class="op-category">Filtering</span>
+          <span class="badge badge-green">Search Pattern ⭐</span>
+        </div>
+      </div>
+    </div>
+    <div class="content">
+      <div class="two-col">
+        <div class="card accent-green">
+          <h3>debounceTime(ms)</h3>
+          <ul>
+            <li>Waits <code>ms</code> milliseconds after the <strong>last emission</strong> before passing the value on</li>
+            <li>Resets the timer on every new emission</li>
+            <li>Use for: <strong>search input, resize events, scroll events</strong></li>
+          </ul>
+          <div class="marble" style="margin-top:10px;">
+            <span class="marble-label">Keystrokes:</span>
+            <span class="marble-val">n</span><span class="marble-val">i</span><span class="marble-val">t</span><span class="marble-val">i</span><span class="marble-val">n</span>
+          </div>
+          <div class="marble">
+            <span class="marble-label">debounce(300):</span>
+            <span class="marble-line">──────────────── 300ms ───</span><span class="marble-val green">nitin</span>
+          </div>
+          <p style="margin-top:6px;font-size:12px;color:#8b949e;">5 keystrokes → 1 emission after user stops typing</p>
+        </div>
+        <div class="card accent-blue">
+          <h3>distinctUntilChanged()</h3>
+          <ul>
+            <li>Skips emission if the value is the <strong>same as the previous</strong> value</li>
+            <li>Prevents redundant operations when value hasn't actually changed</li>
+            <li>Use for: <strong>prevent re-fetching same search term, state changes</strong></li>
+          </ul>
+          <div class="marble" style="margin-top:10px;">
+            <span class="marble-label">Input:</span>
+            <span class="marble-val">A</span><span class="marble-val red">A</span><span class="marble-val">B</span><span class="marble-val red">B</span><span class="marble-val">C</span>
+          </div>
+          <div class="marble">
+            <span class="marble-label">distinct:</span>
+            <span class="marble-val">A</span><span class="marble-line">──</span><span class="marble-val">B</span><span class="marble-line">──</span><span class="marble-val">C</span>
+          </div>
+          <p style="margin-top:6px;font-size:12px;color:#8b949e;">Duplicate consecutive values are dropped</p>
+        </div>
+      </div>
+      <div class="code-block">
+        <pre><span class="kw">import</span> { <span class="fn">debounceTime</span>, <span class="fn">distinctUntilChanged</span>, <span class="fn">switchMap</span> } <span class="kw">from</span> <span class="str">'rxjs/operators'</span>;
+
+<span class="cmt">// ── Complete search pattern ──────────────────────────────────</span>
+<span class="kw">this</span>.<span class="var">searchControl</span>.valueChanges.<span class="fn">pipe</span>(
+
+  <span class="fn">debounceTime</span>(<span class="num">400</span>),
+  <span class="cmt">// ↑ wait 400ms after user stops typing</span>
+
+  <span class="fn">distinctUntilChanged</span>(),
+  <span class="cmt">// ↑ skip if same value (e.g. user types 'a', deletes, types 'a' again)</span>
+
+  <span class="fn">switchMap</span>(<span class="var">term</span> => <span class="kw">this</span>.<span class="var">api</span>.<span class="fn">search</span>(<span class="var">term</span>)),
+  <span class="cmt">// ↑ cancel previous request, only keep latest</span>
+
+).<span class="fn">subscribe</span>(<span class="var">results</span> => <span class="kw">this</span>.<span class="var">results</span> = <span class="var">results</span>);
+
+<span class="cmt">// ── Resize events — don't fire on every pixel ────────────────</span>
+<span class="fn">fromEvent</span>(<span class="var">window</span>, <span class="str">'resize'</span>).<span class="fn">pipe</span>(
+  <span class="fn">debounceTime</span>(<span class="num">200</span>),
+  <span class="fn">map</span>(() => window.innerWidth)
+).<span class="fn">subscribe</span>(<span class="var">width</span> => <span class="kw">this</span>.<span class="fn">onResize</span>(<span class="var">width</span>));</pre>
+      </div>
+      <div class="card accent-yellow">
+        <h3>throttleTime vs debounceTime</h3>
+        <table style="margin-top:8px;">
+          <thead><tr><th></th><th>debounceTime</th><th>throttleTime</th></tr></thead>
+          <tbody>
+            <tr><td>Fires</td><td>After user <strong>stops</strong> for X ms</td><td>At most once per X ms interval</td></tr>
+            <tr><td>Use case</td><td>Search input, API calls on input</td><td>Scroll events, mouse move, analytics</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════ SLIDE 10 — catchError & retry ══════ -->
+  <div class="slide" id="s10">
+    <div class="slide-header">
+      <span class="topic-badge">10</span>
+      <div>
+        <div class="op-title-bar">
+          <span class="op-name">catchError / retry / retryWhen</span>
+          <span class="op-category">Error Handling</span>
+          <span class="badge badge-red">Critical</span>
+        </div>
+      </div>
+    </div>
+    <div class="content">
+      <div class="two-col">
+        <div class="card accent-red">
+          <h3>catchError</h3>
+          <ul>
+            <li>Catches errors and lets you <strong>recover</strong> with a fallback Observable</li>
+            <li>The stream <strong>completes</strong> after the fallback — unless you re-throw</li>
+            <li>Must return an Observable from the handler</li>
+            <li>Use <code>EMPTY</code> to silently complete, <code>of(fallback)</code> for default data</li>
+          </ul>
+        </div>
+        <div class="card accent-orange">
+          <h3>retry / retryWhen</h3>
+          <ul>
+            <li><code>retry(n)</code> — resubscribes to the source Observable up to <code>n</code> times on error</li>
+            <li><code>retryWhen</code> — custom retry logic (e.g. exponential backoff)</li>
+            <li>Place <code>retry</code> <strong>before</strong> <code>catchError</code> so retries happen first</li>
+            <li>Use for: <strong>transient network errors, flaky APIs</strong></li>
+          </ul>
+        </div>
+      </div>
+      <div class="code-block">
+        <pre><span class="kw">import</span> { <span class="fn">catchError</span>, <span class="fn">retry</span> } <span class="kw">from</span> <span class="str">'rxjs/operators'</span>;
+<span class="kw">import</span> { <span class="cls">EMPTY</span>, <span class="fn">of</span>, <span class="fn">throwError</span> } <span class="kw">from</span> <span class="str">'rxjs'</span>;
+
+<span class="cmt">// ── Retry 3 times, then show fallback data ───────────────────</span>
+<span class="kw">this</span>.<span class="var">api</span>.<span class="fn">getUsers</span>().<span class="fn">pipe</span>(
+  <span class="fn">retry</span>(<span class="num">3</span>),
+  <span class="cmt">// ↑ retry up to 3 times before giving up</span>
+  <span class="fn">catchError</span>(<span class="var">err</span> => {
+    console.<span class="fn">error</span>(<span class="str">'API failed after 3 retries:'</span>, <span class="var">err</span>);
+    <span class="kw">return</span> <span class="fn">of</span>([]);   <span class="cmt">// ← return empty array as fallback</span>
+  })
+).<span class="fn">subscribe</span>(<span class="var">users</span> => <span class="kw">this</span>.<span class="var">users</span> = <span class="var">users</span>);
+
+<span class="cmt">// ── Rethrow specific errors, handle others ───────────────────</span>
+<span class="kw">this</span>.<span class="var">api</span>.<span class="fn">getUser</span>(<span class="var">id</span>).<span class="fn">pipe</span>(
+  <span class="fn">catchError</span>(<span class="var">err</span> => {
+    <span class="kw">if</span> (<span class="var">err</span>.status === <span class="num">404</span>) {
+      <span class="kw">return</span> <span class="fn">of</span>(<span class="kw">null</span>);          <span class="cmt">// not found → return null</span>
+    }
+    <span class="kw">if</span> (<span class="var">err</span>.status === <span class="num">401</span>) {
+      <span class="kw">this</span>.<span class="var">router</span>.<span class="fn">navigate</span>([<span class="str">'/login'</span>]);
+      <span class="kw">return</span> <span class="cls">EMPTY</span>;             <span class="cmt">// silently complete</span>
+    }
+    <span class="kw">return</span> <span class="fn">throwError</span>(() => <span class="var">err</span>); <span class="cmt">// rethrow for unknown errors</span>
+  })
+).<span class="fn">subscribe</span>(<span class="var">user</span> => <span class="kw">this</span>.<span class="var">user</span> = <span class="var">user</span>);
+
+<span class="cmt">// ── Exponential backoff with retryWhen ───────────────────────</span>
+<span class="kw">import</span> { <span class="fn">retryWhen</span>, <span class="fn">delayWhen</span>, <span class="fn">scan</span> } <span class="kw">from</span> <span class="str">'rxjs/operators'</span>;
+<span class="kw">import</span> { <span class="fn">timer</span> } <span class="kw">from</span> <span class="str">'rxjs'</span>;
+
+<span class="kw">this</span>.<span class="var">api</span>.<span class="fn">getData</span>().<span class="fn">pipe</span>(
+  <span class="fn">retryWhen</span>(<span class="var">errors$</span> => <span class="var">errors$</span>.<span class="fn">pipe</span>(
+    <span class="fn">scan</span>((<span class="var">count</span>, <span class="var">err</span>) => {
+      <span class="kw">if</span> (<span class="var">count</span> >= <span class="num">3</span>) <span class="kw">throw</span> <span class="var">err</span>;   <span class="cmt">// give up after 3</span>
+      <span class="kw">return</span> <span class="var">count</span> + <span class="num">1</span>;
+    }, <span class="num">0</span>),
+    <span class="fn">delayWhen</span>(<span class="var">count</span> => <span class="fn">timer</span>(<span class="var">count</span> * <span class="num">1000</span>))
+    <span class="cmt">// retry after 1s, 2s, 3s</span>
+  ))
+).<span class="fn">subscribe</span>();</pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════ SLIDE 11 — takeUntil ══════ -->
+  <div class="slide" id="s11">
+    <div class="slide-header">
+      <span class="topic-badge">11</span>
+      <div>
+        <div class="op-title-bar">
+          <span class="op-name">takeUntil / takeUntilDestroyed</span>
+          <span class="op-category">Filtering / Lifecycle</span>
+          <span class="badge badge-purple">Memory Leak Prevention ⭐</span>
+        </div>
+      </div>
+    </div>
+    <div class="content">
+      <div class="two-col">
+        <div class="card accent-purple">
+          <h3>takeUntil</h3>
+          <ul>
+            <li>Completes the source Observable when the <strong>notifier Observable</strong> emits</li>
+            <li>Automatically unsubscribes — no manual cleanup needed</li>
+            <li>Standard pattern: use a <code>Subject</code> as the notifier, emit in <code>ngOnDestroy</code></li>
+            <li>Prevents <strong>memory leaks</strong> from subscriptions outliving the component</li>
+          </ul>
+        </div>
+        <div class="card accent-green">
+          <h3>takeUntilDestroyed (Angular 16+)</h3>
+          <ul>
+            <li>Angular's built-in operator tied to the component's <strong>destroy lifecycle</strong></li>
+            <li>No need for a <code>Subject</code> — Angular handles it automatically</li>
+            <li>Must be called in an <strong>injection context</strong> (constructor or field initializer)</li>
+            <li>Recommended modern approach in Angular 16+</li>
+          </ul>
+        </div>
+      </div>
+      <div class="code-block">
+        <pre><span class="cmt">// ── Pattern 1: takeUntil with Subject (Angular < 16) ────────</span>
+<span class="kw">export class</span> <span class="cls">MyComponent</span> <span class="kw">implements</span> <span class="int">OnInit</span>, <span class="int">OnDestroy</span> {
+  <span class="kw">private</span> <span class="var">destroy$</span> = <span class="kw">new</span> <span class="cls">Subject</span>&lt;<span class="kw">void</span>&gt;();
+
+  <span class="fn">ngOnInit</span>(): <span class="kw">void</span> {
+    <span class="kw">this</span>.<span class="var">api</span>.<span class="fn">getUpdates</span>().<span class="fn">pipe</span>(
+      <span class="fn">takeUntil</span>(<span class="kw">this</span>.<span class="var">destroy$</span>)
+      <span class="cmt">// ↑ auto-completes when destroy$ emits</span>
+    ).<span class="fn">subscribe</span>(<span class="var">data</span> => <span class="kw">this</span>.<span class="var">data</span> = <span class="var">data</span>);
+  }
+
+  <span class="fn">ngOnDestroy</span>(): <span class="kw">void</span> {
+    <span class="kw">this</span>.<span class="var">destroy$</span>.<span class="fn">next</span>();    <span class="cmt">// triggers takeUntil → unsubscribes</span>
+    <span class="kw">this</span>.<span class="var">destroy$</span>.<span class="fn">complete</span>();
+  }
+}
+
+<span class="cmt">// ── Pattern 2: takeUntilDestroyed (Angular 16+) ──────────────</span>
+<span class="kw">import</span> { <span class="fn">takeUntilDestroyed</span> } <span class="kw">from</span> <span class="str">'@angular/core/rxjs-interop'</span>;
+
+<span class="kw">export class</span> <span class="cls">MyComponent</span> {
+  <span class="fn">constructor</span>() {
+    <span class="kw">this</span>.<span class="var">api</span>.<span class="fn">getUpdates</span>().<span class="fn">pipe</span>(
+      <span class="fn">takeUntilDestroyed</span>()
+      <span class="cmt">// ↑ no Subject needed — Angular handles cleanup automatically</span>
+    ).<span class="fn">subscribe</span>(<span class="var">data</span> => <span class="kw">this</span>.<span class="var">data</span> = <span class="var">data</span>);
+  }
+}
+
+<span class="cmt">// ── Without takeUntil — MEMORY LEAK ❌ ───────────────────────</span>
+<span class="cmt">// ngOnInit() {</span>
+<span class="cmt">//   this.api.getUpdates().subscribe(...)  // keeps running after component destroyed!</span>
+<span class="cmt">// }</span></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════ SLIDE 12 — Subject, BehaviorSubject, ReplaySubject ══════ -->
+  <div class="slide" id="s12">
+    <div class="slide-header">
+      <span class="topic-badge">12</span>
+      <div>
+        <div class="op-title-bar">
+          <span class="op-name">Subject / BehaviorSubject / ReplaySubject</span>
+          <span class="op-category">Multicasting</span>
+          <span class="badge badge-orange">Most Asked ⭐</span>
+        </div>
+      </div>
+    </div>
+    <div class="content">
+      <div class="three-col">
+        <div class="card accent-blue">
+          <h3>Subject</h3>
+          <ul>
+            <li>Both an <strong>Observable</strong> and an <strong>Observer</strong></li>
+            <li>New subscribers get values emitted <strong>after</strong> they subscribe</li>
+            <li>No initial value, no replay</li>
+            <li>Use for: <strong>events, user actions, destroy$</strong></li>
+          </ul>
+          <div class="code-block" style="margin-top:10px;">
+            <pre><span class="kw">const</span> <span class="var">s</span> = <span class="kw">new</span> <span class="cls">Subject</span>&lt;<span class="kw">number</span>&gt;();
+<span class="var">s</span>.<span class="fn">next</span>(<span class="num">1</span>);      <span class="cmt">// no subscribers yet</span>
+<span class="var">s</span>.<span class="fn">subscribe</span>(<span class="var">v</span> => console.<span class="fn">log</span>(<span class="var">v</span>));
+<span class="var">s</span>.<span class="fn">next</span>(<span class="num">2</span>);      <span class="cmt">// logs: 2</span>
+<span class="var">s</span>.<span class="fn">next</span>(<span class="num">3</span>);      <span class="cmt">// logs: 3</span>
+<span class="cmt">// 1 was missed ❌</span></pre>
+          </div>
+        </div>
+        <div class="card accent-orange">
+          <h3>BehaviorSubject</h3>
+          <ul>
+            <li>Requires an <strong>initial value</strong></li>
+            <li>New subscribers <strong>immediately get the current value</strong></li>
+            <li>Always has a current value (access via <code>.value</code>)</li>
+            <li>Use for: <strong>state management, user auth status, loading flags</strong></li>
+          </ul>
+          <div class="code-block" style="margin-top:10px;">
+            <pre><span class="kw">const</span> <span class="var">b</span> = <span class="kw">new</span> <span class="cls">BehaviorSubject</span>(<span class="num">0</span>);
+<span class="var">b</span>.<span class="fn">next</span>(<span class="num">1</span>);
+<span class="var">b</span>.<span class="fn">next</span>(<span class="num">2</span>);
+<span class="var">b</span>.<span class="fn">subscribe</span>(<span class="var">v</span> => console.<span class="fn">log</span>(<span class="var">v</span>));
+<span class="cmt">// logs: 2 immediately ✅</span>
+<span class="var">b</span>.<span class="fn">next</span>(<span class="num">3</span>);
+<span class="cmt">// logs: 3</span>
+console.<span class="fn">log</span>(<span class="var">b</span>.value); <span class="cmt">// 3</span></pre>
+          </div>
+        </div>
+        <div class="card accent-purple">
+          <h3>ReplaySubject</h3>
+          <ul>
+            <li>Replays the last <strong>N</strong> values to new subscribers</li>
+            <li>No initial value required</li>
+            <li>Can also set a time window for replayed values</li>
+            <li>Use for: <strong>caching last N events, late subscribers catching up</strong></li>
+          </ul>
+          <div class="code-block" style="margin-top:10px;">
+            <pre><span class="kw">const</span> <span class="var">r</span> = <span class="kw">new</span> <span class="cls">ReplaySubject</span>(<span class="num">2</span>);
+<span class="cmt">// replays last 2 values</span>
+<span class="var">r</span>.<span class="fn">next</span>(<span class="num">1</span>);
+<span class="var">r</span>.<span class="fn">next</span>(<span class="num">2</span>);
+<span class="var">r</span>.<span class="fn">next</span>(<span class="num">3</span>);
+<span class="var">r</span>.<span class="fn">subscribe</span>(<span class="var">v</span> => console.<span class="fn">log</span>(<span class="var">v</span>));
+<span class="cmt">// logs: 2, 3 (last 2) ✅</span></pre>
+          </div>
+        </div>
+      </div>
+      <div class="card accent-cyan">
+        <h3>Real-world usage in Angular services</h3>
+        <div class="code-block" style="margin-top:10px;">
+          <pre><span class="cmt">// ── Auth service with BehaviorSubject ────────────────────────</span>
+<span class="dec">@Injectable</span>({ providedIn: <span class="str">'root'</span> })
+<span class="kw">export class</span> <span class="cls">AuthService</span> {
+  <span class="kw">private</span> <span class="var">currentUser$</span> = <span class="kw">new</span> <span class="cls">BehaviorSubject</span>&lt;<span class="cls">User</span> | <span class="kw">null</span>&gt;(<span class="kw">null</span>);
+  <span class="cmt">// ↑ null = not logged in (initial value)</span>
+
+  <span class="cmt">// expose as Observable (components can't call .next())</span>
+  <span class="var">user$</span> = <span class="kw">this</span>.<span class="var">currentUser$</span>.<span class="fn">asObservable</span>();
+
+  <span class="fn">login</span>(<span class="var">user</span>: <span class="cls">User</span>): <span class="kw">void</span> {
+    <span class="kw">this</span>.<span class="var">currentUser$</span>.<span class="fn">next</span>(<span class="var">user</span>);   <span class="cmt">// push new user</span>
+  }
+  <span class="fn">logout</span>(): <span class="kw">void</span> {
+    <span class="kw">this</span>.<span class="var">currentUser$</span>.<span class="fn">next</span>(<span class="kw">null</span>);   <span class="cmt">// clear user</span>
+  }
+  <span class="fn">getUser</span>(): <span class="cls">User</span> | <span class="kw">null</span> {
+    <span class="kw">return</span> <span class="kw">this</span>.<span class="var">currentUser$</span>.value;  <span class="cmt">// sync access</span>
+  }
+}</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════ SLIDE 13 — Interview Q&A ══════ -->
+  <div class="slide" id="s13">
+    <div class="slide-header">
+      <span class="topic-badge">13</span>
+      <h1>Interview Questions &amp; Answers</h1>
+    </div>
+    <div class="content">
+      <div class="iq-item">
+        <div class="iq-q">Q1. What is the difference between Observable and Promise?</div>
+        <div class="iq-a"><strong>Promise</strong>: eager (executes immediately), single value, not cancellable, no operators.<br>
+        <strong>Observable</strong>: lazy (executes only when subscribed), multiple values over time, cancellable (unsubscribe), composable with operators via <code>pipe()</code>. Observables can represent click streams, WebSocket data, HTTP calls — all with the same API.</div>
+      </div>
+      <div class="iq-item">
+        <div class="iq-q">Q2. What is the difference between switchMap, mergeMap, concatMap and exhaustMap?</div>
+        <div class="iq-a"><strong>switchMap</strong>: cancels the previous inner Observable when a new value arrives — use for search.<br>
+        <strong>mergeMap</strong>: runs all inner Observables in parallel — use for parallel uploads.<br>
+        <strong>concatMap</strong>: queues inner Observables and processes them one by one in order — use for sequential saves.<br>
+        <strong>exhaustMap</strong>: ignores new values while an inner Observable is in-flight — use for login/submit buttons.</div>
+      </div>
+      <div class="iq-item">
+        <div class="iq-q">Q3. What is the difference between Subject, BehaviorSubject and ReplaySubject?</div>
+        <div class="iq-a"><strong>Subject</strong>: no initial value, late subscribers miss past emissions.<br>
+        <strong>BehaviorSubject</strong>: has an initial value, late subscribers immediately get the current value — ideal for state management.<br>
+        <strong>ReplaySubject(n)</strong>: replays the last N emissions to new subscribers — ideal for caching recent events.</div>
+      </div>
+      <div class="iq-item">
+        <div class="iq-q">Q4. What is the difference between combineLatest and forkJoin?</div>
+        <div class="iq-a"><strong>combineLatest</strong>: emits whenever any source emits (after all have emitted at least once) — works with ongoing streams like form controls.<br>
+        <strong>forkJoin</strong>: waits for ALL sources to complete, then emits one combined result — works only with finite streams like HTTP calls.</div>
+      </div>
+      <div class="iq-item">
+        <div class="iq-q">Q5. How do you prevent memory leaks from subscriptions in Angular?</div>
+        <div class="iq-a">Three approaches:<br>
+        1. <strong>takeUntil</strong> pattern: use a <code>Subject destroy$</code>, call <code>destroy$.next()</code> in <code>ngOnDestroy</code>.<br>
+        2. <strong>takeUntilDestroyed()</strong> (Angular 16+): modern built-in operator — no manual Subject needed.<br>
+        3. <strong>async pipe</strong>: Angular automatically unsubscribes when the component is destroyed. Best for template-only subscriptions.</div>
+      </div>
+      <div class="iq-item">
+        <div class="iq-q">Q6. What does tap() do and when would you use it?</div>
+        <div class="iq-a"><code>tap()</code> performs side effects without modifying the stream. The value passes through unchanged. Use it for: logging/debugging during development, triggering analytics events, showing loading spinners, and setting flags — without breaking the data pipeline.</div>
+      </div>
+      <div class="iq-item">
+        <div class="iq-q">Q7. When would you NOT use switchMap?</div>
+        <div class="iq-a">Never use <code>switchMap</code> for <strong>write operations</strong> (POST, PUT, DELETE). If the user clicks "Save" twice, the first HTTP request gets cancelled — the data may never be saved. Use <code>exhaustMap</code> (ignore extra clicks) or <code>concatMap</code> (process all clicks in order) instead.</div>
+      </div>
+      <div class="iq-item">
+        <div class="iq-q">Q8. What is the difference between debounceTime and throttleTime?</div>
+        <div class="iq-a"><strong>debounceTime(ms)</strong>: waits until no new values arrive for <code>ms</code> milliseconds, then emits the last value. Ideal for search inputs — waits for the user to stop typing.<br>
+        <strong>throttleTime(ms)</strong>: emits the first value, then ignores all values for <code>ms</code> milliseconds. Ideal for scroll/resize events — fires at a controlled rate regardless of how often the source emits.</div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- #deck -->
+
+<div id="nav">
+  <button id="prevBtn" onclick="navigate(-1)" disabled>&#8592;</button>
+  <span id="counter">1 / 14</span>
+  <button id="nextBtn" onclick="navigate(1)">&#8594;</button>
+</div>
+<div id="hint">← → arrow keys to navigate</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  let current = 0;
+
+  function navigate(dir) {
+    slides[current].classList.remove('active');
+    current = Math.max(0, Math.min(slides.length - 1, current + dir));
+    slides[current].classList.add('active');
+    document.getElementById('counter').textContent = (current + 1) + ' / ' + slides.length;
+    document.getElementById('prevBtn').disabled = current === 0;
+    document.getElementById('nextBtn').disabled = current === slides.length - 1;
+    document.getElementById('progress-bar').style.width = ((current / (slides.length - 1)) * 100) + '%';
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') navigate(1);
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   navigate(-1);
+  });
+
+  navigate(0);
+</script>
+</body>
+</html>
