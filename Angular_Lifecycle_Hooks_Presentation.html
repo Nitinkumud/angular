@@ -515,6 +515,158 @@
   <span class="cmt">// Parent must do: this.config = { ...this.config, key: val }  (new reference)</span>
 }</pre>
       </div>
+
+      <!-- ── Change Detection: Primitive vs Reference vs Mutation ── -->
+      <div class="card accent-yellow">
+        <h3>Primitive vs Reference vs Mutation — What ngOnChanges Detects</h3>
+        <table style="margin-top:10px;">
+          <thead>
+            <tr>
+              <th>Change Type</th>
+              <th>Example (Parent)</th>
+              <th>ngOnChanges fires?</th>
+              <th>Why?</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="badge badge-green">Primitive</span></td>
+              <td><code>this.count = 10</code></td>
+              <td><span class="badge badge-green">✅ Yes</span></td>
+              <td>New value in memory — old <code>!==</code> new</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-blue">New object ref</span></td>
+              <td><code>this.user = { ...this.user, name: 'Nitin' }</code></td>
+              <td><span class="badge badge-green">✅ Yes</span></td>
+              <td>New reference — old pointer <code>!==</code> new pointer</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-red">Mutate object</span></td>
+              <td><code>this.user.name = 'Rahul'</code></td>
+              <td><span class="badge badge-red">❌ No</span></td>
+              <td>Same reference — Angular sees no difference</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-red">Mutate array</span></td>
+              <td><code>this.items.push('new item')</code></td>
+              <td><span class="badge badge-red">❌ No</span></td>
+              <td>Same reference — Angular sees no difference</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card accent-purple">
+        <h3>Fix for Mutations — Always Create a New Reference</h3>
+        <div class="code-block" style="margin-top:10px;">
+          <pre><span class="cmt">// ❌ Mutation — ngOnChanges will NOT fire in child</span>
+<span class="kw">this</span>.<span class="var">user</span>.name = <span class="str">'Rahul'</span>;
+<span class="kw">this</span>.<span class="var">items</span>.<span class="fn">push</span>(<span class="str">'new item'</span>);
+
+<span class="cmt">// ✅ New reference — ngOnChanges WILL fire in child</span>
+<span class="kw">this</span>.<span class="var">user</span>  = { ...<span class="kw">this</span>.<span class="var">user</span>, name: <span class="str">'Rahul'</span> };
+<span class="kw">this</span>.<span class="var">items</span> = [...<span class="kw">this</span>.<span class="var">items</span>, <span class="str">'new item'</span>];</pre>
+        </div>
+        <p style="margin-top:10px;">This immutability pattern is also why <strong>OnPush</strong> change detection works well with <code>ngOnChanges</code>.</p>
+      </div>
+
+      <!-- ── Debounce in ngOnChanges ── -->
+      <div class="card accent-cyan">
+        <h3>Why Debounce? — Avoid Heavy API Calls on Every Change</h3>
+        <p style="margin-bottom:10px;">
+          <code>ngOnChanges</code> fires on <strong>every</strong> <code>@Input()</code> change. If the parent updates rapidly
+          (e.g., user typing in a search box), you'd fire an API call on every keystroke without debouncing.
+        </p>
+        <div class="two-col" style="margin-bottom:10px;">
+          <div class="card accent-red">
+            <h3>❌ Without Debounce</h3>
+            <div class="code-block" style="margin-top:8px;">
+              <pre><span class="fn">ngOnChanges</span>(<span class="var">changes</span>: <span class="cls">SimpleChanges</span>) {
+  <span class="kw">if</span> (<span class="var">changes</span>[<span class="str">'searchTerm'</span>]) {
+    <span class="kw">this</span>.<span class="var">api</span>.<span class="fn">search</span>(
+      <span class="var">changes</span>[<span class="str">'searchTerm'</span>].currentValue
+    ).<span class="fn">subscribe</span>(...);
+    <span class="cmt">// user types "nitin" → 5 API calls!</span>
+    <span class="cmt">// 'n', 'ni', 'nit', 'niti', 'nitin'</span>
+  }
+}</pre>
+            </div>
+          </div>
+          <div class="card accent-green">
+            <h3>✅ With Debounce</h3>
+            <div class="code-block" style="margin-top:8px;">
+              <pre><span class="fn">ngOnChanges</span>(<span class="var">changes</span>: <span class="cls">SimpleChanges</span>) {
+  <span class="kw">if</span> (<span class="var">changes</span>[<span class="str">'searchTerm'</span>]) {
+    <span class="kw">this</span>.<span class="var">search$</span>.<span class="fn">next</span>(
+      <span class="var">changes</span>[<span class="str">'searchTerm'</span>].currentValue
+    );
+    <span class="cmt">// just push to Subject — let RxJS handle it</span>
+    <span class="cmt">// user types "nitin" → only 1 API call!</span>
+  }
+}</pre>
+            </div>
+          </div>
+        </div>
+        <div class="code-block">
+          <pre><span class="kw">import</span> { Subject } <span class="kw">from</span> <span class="str">'rxjs'</span>;
+<span class="kw">import</span> { debounceTime, distinctUntilChanged, switchMap, takeUntil } <span class="kw">from</span> <span class="str">'rxjs/operators'</span>;
+
+<span class="kw">export class</span> <span class="cls">SearchComponent</span> <span class="kw">implements</span> <span class="int">OnChanges</span>, <span class="int">OnInit</span>, <span class="int">OnDestroy</span> {
+  <span class="dec">@Input</span>() <span class="var">searchTerm</span>: <span class="kw">string</span>;
+
+  <span class="kw">private</span> <span class="var">search$</span> = <span class="kw">new</span> <span class="fn">Subject</span>&lt;<span class="kw">string</span>&gt;();
+  <span class="kw">private</span> <span class="var">destroy$</span> = <span class="kw">new</span> <span class="fn">Subject</span>&lt;<span class="kw">void</span>&gt;();
+
+  <span class="fn">ngOnInit</span>(): <span class="kw">void</span> {
+    <span class="kw">this</span>.<span class="var">search$</span>.<span class="fn">pipe</span>(
+      <span class="fn">debounceTime</span>(<span class="num">400</span>),          <span class="cmt">// wait 400ms after last change</span>
+      <span class="fn">distinctUntilChanged</span>(),     <span class="cmt">// skip if same value as before</span>
+      <span class="fn">switchMap</span>(<span class="var">term</span> =&gt; <span class="kw">this</span>.<span class="var">api</span>.<span class="fn">search</span>(<span class="var">term</span>)),  <span class="cmt">// cancel previous request</span>
+      <span class="fn">takeUntil</span>(<span class="kw">this</span>.<span class="var">destroy$</span>)
+    ).<span class="fn">subscribe</span>(<span class="var">results</span> =&gt; <span class="kw">this</span>.<span class="var">results</span> = <span class="var">results</span>);
+  }
+
+  <span class="fn">ngOnChanges</span>(<span class="var">changes</span>: <span class="cls">SimpleChanges</span>): <span class="kw">void</span> {
+    <span class="kw">if</span> (<span class="var">changes</span>[<span class="str">'searchTerm'</span>]) {
+      <span class="kw">this</span>.<span class="var">search$</span>.<span class="fn">next</span>(<span class="var">changes</span>[<span class="str">'searchTerm'</span>].currentValue);
+    }
+  }
+
+  <span class="fn">ngOnDestroy</span>(): <span class="kw">void</span> {
+    <span class="kw">this</span>.<span class="var">destroy$</span>.<span class="fn">next</span>();
+    <span class="kw">this</span>.<span class="var">destroy$</span>.<span class="fn">complete</span>();
+  }
+}</pre>
+        </div>
+        <table style="margin-top:12px;">
+          <thead>
+            <tr>
+              <th>Operator</th>
+              <th>Purpose</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>debounceTime(400)</code></td>
+              <td>Waits 400ms after the last emission before passing it on</td>
+            </tr>
+            <tr>
+              <td><code>distinctUntilChanged()</code></td>
+              <td>Skips emission if value hasn't actually changed</td>
+            </tr>
+            <tr>
+              <td><code>switchMap()</code></td>
+              <td>Cancels the previous in-flight HTTP request if a new one arrives</td>
+            </tr>
+            <tr>
+              <td><code>takeUntil(destroy$)</code></td>
+              <td>Auto-unsubscribes on component destruction — prevents memory leaks</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
     </div>
   </div>
 
@@ -609,12 +761,86 @@
           </ul>
         </div>
       </div>
-      <div class="code-block">
-        <pre><span class="kw">import</span> { DoCheck, KeyValueDiffer, KeyValueDiffers } <span class="kw">from</span> <span class="str">'@angular/core'</span>;
+      <!-- Simple Example -->
+      <div class="card accent-green" style="margin-bottom:4px;">
+        <h3>Simple Example — Manual Dirty Check (no differ needed)</h3>
+        <p style="margin-bottom:10px;">Track a mutated <code>@Input()</code> object by saving a snapshot and comparing on each cycle.</p>
+        <div class="code-block">
+          <pre><span class="cmt">// Parent mutates the object — ngOnChanges will NOT fire:</span>
+<span class="cmt">// this.user.name = 'Rahul';  ← same reference</span>
+
+<span class="dec">@Component</span>({ selector: <span class="str">'app-user-card'</span>, template: <span class="str">'&lt;p&gt;{{ user.name }}&lt;/p&gt;'</span> })
+<span class="kw">export class</span> <span class="cls">UserCardComponent</span> <span class="kw">implements</span> <span class="int">DoCheck</span> {
+  <span class="dec">@Input</span>() <span class="var">user</span>: { name: <span class="kw">string</span>; age: <span class="kw">number</span> };
+
+  <span class="kw">private</span> <span class="var">previousName</span>: <span class="kw">string</span>;   <span class="cmt">// snapshot of last known value</span>
+
+  <span class="fn">ngDoCheck</span>(): <span class="kw">void</span> {
+    <span class="cmt">// runs every change detection cycle — compare manually</span>
+    <span class="kw">if</span> (<span class="kw">this</span>.<span class="var">user</span>.name !== <span class="kw">this</span>.<span class="var">previousName</span>) {
+      console.<span class="fn">log</span>(<span class="str">'Name changed!'</span>, <span class="kw">this</span>.<span class="var">previousName</span>, <span class="str">'→'</span>, <span class="kw">this</span>.<span class="var">user</span>.name);
+      <span class="kw">this</span>.<span class="var">previousName</span> = <span class="kw">this</span>.<span class="var">user</span>.name;  <span class="cmt">// update snapshot</span>
+    }
+  }
+}</pre>
+        </div>
+        <p style="margin-top:8px;"><strong>How it works:</strong> Every CD cycle Angular calls <code>ngDoCheck()</code>. We compare the current value against our saved snapshot — if different, we react and update the snapshot.</p>
+      </div>
+
+      <!-- Advanced Example -->
+      <div class="card accent-orange">
+        <h3>Advanced Example — KeyValueDiffer (Angular built-in)</h3>
+        <p style="margin-bottom:10px;">Use Angular's <code>KeyValueDiffer</code> to automatically detect <em>which properties</em> changed in an object — Angular's own <code>NgClass</code> and <code>NgStyle</code> use this internally.</p>
+
+        <!-- How it works conceptually -->
+        <div class="card accent-yellow" style="margin-bottom:12px;">
+          <h3>How KeyValueDiffer works — "Before/After Photo" system</h3>
+          <div class="code-block" style="margin-top:8px;">
+            <pre><span class="cmt">// Cycle 1: differ takes a snapshot  → { name: 'Nitin', age: 30 }</span>
+<span class="cmt">// Cycle 2: parent mutates           → user.name = 'Rahul'</span>
+<span class="cmt">// Cycle 3: differ.diff(user) compares current vs snapshot</span>
+<span class="cmt">//          → returns changes: name changed 'Nitin' → 'Rahul'</span>
+<span class="cmt">//          → internally updates its own snapshot for next cycle</span></pre>
+          </div>
+        </div>
+
+        <!-- Step by step breakdown -->
+        <div class="card accent-blue" style="margin-bottom:12px;">
+          <h3>Step-by-step breakdown</h3>
+          <div class="code-block" style="margin-top:8px;">
+            <pre><span class="cmt">// STEP 1 — Inject the factory (KeyValueDiffers is a service Angular provides)</span>
+<span class="fn">constructor</span>(<span class="kw">private</span> <span class="var">differs</span>: <span class="cls">KeyValueDiffers</span>) {}
+
+<span class="cmt">// STEP 2 — Create a differ for your specific object in ngOnInit</span>
+<span class="cmt">//   differs.find(obj)  → finds the right differ strategy for this object type</span>
+<span class="cmt">//   .create()          → creates an instance that will "watch" this object</span>
+<span class="kw">this</span>.<span class="var">differ</span> = <span class="kw">this</span>.<span class="var">differs</span>.<span class="fn">find</span>(<span class="kw">this</span>.<span class="var">user</span>).<span class="fn">create</span>();
+
+<span class="cmt">// STEP 3 — Call .diff() on every cycle inside ngDoCheck</span>
+<span class="cmt">//   returns null         → nothing changed</span>
+<span class="cmt">//   returns ChangeRecord → something changed, here's what</span>
+<span class="kw">const</span> <span class="var">changes</span> = <span class="kw">this</span>.<span class="var">differ</span>.<span class="fn">diff</span>(<span class="kw">this</span>.<span class="var">user</span>);
+
+<span class="cmt">// STEP 4 — Iterate over what changed</span>
+<span class="kw">if</span> (<span class="var">changes</span>) {
+  <span class="var">changes</span>.<span class="fn">forEachChangedItem</span>(item => {
+    console.<span class="fn">log</span>(item.key);            <span class="cmt">// 'name'</span>
+    console.<span class="fn">log</span>(item.previousValue);  <span class="cmt">// 'Nitin'</span>
+    console.<span class="fn">log</span>(item.currentValue);   <span class="cmt">// 'Rahul'</span>
+  });
+  <span class="var">changes</span>.<span class="fn">forEachAddedItem</span>(item   => { <span class="cmt">/* new property added   */</span> });
+  <span class="var">changes</span>.<span class="fn">forEachRemovedItem</span>(item => { <span class="cmt">/* property deleted     */</span> });
+}</pre>
+          </div>
+        </div>
+
+        <!-- Full code -->
+        <div class="code-block">
+          <pre><span class="kw">import</span> { DoCheck, KeyValueDiffer, KeyValueDiffers } <span class="kw">from</span> <span class="str">'@angular/core'</span>;
 
 <span class="dec">@Component</span>({ selector: <span class="str">'app-tracker'</span>, template: <span class="str">'...'</span> })
 <span class="kw">export class</span> <span class="cls">TrackerComponent</span> <span class="kw">implements</span> <span class="int">DoCheck</span> {
-  <span class="dec">@Input</span>() <span class="var">user</span>: { name: <span class="kw">string</span>; age: <span class="kw">number</span> };  <span class="cmt">// mutable object</span>
+  <span class="dec">@Input</span>() <span class="var">user</span>: { name: <span class="kw">string</span>; age: <span class="kw">number</span> };
   <span class="kw">private</span> <span class="var">differ</span>: <span class="cls">KeyValueDiffer</span>&lt;<span class="kw">string</span>, <span class="kw">any</span>&gt;;
 
   <span class="fn">constructor</span>(<span class="kw">private</span> <span class="var">differs</span>: <span class="cls">KeyValueDiffers</span>) {}
@@ -629,12 +855,56 @@
       <span class="var">changes</span>.<span class="fn">forEachChangedItem</span>(item =>
         console.<span class="fn">log</span>(<span class="str">'Changed:'</span>, item.key, item.previousValue, <span class="str">'→'</span>, item.currentValue)
       );
+      <span class="cmt">// e.g. Changed: name Nitin → Rahul</span>
     }
   }
-
-  <span class="cmt">// ✅ Better approach: use immutable updates + ngOnChanges instead</span>
-  <span class="cmt">// this.user = { ...this.user, age: 31 }  ← triggers ngOnChanges</span>
 }</pre>
+        </div>
+
+        <!-- KeyValueDiffer vs IterableDiffer -->
+        <table style="margin-top:12px;">
+          <thead>
+            <tr><th>Differ</th><th>Used for</th><th>Example</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>KeyValueDiffer</code></td>
+              <td>Objects (key-value pairs)</td>
+              <td><code>{ name: 'Nitin', age: 30 }</code></td>
+            </tr>
+            <tr>
+              <td><code>IterableDiffer</code></td>
+              <td>Arrays / iterables</td>
+              <td><code>['a', 'b', 'c']</code></td>
+            </tr>
+          </tbody>
+        </table>
+        <p style="margin-top:10px;">💡 Angular's own <code>NgClass</code> and <code>NgStyle</code> use <code>KeyValueDiffer</code> internally — that's how they react to object mutations in templates.</p>
+        <p style="margin-top:6px;">⚠️ <strong>Why not <code>JSON.stringify</code> comparison?</strong> It's slow for large objects, doesn't tell you <em>which</em> property changed, and <code>KeyValueDiffer</code> is Angular's optimized alternative.</p>
+      </div>
+
+      <!-- When to use what -->
+      <div class="card accent-red">
+        <h3>⚠️ When to use ngDoCheck vs ngOnChanges</h3>
+        <table style="margin-top:8px;">
+          <thead>
+            <tr><th>Scenario</th><th>Use</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Parent passes a <strong>new object/primitive</strong> (immutable update)</td>
+              <td><code>ngOnChanges</code> ✅ preferred</td>
+            </tr>
+            <tr>
+              <td>Parent <strong>mutates</strong> an existing object/array (same ref)</td>
+              <td><code>ngDoCheck</code> with manual check or Differ</td>
+            </tr>
+            <tr>
+              <td>Best practice</td>
+              <td>Use <strong>immutable patterns</strong> so <code>ngOnChanges</code> works — avoid <code>ngDoCheck</code> if possible</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
   </div>
@@ -652,49 +922,242 @@
       </div>
     </div>
     <div class="content">
+
+      <!-- When it runs + key facts -->
       <div class="two-col">
         <div class="card accent-purple">
           <h3>When It Runs</h3>
           <ul>
             <li>Called <strong>once</strong> after Angular projects external content via <code>&lt;ng-content&gt;</code></li>
-            <li>@ContentChild / @ContentChildren are populated here</li>
-            <li>Child component's <code>ngOnInit</code> runs BEFORE parent's <code>ngAfterContentInit</code></li>
+            <li><code>@ContentChild</code> / <code>@ContentChildren</code> are populated <strong>by this point</strong></li>
+            <li>Child's <code>ngOnInit</code> runs <strong>before</strong> parent's <code>ngAfterContentInit</code></li>
+            <li>Safe to read / interact with projected content here</li>
           </ul>
         </div>
         <div class="card accent-blue">
-          <h3>Content Projection vs View</h3>
+          <h3>Real-World Use Cases</h3>
           <ul>
-            <li><strong>Content</strong> = what parent passes inside the component's tag (<code>&lt;ng-content&gt;</code>)</li>
-            <li><strong>View</strong> = what the component defines in its own template</li>
-            <li>Use <code>@ContentChild</code> to query projected content</li>
+            <li>Activate the first tab / accordion panel by default</li>
+            <li>Read how many items were projected and configure layout</li>
+            <li>Subscribe to <code>QueryList.changes</code> to react to dynamic additions</li>
+            <li>Build reusable container components (card, modal, tab-group)</li>
           </ul>
         </div>
       </div>
-      <div class="code-block">
-        <pre><span class="kw">import</span> { AfterContentInit, ContentChild, ContentChildren, QueryList } <span class="kw">from</span> <span class="str">'@angular/core'</span>;
 
-<span class="cmt">// Parent template:</span>
-<span class="cmt">// &lt;app-tab-group&gt;</span>
-<span class="cmt">//   &lt;app-tab label="Home"&gt;...&lt;/app-tab&gt;    ← projected content</span>
-<span class="cmt">// &lt;/app-tab-group&gt;</span>
+      <!-- Content Projection explained -->
+      <div class="card accent-yellow">
+        <h3>What is Content Projection? (<code>ng-content</code>)</h3>
+        <p style="margin-bottom:10px;">
+          Content projection lets a <strong>parent pass HTML/components inside a child's tag</strong>.
+          The child uses <code>&lt;ng-content&gt;</code> as a slot to render whatever the parent placed there.
+        </p>
+        <div class="two-col">
+          <div>
+            <p style="margin-bottom:6px;"><strong>Without projection</strong> — child controls all its own content:</p>
+            <div class="code-block">
+              <pre><span class="cmt">&lt;!-- Child template (card.component.html) --&gt;</span>
+&lt;<span class="var">div</span> class=<span class="str">"card"</span>&gt;
+  &lt;<span class="var">p</span>&gt;I am hardcoded inside child&lt;/<span class="var">p</span>&gt;
+&lt;/<span class="var">div</span>&gt;
 
-<span class="dec">@Component</span>({ selector: <span class="str">'app-tab-group'</span>, template: <span class="str">'&lt;ng-content&gt;&lt;/ng-content&gt;'</span> })
-<span class="kw">export class</span> <span class="cls">TabGroupComponent</span> <span class="kw">implements</span> <span class="int">AfterContentInit</span> {
-  <span class="dec">@ContentChildren</span>(<span class="cls">TabComponent</span>) <span class="var">tabs</span>: <span class="cls">QueryList</span>&lt;<span class="cls">TabComponent</span>&gt;;
+<span class="cmt">&lt;!-- Parent can't change what's inside ❌ --&gt;</span>
+&lt;<span class="var">app-card</span>&gt;&lt;/<span class="var">app-card</span>&gt;</pre>
+            </div>
+          </div>
+          <div>
+            <p style="margin-bottom:6px;"><strong>With projection</strong> — parent controls the content:</p>
+            <div class="code-block">
+              <pre><span class="cmt">&lt;!-- Child template (card.component.html) --&gt;</span>
+&lt;<span class="var">div</span> class=<span class="str">"card"</span>&gt;
+  &lt;<span class="var">ng-content</span>&gt;&lt;/<span class="var">ng-content</span>&gt;  <span class="cmt">&lt;!-- slot --&gt;</span>
+&lt;/<span class="var">div</span>&gt;
 
-  <span class="fn">ngAfterContentInit</span>(): <span class="kw">void</span> {
-    <span class="cmt">// ✅ tabs QueryList is populated here</span>
-    console.<span class="fn">log</span>(<span class="str">'Tabs count:'</span>, <span class="kw">this</span>.<span class="var">tabs</span>.length);
+<span class="cmt">&lt;!-- Parent passes content into the slot ✅ --&gt;</span>
+&lt;<span class="var">app-card</span>&gt;
+  &lt;<span class="var">h2</span>&gt;Hello Nitin&lt;/<span class="var">h2</span>&gt;   <span class="cmt">&lt;!-- projected --&gt;</span>
+&lt;/<span class="var">app-card</span>&gt;</pre>
+            </div>
+          </div>
+        </div>
+        <p style="margin-top:10px;">
+          <strong>Content</strong> = what the <em>parent passes inside</em> the child's tag (rendered via <code>&lt;ng-content&gt;</code>)<br>
+          <strong>View</strong> = what the child defines in <em>its own template</em> (rendered normally)
+        </p>
+      </div>
 
-    <span class="cmt">// Activate first tab by default</span>
-    <span class="kw">const</span> <span class="var">firstTab</span> = <span class="kw">this</span>.<span class="var">tabs</span>.<span class="fn">first</span>();
-    <span class="kw">if</span> (<span class="var">firstTab</span>) <span class="var">firstTab</span>.active = <span class="kw">true</span>;
+      <!-- @ContentChild vs @ViewChild -->
+      <div class="card accent-cyan">
+        <h3><code>@ContentChild</code> vs <code>@ViewChild</code></h3>
+        <table style="margin-top:8px;">
+          <thead>
+            <tr><th>Decorator</th><th>Queries</th><th>Available in</th><th>Example</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>@ContentChild</code></td>
+              <td>Projected content (<code>&lt;ng-content&gt;</code>)</td>
+              <td><code>ngAfterContentInit</code> ✅</td>
+              <td>Child passed by parent inside tags</td>
+            </tr>
+            <tr>
+              <td><code>@ViewChild</code></td>
+              <td>Component's own template</td>
+              <td><code>ngAfterViewInit</code> ✅</td>
+              <td>Elements defined in component's own HTML</td>
+            </tr>
+          </tbody>
+        </table>
+        <p style="margin-top:8px;">⚠️ Accessing <code>@ContentChild</code> in <code>ngOnInit</code> returns <code>undefined</code> — the projected content is not ready yet at that point.</p>
+      </div>
 
-    <span class="cmt">// Listen for dynamic tab additions</span>
-    <span class="kw">this</span>.<span class="var">tabs</span>.changes.<span class="fn">subscribe</span>(() => <span class="kw">this</span>.<span class="fn">updateTabs</span>());
+      <!-- Working example -->
+      <div class="card accent-green">
+        <h3>Simple Example — just two components: Child &amp; Parent</h3>
+        <p style="margin-bottom:12px;">
+          <strong>Child</strong> = the component being projected (has <code>@Input() message</code>)<br>
+          <strong>Parent</strong> = the container that uses <code>&lt;ng-content&gt;</code> and reads the child via <code>ngAfterContentInit</code>
+        </p>
+
+        <!-- ChildComponent -->
+        <div class="card accent-blue" style="margin-bottom:10px;">
+          <h3>ChildComponent — the projected component</h3>
+          <div class="two-col">
+            <div>
+              <p style="margin-bottom:4px;font-size:12px;color:#8b949e;">child.component.ts</p>
+              <div class="code-block">
+                <pre><span class="dec">@Component</span>({
+  selector: <span class="str">'app-child'</span>,
+  template: <span class="str">'&lt;p&gt;{{ message }}&lt;/p&gt;'</span>
+})
+<span class="kw">export class</span> <span class="cls">ChildComponent</span> {
+  <span class="dec">@Input</span>() <span class="var">message</span>: <span class="kw">string</span> = <span class="str">''</span>;
+  <span class="cmt">// Parent will pass: message="Hello!"</span>
+}</pre>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;">
+              <div class="card accent-yellow" style="width:100%">
+                <h3>What this renders</h3>
+                <p>When parent passes <code>message="Hello!"</code>, the child simply renders:</p>
+                <div class="code-block" style="margin-top:8px;">
+                  <pre>&lt;<span class="var">p</span>&gt;Hello!&lt;/<span class="var">p</span>&gt;</pre>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ParentComponent -->
+        <div class="card accent-purple" style="margin-bottom:10px;">
+          <h3>ParentComponent — uses <code>ng-content</code> + <code>ngAfterContentInit</code></h3>
+          <p style="margin-bottom:8px;">
+            The parent's template has a <code>&lt;ng-content&gt;</code> slot. Whatever is placed <em>between</em>
+            <code>&lt;app-parent&gt;...&lt;/app-parent&gt;</code> tags gets rendered in that slot.
+            <code>@ContentChild</code> gives the TypeScript instance of the projected child.
+          </p>
+          <div class="two-col">
+            <div>
+              <p style="margin-bottom:4px;font-size:12px;color:#8b949e;">parent.component.ts</p>
+              <div class="code-block">
+                <pre><span class="kw">import</span> { AfterContentInit, ContentChild }
+  <span class="kw">from</span> <span class="str">'@angular/core'</span>;
+
+<span class="dec">@Component</span>({
+  selector: <span class="str">'app-parent'</span>,
+  templateUrl: <span class="str">'parent.component.html'</span>
+})
+<span class="kw">export class</span> <span class="cls">ParentComponent</span>
+  <span class="kw">implements</span> <span class="int">AfterContentInit</span> {
+
+  <span class="dec">@ContentChild</span>(<span class="cls">ChildComponent</span>)
+  <span class="var">child</span>: <span class="cls">ChildComponent</span>;
+  <span class="cmt">// ↑ holds reference to projected child</span>
+
+  <span class="fn">ngOnInit</span>() {
+    <span class="cmt">// ❌ child is undefined here!</span>
+    <span class="cmt">// Angular hasn't projected yet</span>
+    console.<span class="fn">log</span>(<span class="kw">this</span>.<span class="var">child</span>); <span class="cmt">// undefined</span>
+  }
+
+  <span class="fn">ngAfterContentInit</span>() {
+    <span class="cmt">// ✅ child is ready now!</span>
+    <span class="cmt">// Projection is complete</span>
+    console.<span class="fn">log</span>(<span class="kw">this</span>.<span class="var">child</span>.message);
+    <span class="cmt">// → "Hello!"</span>
   }
 }</pre>
+              </div>
+            </div>
+            <div>
+              <p style="margin-bottom:4px;font-size:12px;color:#8b949e;">parent.component.html</p>
+              <div class="code-block">
+                <pre>&lt;<span class="var">div</span> class=<span class="str">"parent-box"</span>&gt;
+
+  &lt;<span class="var">h3</span>&gt;I am the Parent&lt;/<span class="var">h3</span>&gt;
+
+  <span class="cmt">&lt;!-- This slot will hold whatever  --&gt;</span>
+  <span class="cmt">&lt;!-- the user puts inside app-parent --&gt;</span>
+  &lt;<span class="var">ng-content</span>&gt;&lt;/<span class="var">ng-content</span>&gt;
+
+&lt;/<span class="var">div</span>&gt;</pre>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- How parent is used (app.component.html) -->
+        <div class="card accent-orange" style="margin-bottom:10px;">
+          <h3>How it is used — app.component.html</h3>
+          <p style="margin-bottom:8px;">The app puts <code>&lt;app-child&gt;</code> <strong>inside</strong> <code>&lt;app-parent&gt;</code> tags. This is the "projected content".</p>
+          <div class="two-col">
+            <div>
+              <p style="margin-bottom:4px;font-size:12px;color:#8b949e;">app.component.html</p>
+              <div class="code-block">
+                <pre>&lt;<span class="var">app-parent</span>&gt;
+
+  <span class="cmt">&lt;!-- app-child is placed INSIDE   --&gt;</span>
+  <span class="cmt">&lt;!-- app-parent tags → projected  --&gt;</span>
+  &lt;<span class="var">app-child</span>
+    message=<span class="str">"Hello!"</span>&gt;
+  &lt;/<span class="var">app-child</span>&gt;
+
+&lt;/<span class="var">app-parent</span>&gt;</pre>
+              </div>
+            </div>
+            <div>
+              <p style="margin-bottom:4px;font-size:12px;color:#8b949e;">What renders in browser</p>
+              <div class="code-block">
+                <pre>&lt;<span class="var">div</span> class=<span class="str">"parent-box"</span>&gt;
+  &lt;<span class="var">h3</span>&gt;I am the Parent&lt;/<span class="var">h3</span>&gt;
+
+  <span class="cmt">&lt;!-- ng-content replaced by: --&gt;</span>
+  &lt;<span class="var">p</span>&gt;Hello!&lt;/<span class="var">p</span>&gt;
+
+&lt;/<span class="var">div</span>&gt;</pre>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Lifecycle order -->
+        <div class="card accent-red">
+          <h3>Lifecycle order — why <code>ngAfterContentInit</code> is the earliest safe point</h3>
+          <div class="code-block" style="margin-top:8px;">
+            <pre><span class="cmt">// 1. ChildComponent  constructor()              — child instance created</span>
+<span class="cmt">// 2. ChildComponent  ngOnInit()                 — @Input() message = 'Hello!' is set</span>
+<span class="cmt">// ── Angular projects child into parent's &lt;ng-content&gt; slot ────────────────</span>
+<span class="cmt">// 3. ParentComponent constructor()              — parent instance created</span>
+<span class="cmt">// 4. ParentComponent ngOnInit()                 — this.child = undefined ❌</span>
+<span class="cmt">// 5. ParentComponent ngAfterContentInit()       — this.child = ChildComponent ✅</span>
+<span class="cmt">//                                                 this.child.message → 'Hello!'</span>
+<span class="cmt">//</span>
+<span class="cmt">// KEY RULE: Never access @ContentChild in ngOnInit — always use ngAfterContentInit.</span></pre>
+          </div>
+        </div>
+
       </div>
+
     </div>
   </div>
 
@@ -711,46 +1174,191 @@
       </div>
     </div>
     <div class="content">
+
+      <!-- When it runs -->
       <div class="two-col">
         <div class="card accent-purple">
           <h3>When It Runs</h3>
           <ul>
-            <li>Called after <strong>every change detection</strong> that checks projected content</li>
-            <li>Runs after <code>ngAfterContentInit</code> on first run</li>
-            <li>Be careful — this is called <strong>very frequently</strong></li>
-            <li>Avoid triggering change detection here (ExpressionChangedAfterItHasBeenChecked risk)</li>
+            <li>Called after <strong>every change detection cycle</strong> that checks projected content</li>
+            <li>Runs right after <code>ngAfterContentInit</code> on first load</li>
+            <li>Fires <strong>every</strong> time Angular re-checks projected content — even on a click elsewhere</li>
+            <li>⚠️ Avoid updating template-bound properties here — causes <code>ExpressionChangedAfterItHasBeenChecked</code> error in dev mode</li>
           </ul>
         </div>
         <div class="card accent-yellow">
-          <h3>Practical Use</h3>
-          <ul>
-            <li>Re-evaluate state after projected content changes (e.g., count visible tabs)</li>
-            <li>Sync internal state based on what was projected</li>
-            <li>Rarely needed — use <code>QueryList.changes</code> observable instead when possible</li>
-          </ul>
+          <h3>ngAfterContentInit vs ngAfterContentChecked</h3>
+          <table style="margin-top:8px;">
+            <thead><tr><th>Hook</th><th>Runs</th><th>Use for</th></tr></thead>
+            <tbody>
+              <tr><td><code>ngAfterContentInit</code></td><td>Once only</td><td>First-time setup after projection</td></tr>
+              <tr><td><code>ngAfterContentChecked</code></td><td>Every CD cycle</td><td>React to <em>changes</em> in projected content</td></tr>
+            </tbody>
+          </table>
         </div>
       </div>
-      <div class="code-block">
-        <pre><span class="kw">import</span> { AfterContentChecked, ContentChildren, QueryList } <span class="kw">from</span> <span class="str">'@angular/core'</span>;
 
-<span class="dec">@Component</span>({ selector: <span class="str">'app-tab-group'</span>, template: <span class="str">'&lt;ng-content&gt;&lt;/ng-content&gt;'</span> })
-<span class="kw">export class</span> <span class="cls">TabGroupComponent</span> <span class="kw">implements</span> <span class="int">AfterContentChecked</span> {
-  <span class="dec">@ContentChildren</span>(<span class="cls">TabComponent</span>) <span class="var">tabs</span>: <span class="cls">QueryList</span>&lt;<span class="cls">TabComponent</span>&gt;;
-  <span class="var">activeTabCount</span> = <span class="num">0</span>;
+      <!-- Scenario -->
+      <div class="card accent-cyan">
+        <h3>Scenario — Child has a checkbox. Parent watches it via <code>ngAfterContentChecked</code></h3>
+        <p style="margin-top:6px;">The child component has a checkbox <code>isActive</code>. The parent uses <code>ngAfterContentChecked</code> to detect every time that value changes and show a status message.</p>
+      </div>
+
+      <!-- ChildComponent -->
+      <div class="card accent-blue" style="margin-bottom:10px;">
+        <h3>ChildComponent — has a checkbox the user can toggle</h3>
+        <div class="two-col">
+          <div>
+            <p style="margin-bottom:4px;font-size:12px;color:#8b949e;">child.component.ts</p>
+            <div class="code-block">
+              <pre><span class="dec">@Component</span>({
+  selector: <span class="str">'app-child'</span>,
+  templateUrl: <span class="str">'child.component.html'</span>
+})
+<span class="kw">export class</span> <span class="cls">ChildComponent</span> {
+  <span class="var">isActive</span>: <span class="kw">boolean</span> = <span class="kw">false</span>;
+  <span class="cmt">// User toggles this via a checkbox</span>
+  <span class="cmt">// No @Input needed — parent reads it</span>
+  <span class="cmt">// directly via @ContentChild</span>
+}</pre>
+            </div>
+          </div>
+          <div>
+            <p style="margin-bottom:4px;font-size:12px;color:#8b949e;">child.component.html</p>
+            <div class="code-block">
+              <pre>&lt;<span class="var">label</span>&gt;
+  &lt;<span class="var">input</span>
+    type=<span class="str">"checkbox"</span>
+    [(ngModel)]=<span class="str">"isActive"</span>
+  /&gt;
+  Mark as Active
+&lt;/<span class="var">label</span>&gt;
+
+&lt;<span class="var">p</span>&gt;isActive: {{ isActive }}&lt;/<span class="var">p</span>&gt;</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ParentComponent -->
+      <div class="card accent-purple" style="margin-bottom:10px;">
+        <h3>ParentComponent — watches child's <code>isActive</code> on every CD cycle</h3>
+        <div class="two-col">
+          <div>
+            <p style="margin-bottom:4px;font-size:12px;color:#8b949e;">parent.component.ts</p>
+            <div class="code-block">
+              <pre><span class="kw">import</span> { AfterContentChecked,
+         ContentChild } <span class="kw">from</span> <span class="str">'@angular/core'</span>;
+
+<span class="dec">@Component</span>({
+  selector: <span class="str">'app-parent'</span>,
+  templateUrl: <span class="str">'parent.component.html'</span>
+})
+<span class="kw">export class</span> <span class="cls">ParentComponent</span>
+  <span class="kw">implements</span> <span class="int">AfterContentChecked</span> {
+
+  <span class="dec">@ContentChild</span>(<span class="cls">ChildComponent</span>)
+  <span class="var">child</span>: <span class="cls">ChildComponent</span>;
+
+  <span class="var">statusMessage</span>: <span class="kw">string</span> = <span class="str">''</span>;
+  <span class="kw">private</span> <span class="var">lastActive</span>: <span class="kw">boolean</span>;
 
   <span class="fn">ngAfterContentChecked</span>(): <span class="kw">void</span> {
-    <span class="kw">const</span> <span class="var">newCount</span> = <span class="kw">this</span>.<span class="var">tabs</span>.<span class="fn">filter</span>(t => t.active).length;
+    <span class="cmt">// runs after EVERY change detection cycle</span>
+    <span class="kw">if</span> (!<span class="kw">this</span>.<span class="var">child</span>) <span class="kw">return</span>;
 
-    <span class="cmt">// ✅ Only act if value actually changed — avoid infinite loops</span>
-    <span class="kw">if</span> (<span class="var">newCount</span> !== <span class="kw">this</span>.<span class="var">activeTabCount</span>) {
-      <span class="kw">this</span>.<span class="var">activeTabCount</span> = <span class="var">newCount</span>;
+    <span class="cmt">// only act if value actually changed</span>
+    <span class="kw">if</span> (<span class="kw">this</span>.<span class="var">child</span>.isActive !== <span class="kw">this</span>.<span class="var">lastActive</span>) {
+      <span class="kw">this</span>.<span class="var">lastActive</span> = <span class="kw">this</span>.<span class="var">child</span>.isActive;
+      <span class="kw">this</span>.<span class="var">statusMessage</span> = <span class="kw">this</span>.<span class="var">child</span>.isActive
+        ? <span class="str">'✅ Child is now Active'</span>
+        : <span class="str">'❌ Child is now Inactive'</span>;
     }
   }
-
-  <span class="cmt">// ❌ Anti-pattern: updating a bound property here triggers ExpressionChangedError</span>
-  <span class="cmt">// ngAfterContentChecked() { this.title = 'new'; }  ← causes error in dev mode</span>
 }</pre>
+            </div>
+          </div>
+          <div>
+            <p style="margin-bottom:4px;font-size:12px;color:#8b949e;">parent.component.html</p>
+            <div class="code-block">
+              <pre>&lt;<span class="var">div</span> class=<span class="str">"parent-box"</span>&gt;
+
+  &lt;<span class="var">h3</span>&gt;Parent Component&lt;/<span class="var">h3</span>&gt;
+
+  <span class="cmt">&lt;!-- slot for projected child --&gt;</span>
+  &lt;<span class="var">ng-content</span>&gt;&lt;/<span class="var">ng-content</span>&gt;
+
+  <span class="cmt">&lt;!-- updated by ngAfterContentChecked --&gt;</span>
+  &lt;<span class="var">p</span>&gt;Status: {{ statusMessage }}&lt;/<span class="var">p</span>&gt;
+
+&lt;/<span class="var">div</span>&gt;</pre>
+            </div>
+          </div>
+        </div>
       </div>
+
+      <!-- app.component.html usage -->
+      <div class="card accent-orange" style="margin-bottom:10px;">
+        <h3>How it is used — app.component.html</h3>
+        <div class="two-col">
+          <div>
+            <p style="margin-bottom:4px;font-size:12px;color:#8b949e;">app.component.html</p>
+            <div class="code-block">
+              <pre>&lt;<span class="var">app-parent</span>&gt;
+  <span class="cmt">&lt;!-- child is projected content --&gt;</span>
+  &lt;<span class="var">app-child</span>&gt;&lt;/<span class="var">app-child</span>&gt;
+&lt;/<span class="var">app-parent</span>&gt;</pre>
+            </div>
+          </div>
+          <div>
+            <p style="margin-bottom:4px;font-size:12px;color:#8b949e;">What happens at runtime</p>
+            <div class="code-block">
+              <pre><span class="cmt">// User loads page:</span>
+<span class="cmt">//   statusMessage = ''  (lastActive = undefined)</span>
+<span class="cmt">//   ngAfterContentChecked fires → sets lastActive = false</span>
+<span class="cmt">//   statusMessage = '❌ Child is now Inactive'</span>
+
+<span class="cmt">// User ticks the checkbox:</span>
+<span class="cmt">//   isActive flips to true → CD cycle runs</span>
+<span class="cmt">//   ngAfterContentChecked fires</span>
+<span class="cmt">//   child.isActive (true) !== lastActive (false)</span>
+<span class="cmt">//   → statusMessage = '✅ Child is now Active'</span>
+
+<span class="cmt">// User unticks the checkbox:</span>
+<span class="cmt">//   isActive flips to false → CD cycle runs</span>
+<span class="cmt">//   → statusMessage = '❌ Child is now Inactive'</span></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Anti-pattern warning -->
+      <div class="card accent-red">
+        <h3>⚠️ Anti-pattern — ExpressionChangedAfterItHasBeenChecked Error</h3>
+        <p style="margin-bottom:8px;">Angular checks the template <em>after</em> calling this hook in dev mode. If you update a template-bound property here, Angular detects the mismatch and throws an error.</p>
+        <div class="code-block">
+          <pre><span class="cmt">// ❌ BAD — updating a template-bound property directly</span>
+<span class="fn">ngAfterContentChecked</span>(): <span class="kw">void</span> {
+  <span class="kw">this</span>.<span class="var">statusMessage</span> = <span class="str">'updated'</span>;  <span class="cmt">// throws ExpressionChangedAfterItHasBeenChecked ❌</span>
+}
+
+<span class="cmt">// ✅ GOOD — guard with a snapshot comparison (only update when value truly changed)</span>
+<span class="fn">ngAfterContentChecked</span>(): <span class="kw">void</span> {
+  <span class="kw">if</span> (<span class="kw">this</span>.<span class="var">child</span>.isActive !== <span class="kw">this</span>.<span class="var">lastActive</span>) {   <span class="cmt">// ← compare first</span>
+    <span class="kw">this</span>.<span class="var">lastActive</span> = <span class="kw">this</span>.<span class="var">child</span>.isActive;
+    <span class="kw">this</span>.<span class="var">statusMessage</span> = <span class="kw">this</span>.<span class="var">child</span>.isActive ? <span class="str">'✅ Active'</span> : <span class="str">'❌ Inactive'</span>;
+  }
+}
+
+<span class="cmt">// ✅ ALTERNATIVE — use ChangeDetectorRef to notify Angular manually</span>
+<span class="fn">constructor</span>(<span class="kw">private</span> <span class="var">cd</span>: <span class="cls">ChangeDetectorRef</span>) {}
+<span class="fn">ngAfterContentChecked</span>(): <span class="kw">void</span> {
+  <span class="kw">this</span>.<span class="var">statusMessage</span> = <span class="str">'updated'</span>;
+  <span class="kw">this</span>.<span class="var">cd</span>.<span class="fn">detectChanges</span>();  <span class="cmt">// triggers a new CD cycle safely</span>
+}</pre>
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -850,32 +1458,164 @@
           </ul>
         </div>
       </div>
-      <div class="code-block">
-        <pre><span class="kw">import</span> { AfterViewChecked, ChangeDetectorRef } <span class="kw">from</span> <span class="str">'@angular/core'</span>;
 
-<span class="dec">@Component</span>({ selector: <span class="str">'app-scroll'</span>, template: <span class="str">'...'</span> })
-<span class="kw">export class</span> <span class="cls">ScrollComponent</span> <span class="kw">implements</span> <span class="int">AfterViewChecked</span> {
+      <!-- Scenario explanation -->
+      <div class="card accent-yellow">
+        <h3>Scenario — Chat window that auto-scrolls to the latest message</h3>
+        <p style="margin-top:6px;">
+          Think of a <strong>WhatsApp-style chat window</strong>. When a new message is added, the list should automatically
+          scroll to the bottom so the user always sees the latest message.
+        </p>
+        <p style="margin-top:8px;"><strong>Why not scroll directly inside <code>addMessage()</code>?</strong><br>
+          Because when <code>addMessage()</code> runs, the new <code>&lt;li&gt;</code> has NOT been added to the DOM yet —
+          Angular renders it <em>after</em>. Scrolling too early means the element doesn't exist yet.
+        </p>
+        <div class="code-block" style="margin-top:10px;">
+          <pre><span class="cmt">// Correct sequence:</span>
+<span class="cmt">// 1. addMessage('Hello') called  → message pushed to array, flag set true</span>
+<span class="cmt">// 2. Angular re-renders          → new &lt;li&gt; is added to the DOM</span>
+<span class="cmt">// 3. ngAfterViewChecked fires    → DOM is ready, safe to scroll now ✅</span>
+<span class="cmt">// 4. scrollToBottom() runs       → scrolls to the new &lt;li&gt;</span></pre>
+        </div>
+      </div>
+
+      <!-- Flag pattern explanation -->
+      <div class="card accent-orange">
+        <h3>The Flag Pattern — why <code>shouldScrollBottom</code> is needed</h3>
+        <p style="margin-bottom:10px;"><code>ngAfterViewChecked</code> fires on <strong>every</strong> CD cycle — every click, every keypress, every HTTP response. Without a flag, you'd scroll on every cycle unnecessarily.</p>
+        <div class="two-col">
+          <div>
+            <p style="margin-bottom:4px;font-size:12px;color:#f85149;">❌ Without flag — scrolls every cycle</p>
+            <div class="code-block">
+              <pre><span class="fn">ngAfterViewChecked</span>(): <span class="kw">void</span> {
+  <span class="kw">this</span>.<span class="fn">scrollToBottom</span>();
+  <span class="cmt">// runs hundreds of times</span>
+  <span class="cmt">// even when nothing changed</span>
+}</pre>
+            </div>
+          </div>
+          <div>
+            <p style="margin-bottom:4px;font-size:12px;color:#3fb950;">✅ With flag — only scrolls when needed</p>
+            <div class="code-block">
+              <pre><span class="fn">addMessage</span>(msg) {
+  <span class="kw">this</span>.<span class="var">messages</span>.<span class="fn">push</span>(msg);
+  <span class="kw">this</span>.<span class="var">shouldScrollBottom</span> = <span class="kw">true</span>;
+}
+<span class="fn">ngAfterViewChecked</span>(): <span class="kw">void</span> {
+  <span class="kw">if</span> (<span class="kw">this</span>.<span class="var">shouldScrollBottom</span>) {
+    <span class="kw">this</span>.<span class="fn">scrollToBottom</span>();
+    <span class="kw">this</span>.<span class="var">shouldScrollBottom</span> = <span class="kw">false</span>;
+  }
+}</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Full code -->
+      <div class="card accent-green">
+        <h3>Full Example — scroll.component.ts + scroll.component.html</h3>
+        <div class="two-col">
+          <div>
+            <p style="margin-bottom:4px;font-size:12px;color:#8b949e;">scroll.component.ts</p>
+            <div class="code-block">
+              <pre><span class="kw">import</span> { AfterViewChecked, ViewChild,
+         ElementRef } <span class="kw">from</span> <span class="str">'@angular/core'</span>;
+
+<span class="dec">@Component</span>({
+  selector: <span class="str">'app-scroll'</span>,
+  templateUrl: <span class="str">'scroll.component.html'</span>
+})
+<span class="kw">export class</span> <span class="cls">ScrollComponent</span>
+  <span class="kw">implements</span> <span class="int">AfterViewChecked</span> {
+
+  <span class="var">messages</span>: <span class="kw">string</span>[] = [];
+  <span class="var">newMsg</span> = <span class="str">''</span>;
   <span class="kw">private</span> <span class="var">shouldScrollBottom</span> = <span class="kw">false</span>;
 
-  <span class="fn">addMessage</span>(msg: <span class="kw">string</span>) {
-    <span class="kw">this</span>.<span class="var">messages</span>.<span class="fn">push</span>(msg);
-    <span class="kw">this</span>.<span class="var">shouldScrollBottom</span> = <span class="kw">true</span>;  <span class="cmt">// set flag — don't scroll here</span>
+  <span class="cmt">// @ViewChild gets the scroll container div</span>
+  <span class="dec">@ViewChild</span>(<span class="str">'scrollContainer'</span>)
+  <span class="var">scrollContainer</span>: <span class="cls">ElementRef</span>;
+
+  <span class="fn">addMessage</span>(): <span class="kw">void</span> {
+    <span class="kw">if</span> (!<span class="kw">this</span>.<span class="var">newMsg</span>.trim()) <span class="kw">return</span>;
+    <span class="kw">this</span>.<span class="var">messages</span>.<span class="fn">push</span>(<span class="kw">this</span>.<span class="var">newMsg</span>);
+    <span class="kw">this</span>.<span class="var">newMsg</span> = <span class="str">''</span>;
+    <span class="cmt">// set flag — DOM not updated yet</span>
+    <span class="kw">this</span>.<span class="var">shouldScrollBottom</span> = <span class="kw">true</span>;
   }
 
   <span class="fn">ngAfterViewChecked</span>(): <span class="kw">void</span> {
-    <span class="cmt">// ✅ Only act when flag is set — prevents running every cycle</span>
     <span class="kw">if</span> (<span class="kw">this</span>.<span class="var">shouldScrollBottom</span>) {
-      <span class="kw">this</span>.<span class="fn">scrollToBottom</span>();
+      <span class="kw">this</span>.<span class="fn">scrollToBottom</span>();       <span class="cmt">// DOM ready ✅</span>
       <span class="kw">this</span>.<span class="var">shouldScrollBottom</span> = <span class="kw">false</span>;
     }
   }
 
-  <span class="kw">private</span> <span class="fn">scrollToBottom</span>() {
-    <span class="kw">this</span>.<span class="var">scrollContainer</span>.nativeElement.scrollTop =
-      <span class="kw">this</span>.<span class="var">scrollContainer</span>.nativeElement.scrollHeight;
+  <span class="kw">private</span> <span class="fn">scrollToBottom</span>(): <span class="kw">void</span> {
+    <span class="kw">const</span> <span class="var">el</span> = <span class="kw">this</span>.<span class="var">scrollContainer</span>.nativeElement;
+    <span class="var">el</span>.scrollTop = <span class="var">el</span>.scrollHeight;
+    <span class="cmt">// scrollTop  = current position from top</span>
+    <span class="cmt">// scrollHeight = total height of content</span>
+    <span class="cmt">// setting scrollTop = scrollHeight</span>
+    <span class="cmt">// → jumps to the very bottom</span>
   }
 }</pre>
+            </div>
+          </div>
+          <div>
+            <p style="margin-bottom:4px;font-size:12px;color:#8b949e;">scroll.component.html</p>
+            <div class="code-block">
+              <pre><span class="cmt">&lt;!-- scrollable message list --&gt;</span>
+&lt;<span class="var">div</span>
+  #scrollContainer
+  style=<span class="str">"height:200px; overflow-y:auto"</span>&gt;
+
+  &lt;<span class="var">ul</span>&gt;
+    &lt;<span class="var">li</span> *ngFor=<span class="str">"let m of messages"</span>&gt;
+      {{ m }}
+    &lt;/<span class="var">li</span>&gt;
+  &lt;/<span class="var">ul</span>&gt;
+
+&lt;/<span class="var">div</span>&gt;
+
+<span class="cmt">&lt;!-- input to send new message --&gt;</span>
+&lt;<span class="var">input</span>
+  [(ngModel)]=<span class="str">"newMsg"</span>
+  placeholder=<span class="str">"Type message..."</span> /&gt;
+
+&lt;<span class="var">button</span> (click)=<span class="str">"addMessage()"</span>&gt;
+  Send
+&lt;/<span class="var">button</span>&gt;</pre>
+            </div>
+          </div>
+        </div>
+
+        <!-- scrollTop vs scrollHeight -->
+        <table style="margin-top:12px;">
+          <thead><tr><th>Property</th><th>Meaning</th></tr></thead>
+          <tbody>
+            <tr><td><code>scrollTop</code></td><td>Current scroll position from the top of the container</td></tr>
+            <tr><td><code>scrollHeight</code></td><td>Total height of all content inside (including hidden overflow)</td></tr>
+            <tr><td><code>scrollTop = scrollHeight</code></td><td>Jumps scroll position to the very bottom → latest message visible</td></tr>
+          </tbody>
+        </table>
       </div>
+
+      <!-- step by step summary -->
+      <div class="card accent-red">
+        <h3>Step-by-step — what happens when user sends a message</h3>
+        <div class="code-block" style="margin-top:8px;">
+          <pre><span class="cmt">// User types "Hello" and clicks Send</span>
+<span class="cmt">// 1. addMessage() runs → messages.push('Hello'), shouldScrollBottom = true</span>
+<span class="cmt">// 2. Angular re-renders → new &lt;li&gt;Hello&lt;/li&gt; added to DOM</span>
+<span class="cmt">// 3. ngAfterViewChecked fires</span>
+<span class="cmt">// 4. shouldScrollBottom is true → scrollToBottom() called → reset flag to false</span>
+<span class="cmt">// 5. User clicks elsewhere → CD cycle → ngAfterViewChecked fires again</span>
+<span class="cmt">// 6. shouldScrollBottom is false → nothing happens ✅</span></pre>
+        </div>
+      </div>
+
     </div>
   </div>
 
