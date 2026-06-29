@@ -1,0 +1,1767 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Top 20 JavaScript Coding Interview Questions</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; overflow: hidden; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #0d1117;
+      color: #e6edf3;
+    }
+
+    #deck { width: 100vw; height: 100vh; position: relative; }
+
+    .slide {
+      display: none;
+      flex-direction: column;
+      justify-content: flex-start;
+      padding: 40px 60px 80px;
+      width: 100%;
+      height: 100%;
+      overflow-y: auto;
+      gap: 16px;
+      animation: fadeIn .35s ease;
+    }
+    .slide.active { display: flex; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+
+    .slide-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      border-bottom: 2px solid #21262d;
+      padding-bottom: 14px;
+      flex-shrink: 0;
+    }
+    .topic-badge {
+      background: #1f6feb;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: 20px;
+      white-space: nowrap;
+    }
+    .topic-badge.hard  { background: #da3633; }
+    .topic-badge.medium{ background: #e3b341; color: #000; }
+    .topic-badge.easy  { background: #238636; }
+
+    h1 { font-size: 26px; font-weight: 700; color: #58a6ff; }
+    h2 { font-size: 20px; font-weight: 600; color: #79c0ff; margin-bottom: 4px; }
+    h3 { font-size: 14px; font-weight: 600; color: #ffa657; margin-bottom: 4px; }
+
+    .title-slide {
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      background: radial-gradient(ellipse at 50% 0%, #1a2d4a 0%, #0d1117 70%);
+    }
+    .title-slide h1 { font-size: 44px; margin-bottom: 10px; }
+    .title-slide .subtitle { font-size: 17px; color: #8b949e; max-width: 620px; line-height: 1.6; margin-bottom: 8px; }
+    .tag-row { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 20px; }
+    .chip {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-size: 12px;
+      color: #8b949e;
+    }
+
+    .content { flex: 1; display: flex; flex-direction: column; gap: 14px; }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+    .col-6040 { display: grid; grid-template-columns: 3fr 2fr; gap: 16px; }
+    .col-4060 { display: grid; grid-template-columns: 2fr 3fr; gap: 16px; }
+
+    .card {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 10px;
+      padding: 16px 18px;
+    }
+    .card.accent-blue   { border-left: 4px solid #1f6feb; }
+    .card.accent-green  { border-left: 4px solid #3fb950; }
+    .card.accent-orange { border-left: 4px solid #f78166; }
+    .card.accent-purple { border-left: 4px solid #d2a8ff; }
+    .card.accent-yellow { border-left: 4px solid #e3b341; }
+    .card.accent-red    { border-left: 4px solid #da3633; }
+
+    p  { font-size: 14px; line-height: 1.7; color: #c9d1d9; }
+    li { font-size: 13.5px; line-height: 1.85; color: #c9d1d9; margin-left: 18px; }
+    li + li { margin-top: 1px; }
+    ul { padding-left: 4px; }
+    strong { color: #f0f6fc; }
+    em { color: #ffa657; font-style: normal; font-weight: 600; }
+
+    code {
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 12.5px;
+      background: #1c2128;
+      color: #79c0ff;
+      padding: 1px 5px;
+      border-radius: 4px;
+    }
+
+    .code-block {
+      background: #1c2128;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 16px 18px;
+      overflow-x: auto;
+      flex-shrink: 0;
+    }
+    .code-block pre {
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 13px;
+      line-height: 1.65;
+      color: #e6edf3;
+      white-space: pre;
+      margin: 0;
+    }
+    .kw  { color: #ff7b72; }
+    .fn  { color: #d2a8ff; }
+    .str { color: #a5d6ff; }
+    .num { color: #79c0ff; }
+    .cmt { color: #8b949e; font-style: italic; }
+    .var { color: #ffa657; }
+    .op  { color: #ff7b72; }
+    .cls { color: #ffa657; font-weight: bold; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th {
+      background: #161b22;
+      color: #58a6ff;
+      text-align: left;
+      padding: 9px 12px;
+      border-bottom: 2px solid #30363d;
+      font-weight: 600;
+    }
+    td {
+      padding: 8px 12px;
+      border-bottom: 1px solid #21262d;
+      color: #c9d1d9;
+      vertical-align: top;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #161b22; }
+
+    .tag {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .tag-hard   { background: #3a0e0e; color: #ff7b72; }
+    .tag-medium { background: #2e2005; color: #e3b341; }
+    .tag-easy   { background: #0d2a0d; color: #3fb950; }
+    .tag-output { background: #1a1a3a; color: #d2a8ff; }
+
+    .output-box {
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-left: 4px solid #3fb950;
+      border-radius: 6px;
+      padding: 10px 14px;
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 13px;
+      color: #3fb950;
+    }
+    .output-box .label { color: #8b949e; font-size: 11px; margin-bottom: 4px; font-style: italic; }
+
+    .highlight-box {
+      background: #1a2744;
+      border: 1px solid #1f6feb;
+      border-radius: 8px;
+      padding: 12px 16px;
+    }
+    .highlight-box p { color: #79c0ff; }
+
+    .warn-box {
+      background: #2e1f05;
+      border: 1px solid #e3b341;
+      border-radius: 8px;
+      padding: 12px 16px;
+    }
+    .warn-box p { color: #e3b341; font-size: 13px; }
+
+    .question-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: #8b949e;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* navigation */
+    #nav {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      background: #161b22cc;
+      backdrop-filter: blur(8px);
+      border: 1px solid #30363d;
+      border-radius: 40px;
+      padding: 9px 22px;
+      z-index: 1000;
+    }
+    #nav button {
+      background: none;
+      border: none;
+      color: #8b949e;
+      cursor: pointer;
+      font-size: 19px;
+      padding: 4px 8px;
+      border-radius: 6px;
+      transition: color .2s, background .2s;
+    }
+    #nav button:hover:not(:disabled) { color: #e6edf3; background: #21262d; }
+    #nav button:disabled { opacity: 0.3; cursor: default; }
+    #counter { font-size: 13px; color: #8b949e; min-width: 70px; text-align: center; }
+
+    #progress-bar {
+      position: fixed;
+      top: 0; left: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #1f6feb, #d2a8ff);
+      transition: width .3s ease;
+      z-index: 999;
+    }
+    #hint { position: fixed; bottom: 20px; right: 24px; font-size: 11px; color: #484f58; }
+    .slide-num { position: fixed; top: 16px; right: 20px; font-size: 11px; color: #484f58; z-index: 999; }
+
+    .slide::-webkit-scrollbar { width: 5px; }
+    .slide::-webkit-scrollbar-track { background: transparent; }
+    .slide::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
+
+    .index-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 6px;
+    }
+    .index-item {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      transition: border-color .2s, background .2s;
+    }
+    .index-item:hover { border-color: #1f6feb; background: #1a2030; }
+    .index-num {
+      background: #21262d;
+      color: #58a6ff;
+      font-size: 11px;
+      font-weight: 700;
+      border-radius: 6px;
+      padding: 3px 7px;
+      flex-shrink: 0;
+    }
+    .index-title { font-size: 13px; color: #c9d1d9; }
+  </style>
+</head>
+<body>
+
+<div id="progress-bar"></div>
+<div class="slide-num" id="slideNum"></div>
+<div id="deck">
+
+<!-- ══════════════════════════════════════════
+     SLIDE 0 — TITLE
+══════════════════════════════════════════ -->
+<div class="slide title-slide active" id="s0">
+  <h1>Top 20 JavaScript<br>Coding Interview Questions</h1>
+  <p class="subtitle">Prepared for senior developers with Angular background.<br>Deep dives with working code, output, and gotchas — ready for FAANG &amp; product interviews.</p>
+  <p style="color:#484f58;font-size:13px;margin-top:4px;">10+ years Angular experience · Senior / Lead Engineer level</p>
+  <div class="tag-row">
+    <span class="chip">Closures</span>
+    <span class="chip">Event Loop</span>
+    <span class="chip">Promises &amp; async/await</span>
+    <span class="chip">Prototypes</span>
+    <span class="chip">this &amp; Binding</span>
+    <span class="chip">Debounce &amp; Throttle</span>
+    <span class="chip">Currying</span>
+    <span class="chip">Memoization</span>
+    <span class="chip">Array Methods</span>
+    <span class="chip">Deep Clone</span>
+    <span class="chip">Generators</span>
+    <span class="chip">WeakMap / WeakSet</span>
+    <span class="chip">Proxy &amp; Reflect</span>
+    <span class="chip">Design Patterns</span>
+    <span class="chip">var / let / const</span>
+    <span class="chip">Hoisting</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SLIDE 1 — INDEX
+══════════════════════════════════════════ -->
+<div class="slide" id="s1">
+  <div class="slide-header">
+    <span class="topic-badge">Index</span>
+    <h1>All 20 Questions at a Glance</h1>
+  </div>
+  <div class="content">
+    <div class="index-grid">
+      <div class="index-item" onclick="goTo(2)"><span class="index-num">Q1</span><span class="index-title">Closure &amp; Counter Factory</span></div>
+      <div class="index-item" onclick="goTo(3)"><span class="index-num">Q2</span><span class="index-title">Hoisting — var vs let/const</span></div>
+      <div class="index-item" onclick="goTo(4)"><span class="index-num">Q3</span><span class="index-title">Event Loop — Output Prediction</span></div>
+      <div class="index-item" onclick="goTo(5)"><span class="index-num">Q4</span><span class="index-title">Promise Chaining &amp; Error Handling</span></div>
+      <div class="index-item" onclick="goTo(6)"><span class="index-num">Q5</span><span class="index-title">async/await vs Promise</span></div>
+      <div class="index-item" onclick="goTo(7)"><span class="index-num">Q6</span><span class="index-title">Prototypal Inheritance</span></div>
+      <div class="index-item" onclick="goTo(8)"><span class="index-num">Q7</span><span class="index-title">this — 4 Binding Rules</span></div>
+      <div class="index-item" onclick="goTo(9)"><span class="index-num">Q8</span><span class="index-title">call / apply / bind</span></div>
+      <div class="index-item" onclick="goTo(10)"><span class="index-num">Q9</span><span class="index-title">Debounce &amp; Throttle (Implement)</span></div>
+      <div class="index-item" onclick="goTo(11)"><span class="index-num">Q10</span><span class="index-title">Currying (Implement)</span></div>
+      <div class="index-item" onclick="goTo(12)"><span class="index-num">Q11</span><span class="index-title">Memoization (Implement)</span></div>
+      <div class="index-item" onclick="goTo(13)"><span class="index-num">Q12</span><span class="index-title">Deep Clone (Implement)</span></div>
+      <div class="index-item" onclick="goTo(14)"><span class="index-num">Q13</span><span class="index-title">Flatten Nested Array</span></div>
+      <div class="index-item" onclick="goTo(15)"><span class="index-num">Q14</span><span class="index-title">Array Methods — map/filter/reduce</span></div>
+      <div class="index-item" onclick="goTo(16)"><span class="index-num">Q15</span><span class="index-title">Implement Promise.all / allSettled</span></div>
+      <div class="index-item" onclick="goTo(17)"><span class="index-num">Q16</span><span class="index-title">Event Delegation &amp; Bubbling</span></div>
+      <div class="index-item" onclick="goTo(18)"><span class="index-num">Q17</span><span class="index-title">Generator Functions</span></div>
+      <div class="index-item" onclick="goTo(19)"><span class="index-num">Q18</span><span class="index-title">WeakMap, WeakSet &amp; Memory</span></div>
+      <div class="index-item" onclick="goTo(20)"><span class="index-num">Q19</span><span class="index-title">Proxy &amp; Reflect</span></div>
+      <div class="index-item" onclick="goTo(21)"><span class="index-num">Q20</span><span class="index-title">Design Patterns — Module / Observer</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SLIDE 2 — Q1: Closures
+══════════════════════════════════════════ -->
+<div class="slide" id="s2">
+  <div class="slide-header">
+    <span class="topic-badge hard">Hard</span>
+    <h1>Q1 — Implement a Closure-based Counter Factory</h1>
+  </div>
+  <div class="content">
+    <div class="question-label">The Question</div>
+    <div class="highlight-box">
+      <p>Write a <code>createCounter()</code> function that returns an object with <code>increment</code>, <code>decrement</code>, and <code>getCount</code> methods. Each counter instance must have its own private state.</p>
+    </div>
+    <div class="col-6040">
+      <div class="code-block"><pre><span class="kw">function</span> <span class="fn">createCounter</span>(<span class="var">initialValue</span> <span class="op">=</span> <span class="num">0</span>) {
+  <span class="kw">let</span> <span class="var">count</span> <span class="op">=</span> <span class="var">initialValue</span>; <span class="cmt">// private via closure</span>
+
+  <span class="kw">return</span> {
+    <span class="fn">increment</span>() { <span class="var">count</span><span class="op">++</span>; },
+    <span class="fn">decrement</span>() { <span class="var">count</span><span class="op">--</span>; },
+    <span class="fn">getCount</span>()  { <span class="kw">return</span> <span class="var">count</span>; },
+    <span class="fn">reset</span>()     { <span class="var">count</span> <span class="op">=</span> <span class="var">initialValue</span>; }
+  };
+}
+
+<span class="kw">const</span> <span class="var">c1</span> <span class="op">=</span> <span class="fn">createCounter</span>(<span class="num">10</span>);
+<span class="kw">const</span> <span class="var">c2</span> <span class="op">=</span> <span class="fn">createCounter</span>(<span class="num">0</span>);
+
+<span class="var">c1</span>.<span class="fn">increment</span>(); <span class="var">c1</span>.<span class="fn">increment</span>();
+<span class="var">c2</span>.<span class="fn">decrement</span>();
+
+console.<span class="fn">log</span>(<span class="var">c1</span>.<span class="fn">getCount</span>()); <span class="cmt">// 12</span>
+console.<span class="fn">log</span>(<span class="var">c2</span>.<span class="fn">getCount</span>()); <span class="cmt">// -1 — independent!</span></pre></div>
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div class="card accent-blue">
+          <h3>Why Closures Work Here</h3>
+          <ul>
+            <li>Each call to <code>createCounter</code> creates a <strong>new execution context</strong></li>
+            <li>Returned methods <strong>close over</strong> that specific <code>count</code> variable</li>
+            <li><code>count</code> is not accessible from outside — true <em>encapsulation</em></li>
+          </ul>
+        </div>
+        <div class="card accent-orange">
+          <h3>Classic Gotcha — Loop Closure</h3>
+          <pre style="font-family:Consolas,monospace;font-size:12px;line-height:1.6;color:#e6edf3;background:#0d1117;padding:10px;border-radius:6px;"><span class="cmt">// BUG — all print 5</span>
+<span class="kw">for</span> (<span class="kw">var</span> <span class="var">i</span>=<span class="num">0</span>; <span class="var">i</span><span class="op">&lt;</span><span class="num">5</span>; <span class="var">i</span><span class="op">++</span>)
+  setTimeout(<span class="op">()</span><span class="op">=&gt;</span>console.<span class="fn">log</span>(<span class="var">i</span>), <span class="num">0</span>);
+
+<span class="cmt">// FIX — use let (block scope)</span>
+<span class="kw">for</span> (<span class="kw">let</span> <span class="var">i</span>=<span class="num">0</span>; <span class="var">i</span><span class="op">&lt;</span><span class="num">5</span>; <span class="var">i</span><span class="op">++</span>)
+  setTimeout(<span class="op">()</span><span class="op">=&gt;</span>console.<span class="fn">log</span>(<span class="var">i</span>), <span class="num">0</span>);</pre>
+        </div>
+      </div>
+    </div>
+    <div class="warn-box"><p>⚡ Angular link: RxJS operators like <code>scan</code> and service-level state management use the same closure-over-state principle under the hood.</p></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SLIDE 3 — Q2: Hoisting
+══════════════════════════════════════════ -->
+<div class="slide" id="s3">
+  <div class="slide-header">
+    <span class="topic-badge medium">Medium</span>
+    <h1>Q2 — Hoisting: What is the Output?</h1>
+  </div>
+  <div class="content">
+    <div class="question-label">The Question</div>
+    <div class="highlight-box">
+      <p>Predict the console output and explain why. What is the difference between <code>var</code>, <code>let</code>, <code>const</code> and function declarations regarding hoisting?</p>
+    </div>
+    <div class="two-col">
+      <div>
+        <div class="code-block" style="margin-bottom:10px;"><pre>console.<span class="fn">log</span>(<span class="var">a</span>);  <span class="cmt">// ?</span>
+console.<span class="fn">log</span>(<span class="var">b</span>);  <span class="cmt">// ?</span>
+console.<span class="fn">log</span>(<span class="fn">greet</span>()); <span class="cmt">// ?</span>
+console.<span class="fn">log</span>(<span class="fn">greetArrow</span>()); <span class="cmt">// ?</span>
+
+<span class="kw">var</span>   <span class="var">a</span> <span class="op">=</span> <span class="num">1</span>;
+<span class="kw">let</span>   <span class="var">b</span> <span class="op">=</span> <span class="num">2</span>;
+
+<span class="kw">function</span> <span class="fn">greet</span>() { <span class="kw">return</span> <span class="str">'hello'</span>; }
+<span class="kw">const</span> <span class="var">greetArrow</span> <span class="op">=</span> () <span class="op">=&gt;</span> <span class="str">'hi'</span>;</pre></div>
+        <div class="output-box">
+          <div class="label">// Output</div>
+          undefined &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;← var hoisted, value not<br>
+          ReferenceError &nbsp;← let in Temporal Dead Zone<br>
+          'hello' &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;← fn declaration fully hoisted<br>
+          TypeError &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;← const not initialized yet
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <table>
+          <tr><th>Declaration</th><th>Hoisted?</th><th>Initialized?</th></tr>
+          <tr><td><code>var</code></td><td>✅ Yes</td><td>As <code>undefined</code></td></tr>
+          <tr><td><code>let</code></td><td>✅ Yes</td><td>❌ TDZ until declaration</td></tr>
+          <tr><td><code>const</code></td><td>✅ Yes</td><td>❌ TDZ until declaration</td></tr>
+          <tr><td>function decl.</td><td>✅ Yes</td><td>✅ Fully with body</td></tr>
+          <tr><td>function expr.</td><td>⚠️ Variable</td><td>❌ As <code>undefined</code></td></tr>
+        </table>
+        <div class="card accent-purple">
+          <h3>Temporal Dead Zone (TDZ)</h3>
+          <p><code>let</code> and <code>const</code> bindings exist in scope from the start of the block but accessing them before the declaration line throws <code>ReferenceError</code>. This is the TDZ.</p>
+        </div>
+        <div class="card accent-green">
+          <h3>Best Practice</h3>
+          <p>Always use <strong><code>const</code></strong> by default, <strong><code>let</code></strong> when reassignment is needed. Never <code>var</code> in modern code.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SLIDE 4 — Q3: Event Loop
+══════════════════════════════════════════ -->
+<div class="slide" id="s4">
+  <div class="slide-header">
+    <span class="topic-badge hard">Hard</span>
+    <h1>Q3 — Event Loop: Predict the Exact Output</h1>
+  </div>
+  <div class="content">
+    <div class="question-label">The Question</div>
+    <div class="highlight-box">
+      <p>What is the exact output of the code below? Explain the role of the <strong>Call Stack</strong>, <strong>Microtask Queue</strong> (Promises), and <strong>Macrotask Queue</strong> (setTimeout).</p>
+    </div>
+    <div class="two-col">
+      <div class="code-block"><pre>console.<span class="fn">log</span>(<span class="str">'1 - sync'</span>);
+
+setTimeout(<span class="op">()</span> <span class="op">=&gt;</span> console.<span class="fn">log</span>(<span class="str">'2 - timeout'</span>), <span class="num">0</span>);
+
+Promise.<span class="fn">resolve</span>()
+  .<span class="fn">then</span>(<span class="op">()</span> <span class="op">=&gt;</span> console.<span class="fn">log</span>(<span class="str">'3 - promise then'</span>))
+  .<span class="fn">then</span>(<span class="op">()</span> <span class="op">=&gt;</span> console.<span class="fn">log</span>(<span class="str">'4 - promise then 2'</span>));
+
+<span class="fn">queueMicrotask</span>(<span class="op">()</span> <span class="op">=&gt;</span> console.<span class="fn">log</span>(<span class="str">'5 - microtask'</span>));
+
+console.<span class="fn">log</span>(<span class="str">'6 - sync'</span>);</pre></div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div class="output-box">
+          <div class="label">// Output (in order)</div>
+          1 - sync<br>
+          6 - sync<br>
+          3 - promise then<br>
+          5 - microtask<br>
+          4 - promise then 2<br>
+          2 - timeout
+        </div>
+        <div class="card accent-blue">
+          <h3>Execution Order Rules</h3>
+          <ul>
+            <li><strong>Synchronous code</strong> runs first (Call Stack)</li>
+            <li><strong>Microtasks</strong> drain completely before any macrotask (<code>.then</code>, <code>queueMicrotask</code>, <code>MutationObserver</code>)</li>
+            <li>Each resolved <code>.then</code> schedules the next <code>.then</code> as a new microtask</li>
+            <li><strong>Macrotasks</strong> run one per event loop tick (<code>setTimeout</code>, <code>setInterval</code>, I/O)</li>
+          </ul>
+        </div>
+        <div class="warn-box"><p>⚡ Angular: <code>Zone.js</code> patches macrotask and microtask APIs to trigger change detection. <code>NgZone.runOutsideAngular()</code> bypasses this.</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SLIDE 5 — Q4: Promise Chaining
+══════════════════════════════════════════ -->
+<div class="slide" id="s5">
+  <div class="slide-header">
+    <span class="topic-badge hard">Hard</span>
+    <h1>Q4 — Promise Chaining &amp; Error Handling</h1>
+  </div>
+  <div class="content">
+    <div class="question-label">The Question</div>
+    <div class="highlight-box">
+      <p>Fix the broken promise chain below. Then add error handling so that a single <code>.catch</code> at the end handles all errors, but step 2 can recover and continue.</p>
+    </div>
+    <div class="two-col">
+      <div class="code-block"><pre><span class="cmt">// ❌ Broken — not chained, errors swallowed</span>
+<span class="kw">const</span> <span class="var">p</span> <span class="op">=</span> <span class="fn">fetchUser</span>(<span class="num">1</span>);
+<span class="var">p</span>.<span class="fn">then</span>(<span class="var">user</span> <span class="op">=&gt;</span> <span class="fn">fetchOrders</span>(<span class="var">user</span>.<span class="var">id</span>));
+<span class="var">p</span>.<span class="fn">then</span>(<span class="var">orders</span> <span class="op">=&gt;</span> console.<span class="fn">log</span>(<span class="var">orders</span>));
+
+<span class="cmt">// ✅ Fixed — properly chained</span>
+<span class="fn">fetchUser</span>(<span class="num">1</span>)
+  .<span class="fn">then</span>(<span class="var">user</span> <span class="op">=&gt;</span> <span class="fn">fetchOrders</span>(<span class="var">user</span>.<span class="var">id</span>))
+  .<span class="fn">then</span>(<span class="var">orders</span> <span class="op">=&gt;</span> <span class="fn">processOrders</span>(<span class="var">orders</span>))
+  .<span class="fn">then</span>(<span class="var">result</span> <span class="op">=&gt;</span> console.<span class="fn">log</span>(<span class="str">'Done:'</span>, <span class="var">result</span>))
+  .<span class="fn">catch</span>(<span class="var">err</span> <span class="op">=&gt;</span> console.<span class="fn">error</span>(<span class="str">'Error:'</span>, <span class="var">err</span>))
+  .<span class="fn">finally</span>(<span class="op">()</span> <span class="op">=&gt;</span> console.<span class="fn">log</span>(<span class="str">'Cleanup'</span>));
+
+<span class="cmt">// Recovery in middle of chain</span>
+<span class="fn">fetchUser</span>(<span class="num">1</span>)
+  .<span class="fn">then</span>(<span class="var">user</span> <span class="op">=&gt;</span> <span class="fn">fetchOrders</span>(<span class="var">user</span>.<span class="var">id</span>))
+  .<span class="fn">catch</span>(<span class="op">()</span> <span class="op">=&gt;</span> []) <span class="cmt">// step 2 fails → recover with []</span>
+  .<span class="fn">then</span>(<span class="var">orders</span> <span class="op">=&gt;</span> console.<span class="fn">log</span>(<span class="var">orders</span>)) <span class="cmt">// always runs</span>
+  .<span class="fn">catch</span>(<span class="var">err</span> <span class="op">=&gt;</span> console.<span class="fn">error</span>(<span class="var">err</span>));</pre></div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div class="card accent-orange">
+          <h3>Key Rules</h3>
+          <ul>
+            <li><code>.then()</code> returns a <strong>new Promise</strong> — always chain on the returned value</li>
+            <li>A <code>.catch()</code> in the middle <strong>recovers</strong> the chain — subsequent <code>.then()</code> runs</li>
+            <li>Throwing inside <code>.then()</code> passes error to next <code>.catch()</code></li>
+            <li><code>.finally()</code> runs always, receives no value, does not affect chain</li>
+          </ul>
+        </div>
+        <div class="card accent-green">
+          <h3>Promise States</h3>
+          <ul>
+            <li><strong>Pending</strong> → initial state</li>
+            <li><strong>Fulfilled</strong> → value resolved</li>
+            <li><strong>Rejected</strong> → reason available</li>
+            <li>State transitions are <em>irreversible</em></li>
+          </ul>
+        </div>
+        <div class="warn-box"><p>⚡ Angular: <code>HttpClient</code> returns Observables but internally wraps Promises. Converting with <code>firstValueFrom()</code> needs a <code>try/catch</code>.</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SLIDE 6 — Q5: async/await
+══════════════════════════════════════════ -->
+<div class="slide" id="s6">
+  <div class="slide-header">
+    <span class="topic-badge medium">Medium</span>
+    <h1>Q5 — async/await: Parallel vs Sequential</h1>
+  </div>
+  <div class="content">
+    <div class="question-label">The Question</div>
+    <div class="highlight-box">
+      <p>The code below takes 4 seconds. Refactor it so both API calls run in parallel (total ~2 seconds). Also handle errors without crashing the whole function.</p>
+    </div>
+    <div class="two-col">
+      <div class="code-block"><pre><span class="cmt">// ❌ Sequential — 4s total</span>
+<span class="kw">async function</span> <span class="fn">loadDashboard</span>() {
+  <span class="kw">const</span> <span class="var">user</span>   <span class="op">=</span> <span class="kw">await</span> <span class="fn">fetchUser</span>();   <span class="cmt">// 2s</span>
+  <span class="kw">const</span> <span class="var">orders</span> <span class="op">=</span> <span class="kw">await</span> <span class="fn">fetchOrders</span>(); <span class="cmt">// 2s</span>
+  <span class="kw">return</span> { <span class="var">user</span>, <span class="var">orders</span> };
+}
+
+<span class="cmt">// ✅ Parallel — ~2s total</span>
+<span class="kw">async function</span> <span class="fn">loadDashboard</span>() {
+  <span class="kw">const</span> [<span class="var">user</span>, <span class="var">orders</span>] <span class="op">=</span> <span class="kw">await</span> Promise.<span class="fn">all</span>([
+    <span class="fn">fetchUser</span>(),
+    <span class="fn">fetchOrders</span>()
+  ]);
+  <span class="kw">return</span> { <span class="var">user</span>, <span class="var">orders</span> };
+}
+
+<span class="cmt">// ✅ Parallel + individual error handling</span>
+<span class="kw">async function</span> <span class="fn">loadDashboardSafe</span>() {
+  <span class="kw">const</span> <span class="fn">safe</span> <span class="op">=</span> <span class="var">p</span> <span class="op">=&gt;</span> <span class="var">p</span>.<span class="fn">catch</span>(<span class="var">e</span> <span class="op">=&gt;</span> ({ <span class="var">error</span>: <span class="var">e</span>.<span class="var">message</span> }));
+  <span class="kw">const</span> [<span class="var">user</span>, <span class="var">orders</span>] <span class="op">=</span> <span class="kw">await</span> Promise.<span class="fn">all</span>([
+    <span class="fn">safe</span>(<span class="fn">fetchUser</span>()),
+    <span class="fn">safe</span>(<span class="fn">fetchOrders</span>())
+  ]);
+  <span class="kw">return</span> { <span class="var">user</span>, <span class="var">orders</span> };
+}</pre></div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <table>
+          <tr><th>Method</th><th>Behavior on Reject</th></tr>
+          <tr><td><code>Promise.all()</code></td><td>Short-circuits on first rejection</td></tr>
+          <tr><td><code>Promise.allSettled()</code></td><td>Always waits for all, reports each status</td></tr>
+          <tr><td><code>Promise.race()</code></td><td>Resolves/rejects with first to settle</td></tr>
+          <tr><td><code>Promise.any()</code></td><td>Resolves with first fulfilled; rejects only if all reject</td></tr>
+        </table>
+        <div class="card accent-purple">
+          <h3>async/await is Syntactic Sugar</h3>
+          <p>An <code>async</code> function always returns a Promise. <code>await</code> pauses execution of <em>that function only</em> — the event loop continues.</p>
+        </div>
+        <div class="warn-box"><p>⚡ Angular: Prefer <code>forkJoin()</code> (RxJS) over <code>Promise.all</code>, but understand the underlying Promise semantics for debugging and testing.</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SLIDE 7 — Q6: Prototypal Inheritance
+══════════════════════════════════════════ -->
+<div class="slide" id="s7">
+  <div class="slide-header">
+    <span class="topic-badge hard">Hard</span>
+    <h1>Q6 — Prototypal Inheritance &amp; the Prototype Chain</h1>
+  </div>
+  <div class="content">
+    <div class="question-label">The Question</div>
+    <div class="highlight-box">
+      <p>Implement <code>Animal</code> and <code>Dog</code> using ES6 classes. Then show the equivalent using prototype-based syntax. Explain what <code>Object.create</code> does.</p>
+    </div>
+    <div class="two-col">
+      <div class="code-block"><pre><span class="cmt">// ES6 Class syntax (syntactic sugar)</span>
+<span class="kw">class</span> <span class="cls">Animal</span> {
+  <span class="fn">constructor</span>(<span class="var">name</span>) { <span class="kw">this</span>.<span class="var">name</span> <span class="op">=</span> <span class="var">name</span>; }
+  <span class="fn">speak</span>() { <span class="kw">return</span> <span class="str">`${<span class="kw">this</span>.<span class="var">name</span>} makes a sound.`</span>; }
+}
+
+<span class="kw">class</span> <span class="cls">Dog</span> <span class="kw">extends</span> <span class="cls">Animal</span> {
+  <span class="fn">constructor</span>(<span class="var">name</span>) { <span class="kw">super</span>(<span class="var">name</span>); }
+  <span class="fn">speak</span>() { <span class="kw">return</span> <span class="str">`${<span class="kw">this</span>.<span class="var">name</span>} barks.`</span>; }
+}
+
+<span class="kw">const</span> <span class="var">d</span> <span class="op">=</span> <span class="kw">new</span> <span class="cls">Dog</span>(<span class="str">'Rex'</span>);
+console.<span class="fn">log</span>(<span class="var">d</span>.<span class="fn">speak</span>());        <span class="cmt">// Rex barks.</span>
+console.<span class="fn">log</span>(<span class="var">d</span> <span class="kw">instanceof</span> <span class="cls">Dog</span>);   <span class="cmt">// true</span>
+console.<span class="fn">log</span>(<span class="var">d</span> <span class="kw">instanceof</span> <span class="cls">Animal</span>); <span class="cmt">// true</span>
+
+<span class="cmt">// Equivalent prototype-based</span>
+<span class="kw">function</span> <span class="fn">Animal</span>(<span class="var">name</span>) { <span class="kw">this</span>.<span class="var">name</span> <span class="op">=</span> <span class="var">name</span>; }
+<span class="cls">Animal</span>.<span class="var">prototype</span>.<span class="fn">speak</span> <span class="op">=</span> <span class="kw">function</span>() {
+  <span class="kw">return</span> <span class="kw">this</span>.<span class="var">name</span> <span class="op">+</span> <span class="str">' makes a sound.'</span>;
+};
+
+<span class="kw">function</span> <span class="fn">Dog</span>(<span class="var">name</span>) { <span class="cls">Animal</span>.<span class="fn">call</span>(<span class="kw">this</span>, <span class="var">name</span>); }
+<span class="cls">Dog</span>.<span class="var">prototype</span> <span class="op">=</span> Object.<span class="fn">create</span>(<span class="cls">Animal</span>.<span class="var">prototype</span>);
+<span class="cls">Dog</span>.<span class="var">prototype</span>.<span class="var">constructor</span> <span class="op">=</span> <span class="cls">Dog</span>;</pre></div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div class="card accent-blue">
+          <h3>Prototype Chain Lookup</h3>
+          <p>Property lookup: <code>d</code> → <code>Dog.prototype</code> → <code>Animal.prototype</code> → <code>Object.prototype</code> → <code>null</code></p>
+        </div>
+        <div class="card accent-green">
+          <h3>Object.create(proto)</h3>
+          <p>Creates a new object with <code>proto</code> as its <code>[[Prototype]]</code>. Unlike <code>new</code>, it does <em>not</em> call a constructor. Essential for prototype delegation without constructor overhead.</p>
+        </div>
+        <div class="card accent-orange">
+          <h3>hasOwnProperty vs in</h3>
+          <pre style="font-family:Consolas,monospace;font-size:12px;color:#e6edf3;background:#0d1117;padding:8px;border-radius:4px;line-height:1.5;"><span class="str">'name'</span> <span class="kw">in</span> <span class="var">d</span>         <span class="cmt">// true (own)</span>
+<span class="str">'speak'</span> <span class="kw">in</span> <span class="var">d</span>        <span class="cmt">// true (prototype)</span>
+<span class="var">d</span>.<span class="fn">hasOwnProperty</span>(<span class="str">'speak'</span>) <span class="cmt">// false</span></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SLIDE 8 — Q7: this keyword
+══════════════════════════════════════════ -->
+<div class="slide" id="s8">
+  <div class="slide-header">
+    <span class="topic-badge hard">Hard</span>
+    <h1>Q7 — The <code>this</code> Keyword: 4 Binding Rules</h1>
+  </div>
+  <div class="content">
+    <div class="question-label">The Question</div>
+    <div class="highlight-box">
+      <p>What are the 4 rules that determine the value of <code>this</code>? What does <code>this</code> refer to in arrow functions vs regular functions?</p>
+    </div>
+    <div class="col-6040">
+      <div class="code-block"><pre><span class="cmt">// 1. Default binding (global / undefined in strict mode)</span>
+<span class="kw">function</span> <span class="fn">show</span>() { console.<span class="fn">log</span>(<span class="kw">this</span>); } <span class="cmt">// window / undefined</span>
+
+<span class="cmt">// 2. Implicit binding (object method)</span>
+<span class="kw">const</span> <span class="var">obj</span> <span class="op">=</span> { <span class="var">name</span>: <span class="str">'JS'</span>, <span class="fn">greet</span>() { <span class="kw">return</span> <span class="kw">this</span>.<span class="var">name</span>; } };
+<span class="var">obj</span>.<span class="fn">greet</span>();  <span class="cmt">// 'JS'</span>
+<span class="kw">const</span> <span class="var">fn</span> <span class="op">=</span> <span class="var">obj</span>.<span class="var">greet</span>;
+<span class="var">fn</span>();         <span class="cmt">// undefined — lost implicit binding!</span>
+
+<span class="cmt">// 3. Explicit binding</span>
+<span class="var">fn</span>.<span class="fn">call</span>({ <span class="var">name</span>: <span class="str">'Explicit'</span> });  <span class="cmt">// 'Explicit'</span>
+
+<span class="cmt">// 4. new binding</span>
+<span class="kw">function</span> <span class="fn">Person</span>(<span class="var">n</span>) { <span class="kw">this</span>.<span class="var">name</span> <span class="op">=</span> <span class="var">n</span>; }
+<span class="kw">const</span> <span class="var">p</span> <span class="op">=</span> <span class="kw">new</span> <span class="fn">Person</span>(<span class="str">'Nitin'</span>); <span class="cmt">// this = new object</span>
+
+<span class="cmt">// Arrow functions — lexical this</span>
+<span class="kw">class</span> <span class="cls">Timer</span> {
+  <span class="fn">constructor</span>() { <span class="kw">this</span>.<span class="var">ticks</span> <span class="op">=</span> <span class="num">0</span>; }
+  <span class="fn">start</span>() {
+    <span class="cmt">// ❌ regular fn — this is undefined in strict</span>
+    setInterval(<span class="kw">function</span>() { <span class="kw">this</span>.<span class="var">ticks</span><span class="op">++</span>; }, <span class="num">1000</span>);
+    <span class="cmt">// ✅ arrow fn — this captured from start()</span>
+    setInterval(<span class="op">()</span> <span class="op">=&gt;</span> { <span class="kw">this</span>.<span class="var">ticks</span><span class="op">++</span>; }, <span class="num">1000</span>);
+  }
+}</pre></div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <table>
+          <tr><th>Rule</th><th>Priority</th><th>How?</th></tr>
+          <tr><td><strong>new</strong></td><td>4 (highest)</td><td>new Fn()</td></tr>
+          <tr><td><strong>Explicit</strong></td><td>3</td><td>call/apply/bind</td></tr>
+          <tr><td><strong>Implicit</strong></td><td>2</td><td>obj.method()</td></tr>
+          <tr><td><strong>Default</strong></td><td>1 (lowest)</td><td>standalone call</td></tr>
+        </table>
+        <div class="card accent-purple">
+          <h3>Arrow Function Rule</h3>
+          <p>Arrow functions have <strong>no own <code>this</code></strong>. They inherit <code>this</code> from the enclosing lexical scope. Cannot be used as constructors. <code>bind/call/apply</code> cannot change their <code>this</code>.</p>
+        </div>
+        <div class="warn-box"><p>⚡ Angular: Class methods in components used as event handlers (e.g., <code>(click)="handleClick"</code>) are called with <code>this</code> of the component — Arrow functions or <code>bind</code> needed only in imperative DOM code.</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SLIDE 9 — Q8: call / apply / bind
+══════════════════════════════════════════ -->
+<div class="slide" id="s9">
+  <div class="slide-header">
+    <span class="topic-badge medium">Medium</span>
+    <h1>Q8 — Implement <code>call</code>, <code>apply</code>, and <code>bind</code> from Scratch</h1>
+  </div>
+  <div class="content">
+    <div class="question-label">The Question</div>
+    <div class="highlight-box">
+      <p>Implement <code>Function.prototype.myCall</code>, <code>myApply</code>, and <code>myBind</code> using native JavaScript. This tests deep understanding of how <code>this</code> assignment works.</p>
+    </div>
+    <div class="two-col">
+      <div class="code-block"><pre><span class="cls">Function</span>.<span class="var">prototype</span>.<span class="fn">myCall</span> <span class="op">=</span> <span class="kw">function</span>(<span class="var">context</span>, ...<span class="var">args</span>) {
+  <span class="var">context</span> <span class="op">=</span> <span class="var">context</span> <span class="op">??</span> globalThis;
+  <span class="kw">const</span> <span class="var">sym</span> <span class="op">=</span> Symbol(); <span class="cmt">// unique key to avoid collisions</span>
+  <span class="var">context</span>[<span class="var">sym</span>] <span class="op">=</span> <span class="kw">this</span>;  <span class="cmt">// attach fn as method of context</span>
+  <span class="kw">const</span> <span class="var">result</span> <span class="op">=</span> <span class="var">context</span>[<span class="var">sym</span>](...<span class="var">args</span>);
+  <span class="kw">delete</span> <span class="var">context</span>[<span class="var">sym</span>];   <span class="cmt">// clean up</span>
+  <span class="kw">return</span> <span class="var">result</span>;
+};
+
+<span class="cls">Function</span>.<span class="var">prototype</span>.<span class="fn">myApply</span> <span class="op">=</span> <span class="kw">function</span>(<span class="var">context</span>, <span class="var">argsArr</span> <span class="op">=</span> []) {
+  <span class="kw">return</span> <span class="kw">this</span>.<span class="fn">myCall</span>(<span class="var">context</span>, ...<span class="var">argsArr</span>);
+};
+
+<span class="cls">Function</span>.<span class="var">prototype</span>.<span class="fn">myBind</span> <span class="op">=</span> <span class="kw">function</span>(<span class="var">context</span>, ...<span class="var">preset</span>) {
+  <span class="kw">const</span> <span class="var">fn</span> <span class="op">=</span> <span class="kw">this</span>;
+  <span class="kw">return</span> <span class="kw">function</span>(...<span class="var">args</span>) {
+    <span class="kw">return</span> <span class="var">fn</span>.<span class="fn">myCall</span>(<span class="var">context</span>, ...<span class="var">preset</span>, ...<span class="var">args</span>);
+  };
+};
+
+<span class="cmt">// Usage</span>
+<span class="kw">function</span> <span class="fn">greet</span>(<span class="var">greeting</span>, <span class="var">punct</span>) {
+  <span class="kw">return</span> <span class="str">`${<span class="var">greeting</span>}, ${<span class="kw">this</span>.<span class="var">name</span>}${<span class="var">punct</span>}`</span>;
+}
+<span class="kw">const</span> <span class="var">user</span> <span class="op">=</span> { <span class="var">name</span>: <span class="str">'Nitin'</span> };
+<span class="var">greet</span>.<span class="fn">myCall</span>(<span class="var">user</span>, <span class="str">'Hello'</span>, <span class="str">'!'</span>);  <span class="cmt">// Hello, Nitin!</span>
+<span class="var">greet</span>.<span class="fn">myApply</span>(<span class="var">user</span>, [<span class="str">'Hi'</span>, <span class="str">'.'</span>]);   <span class="cmt">// Hi, Nitin.</span>
+<span class="kw">const</span> <span class="var">bound</span> <span class="op">=</span> <span class="var">greet</span>.<span class="fn">myBind</span>(<span class="var">user</span>, <span class="str">'Hey'</span>);
+<span class="var">bound</span>(<span class="str">'?'</span>);                         <span class="cmt">// Hey, Nitin?</span></pre></div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <table>
+          <tr><th></th><th>call</th><th>apply</th><th>bind</th></tr>
+          <tr><td>Args</td><td>spread</td><td>array</td><td>partial apply</td></tr>
+          <tr><td>Returns</td><td>result</td><td>result</td><td>new function</td></tr>
+          <tr><td>Invokes?</td><td>immediately</td><td>immediately</td><td>later</td></tr>
+        </table>
+        <div class="card accent-blue">
+          <h3>Partial Application via bind</h3>
+          <pre style="font-family:Consolas,monospace;font-size:12px;color:#e6edf3;background:#0d1117;padding:8px;border-radius:4px;line-height:1.5;"><span class="kw">const</span> <span class="var">double</span> <span class="op">=</span> <span class="fn">multiply</span>.<span class="fn">bind</span>(<span class="kw">null</span>, <span class="num">2</span>);
+<span class="var">double</span>(<span class="num">5</span>); <span class="cmt">// 10</span>
+<span class="var">double</span>(<span class="num">9</span>); <span class="cmt">// 18</span></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SLIDE 10 — Q9: Debounce & Throttle
+══════════════════════════════════════════ -->
+<div class="slide" id="s10">
+  <div class="slide-header">
+    <span class="topic-badge hard">Hard</span>
+    <h1>Q9 — Implement Debounce &amp; Throttle</h1>
+  </div>
+  <div class="content">
+    <div class="question-label">The Question</div>
+    <div class="highlight-box">
+      <p>Implement <code>debounce(fn, delay)</code> and <code>throttle(fn, limit)</code>. Explain the difference and when to use each.</p>
+    </div>
+    <div class="two-col">
+      <div class="code-block"><pre><span class="cmt">// DEBOUNCE — fires AFTER user stops (last call wins)</span>
+<span class="kw">function</span> <span class="fn">debounce</span>(<span class="var">fn</span>, <span class="var">delay</span>) {
+  <span class="kw">let</span> <span class="var">timer</span>;
+  <span class="kw">return</span> <span class="kw">function</span>(...<span class="var">args</span>) {
+    clearTimeout(<span class="var">timer</span>);
+    <span class="var">timer</span> <span class="op">=</span> setTimeout(<span class="op">()</span> <span class="op">=&gt;</span> <span class="var">fn</span>.<span class="fn">apply</span>(<span class="kw">this</span>, <span class="var">args</span>), <span class="var">delay</span>);
+  };
+}
+
+<span class="cmt">// THROTTLE — fires AT MOST once per limit period</span>
+<span class="kw">function</span> <span class="fn">throttle</span>(<span class="var">fn</span>, <span class="var">limit</span>) {
+  <span class="kw">let</span> <span class="var">lastCall</span> <span class="op">=</span> <span class="num">0</span>;
+  <span class="kw">return</span> <span class="kw">function</span>(...<span class="var">args</span>) {
+    <span class="kw">const</span> <span class="var">now</span> <span class="op">=</span> Date.<span class="fn">now</span>();
+    <span class="kw">if</span> (<span class="var">now</span> <span class="op">-</span> <span class="var">lastCall</span> <span class="op">&gt;=</span> <span class="var">limit</span>) {
+      <span class="var">lastCall</span> <span class="op">=</span> <span class="var">now</span>;
+      <span class="kw">return</span> <span class="var">fn</span>.<span class="fn">apply</span>(<span class="kw">this</span>, <span class="var">args</span>);
+    }
+  };
+}
+
+<span class="cmt">// Usage examples</span>
+<span class="kw">const</span> <span class="var">debouncedSearch</span> <span class="op">=</span> <span class="fn">debounce</span>(<span class="fn">search</span>, <span class="num">300</span>);
+input.<span class="fn">addEventListener</span>(<span class="str">'input'</span>, <span class="var">debouncedSearch</span>);
+
+<span class="kw">const</span> <span class="var">throttledScroll</span> <span class="op">=</span> <span class="fn">throttle</span>(<span class="fn">onScroll</span>, <span class="num">100</span>);
+window.<span class="fn">addEventListener</span>(<span class="str">'scroll'</span>, <span class="var">throttledScroll</span>);</pre></div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <table>
+          <tr><th></th><th>Debounce</th><th>Throttle</th></tr>
+          <tr><td>Fires when</td><td>After silence</td><td>At regular intervals</td></tr>
+          <tr><td>Best for</td><td>Search input, resize-end</td><td>Scroll, mousemove, rate-limiting</td></tr>
+          <tr><td>Behaviour</td><td>Resets timer on each call</td><td>Ignores calls within window</td></tr>
+        </table>
+        <div class="card accent-orange">
+          <h3>Leading vs Trailing Edge</h3>
+          <p>Production debounce implementations support <code>{ leading: true }</code> to fire immediately on the first call, then debounce subsequent calls. Libraries like Lodash expose these options.</p>
+        </div>
+        <div class="warn-box"><p>⚡ Angular: Use RxJS <code>debounceTime(300)</code> and <code>throttleTime(100)</code> operators on form control <code>valueChanges</code> observables for the same effect declaratively.</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SLIDE 11 — Q10: Currying
+══════════════════════════════════════════ -->
+<div class="slide" id="s11">
+  <div class="slide-header">
+    <span class="topic-badge hard">Hard</span>
+    <h1>Q10 — Implement a Generic Curry Function</h1>
+  </div>
+  <div class="content">
+    <div class="question-label">The Question</div>
+    <div class="highlight-box">
+      <p>Write a <code>curry(fn)</code> function that transforms any multi-argument function so it can be called with one argument at a time. Support both curried and multi-arg invocations.</p>
+    </div>
+    <div class="col-6040">
+      <div class="code-block"><pre><span class="kw">function</span> <span class="fn">curry</span>(<span class="var">fn</span>) {
+  <span class="kw">return function</span> <span class="fn">curried</span>(...<span class="var">args</span>) {
+    <span class="kw">if</span> (<span class="var">args</span>.<span class="var">length</span> <span class="op">&gt;=</span> <span class="var">fn</span>.<span class="var">length</span>) {
+      <span class="cmt">// Enough args — call original fn</span>
+      <span class="kw">return</span> <span class="var">fn</span>.<span class="fn">apply</span>(<span class="kw">this</span>, <span class="var">args</span>);
+    }
+    <span class="cmt">// Not enough — return function collecting more</span>
+    <span class="kw">return</span> <span class="kw">function</span>(...<span class="var">moreArgs</span>) {
+      <span class="kw">return</span> <span class="fn">curried</span>.<span class="fn">apply</span>(<span class="kw">this</span>, [...<span class="var">args</span>, ...<span class="var">moreArgs</span>]);
+    };
+  };
+}
+
+<span class="cmt">// Example</span>
+<span class="kw">const</span> <span class="var">add</span> <span class="op">=</span> (<span class="var">a</span>, <span class="var">b</span>, <span class="var">c</span>) <span class="op">=&gt;</span> <span class="var">a</span> <span class="op">+</span> <span class="var">b</span> <span class="op">+</span> <span class="var">c</span>;
+<span class="kw">const</span> <span class="var">curriedAdd</span> <span class="op">=</span> <span class="fn">curry</span>(<span class="var">add</span>);
+
+<span class="var">curriedAdd</span>(<span class="num">1</span>)(<span class="num">2</span>)(<span class="num">3</span>);   <span class="cmt">// 6</span>
+<span class="var">curriedAdd</span>(<span class="num">1</span>, <span class="num">2</span>)(<span class="num">3</span>);  <span class="cmt">// 6</span>
+<span class="var">curriedAdd</span>(<span class="num">1</span>)(<span class="num">2</span>, <span class="num">3</span>);  <span class="cmt">// 6</span>
+<span class="var">curriedAdd</span>(<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>); <span class="cmt">// 6</span>
+
+<span class="cmt">// Real-world: reusable pipelines</span>
+<span class="kw">const</span> <span class="var">multiply</span> <span class="op">=</span> <span class="fn">curry</span>((<span class="var">a</span>, <span class="var">b</span>) <span class="op">=&gt;</span> <span class="var">a</span> <span class="op">*</span> <span class="var">b</span>);
+<span class="kw">const</span> <span class="var">triple</span>   <span class="op">=</span> <span class="var">multiply</span>(<span class="num">3</span>);
+[<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>].<span class="fn">map</span>(<span class="var">triple</span>); <span class="cmt">// [3, 6, 9]</span></pre></div>
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div class="card accent-purple">
+          <h3>How it works</h3>
+          <ul>
+            <li>Checks <code>args.length</code> against <code>fn.length</code> (arity)</li>
+            <li>If enough args → call original function</li>
+            <li>Otherwise → return a closure accumulating more args</li>
+            <li>Uses recursion via <code>curried.apply</code></li>
+          </ul>
+        </div>
+        <div class="card accent-green">
+          <h3>Currying vs Partial Application</h3>
+          <p><strong>Currying</strong>: transforms a function of N args into N unary functions.<br>
+          <strong>Partial application</strong>: fixes some arguments upfront via <code>bind</code> or closures. Currying enables partial application automatically.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SLIDE 12 — Q11: Memoization
+══════════════════════════════════════════ -->
+<div class="slide" id="s12">
+  <div class="slide-header">
+    <span class="topic-badge medium">Medium</span>
+    <h1>Q11 — Implement Memoization</h1>
+  </div>
+  <div class="content">
+    <div class="question-label">The Question</div>
+    <div class="highlight-box">
+      <p>Implement a generic <code>memoize(fn)</code> that caches results. Then write a memoized Fibonacci function. What are the memory trade-offs?</p>
+    </div>
+    <div class="two-col">
+      <div class="code-block"><pre><span class="cmt">// Generic memoize</span>
+<span class="kw">function</span> <span class="fn">memoize</span>(<span class="var">fn</span>) {
+  <span class="kw">const</span> <span class="var">cache</span> <span class="op">=</span> <span class="kw">new</span> Map();
+  <span class="kw">return</span> <span class="kw">function</span>(...<span class="var">args</span>) {
+    <span class="kw">const</span> <span class="var">key</span> <span class="op">=</span> JSON.<span class="fn">stringify</span>(<span class="var">args</span>);
+    <span class="kw">if</span> (<span class="var">cache</span>.<span class="fn">has</span>(<span class="var">key</span>)) {
+      console.<span class="fn">log</span>(<span class="str">'cache hit:'</span>, <span class="var">key</span>);
+      <span class="kw">return</span> <span class="var">cache</span>.<span class="fn">get</span>(<span class="var">key</span>);
+    }
+    <span class="kw">const</span> <span class="var">result</span> <span class="op">=</span> <span class="var">fn</span>.<span class="fn">apply</span>(<span class="kw">this</span>, <span class="var">args</span>);
+    <span class="var">cache</span>.<span class="fn">set</span>(<span class="var">key</span>, <span class="var">result</span>);
+    <span class="kw">return</span> <span class="var">result</span>;
+  };
+}
+
+<span class="cmt">// Memoized Fibonacci</span>
+<span class="kw">const</span> <span class="var">fib</span> <span class="op">=</span> <span class="fn">memoize</span>(<span class="kw">function</span>(<span class="var">n</span>) {
+  <span class="kw">if</span> (<span class="var">n</span> <span class="op">&lt;=</span> <span class="num">1</span>) <span class="kw">return</span> <span class="var">n</span>;
+  <span class="kw">return</span> <span class="var">fib</span>(<span class="var">n</span> <span class="op">-</span> <span class="num">1</span>) <span class="op">+</span> <span class="var">fib</span>(<span class="var">n</span> <span class="op">-</span> <span class="num">2</span>);
+});
+
+console.<span class="fn">log</span>(<span class="var">fib</span>(<span class="num">40</span>)); <span class="cmt">// instant — O(n) not O(2^n)</span>
+
+<span class="cmt">// LRU Cache variant (bounded memory)</span>
+<span class="kw">function</span> <span class="fn">memoizeLRU</span>(<span class="var">fn</span>, <span class="var">maxSize</span> <span class="op">=</span> <span class="num">100</span>) {
+  <span class="kw">const</span> <span class="var">cache</span> <span class="op">=</span> <span class="kw">new</span> Map();
+  <span class="kw">return</span> <span class="kw">function</span>(...<span class="var">args</span>) {
+    <span class="kw">const</span> <span class="var">key</span> <span class="op">=</span> JSON.<span class="fn">stringify</span>(<span class="var">args</span>);
+    <span class="kw">if</span> (<span class="var">cache</span>.<span class="fn">has</span>(<span class="var">key</span>)) {
+      <span class="kw">const</span> <span class="var">val</span> <span class="op">=</span> <span class="var">cache</span>.<span class="fn">get</span>(<span class="var">key</span>);
+      <span class="var">cache</span>.<span class="fn">delete</span>(<span class="var">key</span>); <span class="var">cache</span>.<span class="fn">set</span>(<span class="var">key</span>, <span class="var">val</span>); <span class="cmt">// reorder</span>
+      <span class="kw">return</span> <span class="var">val</span>;
+    }
+    <span class="kw">if</span> (<span class="var">cache</span>.<span class="var">size</span> <span class="op">&gt;=</span> <span class="var">maxSize</span>)
+      <span class="var">cache</span>.<span class="fn">delete</span>(<span class="var">cache</span>.<span class="fn">keys</span>().<span class="fn">next</span>().<span class="var">value</span>); <span class="cmt">// evict oldest</span>
+    <span class="kw">const</span> <span class="var">result</span> <span class="op">=</span> <span class="var">fn</span>.<span class="fn">apply</span>(<span class="kw">this</span>, <span class="var">args</span>);
+    <span class="var">cache</span>.<span class="fn">set</span>(<span class="var">key</span>, <span class="var">result</span>);
+    <span class="kw">return</span> <span class="var">result</span>;
+  };
+}</pre></div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div class="card accent-blue">
+          <h3>Trade-offs</h3>
+          <ul>
+            <li><strong>Pros</strong>: Massive speedup for expensive pure functions</li>
+            <li><strong>Cons</strong>: Memory grows unbounded (use LRU to cap)</li>
+            <li><code>JSON.stringify</code> key fails for functions, circular refs</li>
+            <li>Only suitable for <strong>pure functions</strong> (same input → same output)</li>
+          </ul>
+        </div>
+        <div class="card accent-green">
+          <h3>When to Use</h3>
+          <ul>
+            <li>Fibonacci, factorial, combinatorics</li>
+            <li>Expensive DOM measurements</li>
+            <li>API response caching</li>
+            <li>Selector memoization (like <code>createSelector</code> in NgRx)</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SLIDE 13 — Q12: Deep Clone
+══════════════════════════════════════════ -->
+<div class="slide" id="s13">
+  <div class="slide-header">
+    <span class="topic-badge hard">Hard</span>
+    <h1>Q12 — Implement Deep Clone</h1>
+  </div>
+  <div class="content">
+    <div class="question-label">The Question</div>
+    <div class="highlight-box">
+      <p>Write a <code>deepClone(obj)</code> that handles nested objects, arrays, <code>Date</code>, <code>RegExp</code>, and circular references. Compare approaches.</p>
+    </div>
+    <div class="two-col">
+      <div class="code-block"><pre><span class="kw">function</span> <span class="fn">deepClone</span>(<span class="var">obj</span>, <span class="var">visited</span> <span class="op">=</span> <span class="kw">new</span> WeakMap()) {
+  <span class="kw">if</span> (<span class="var">obj</span> <span class="op">===</span> <span class="kw">null</span> <span class="op">||</span> <span class="kw">typeof</span> <span class="var">obj</span> <span class="op">!==</span> <span class="str">'object'</span>) <span class="kw">return</span> <span class="var">obj</span>;
+
+  <span class="cmt">// Handle circular references</span>
+  <span class="kw">if</span> (<span class="var">visited</span>.<span class="fn">has</span>(<span class="var">obj</span>)) <span class="kw">return</span> <span class="var">visited</span>.<span class="fn">get</span>(<span class="var">obj</span>);
+
+  <span class="cmt">// Special types</span>
+  <span class="kw">if</span> (<span class="var">obj</span> <span class="kw">instanceof</span> Date)   <span class="kw">return</span> <span class="kw">new</span> Date(<span class="var">obj</span>);
+  <span class="kw">if</span> (<span class="var">obj</span> <span class="kw">instanceof</span> RegExp) <span class="kw">return</span> <span class="kw">new</span> RegExp(<span class="var">obj</span>);
+  <span class="kw">if</span> (<span class="var">obj</span> <span class="kw">instanceof</span> Map) {
+    <span class="kw">const</span> <span class="var">m</span> <span class="op">=</span> <span class="kw">new</span> Map();
+    <span class="var">visited</span>.<span class="fn">set</span>(<span class="var">obj</span>, <span class="var">m</span>);
+    <span class="var">obj</span>.<span class="fn">forEach</span>((<span class="var">v</span>, <span class="var">k</span>) <span class="op">=&gt;</span> <span class="var">m</span>.<span class="fn">set</span>(<span class="fn">deepClone</span>(<span class="var">k</span>, <span class="var">visited</span>),
+                                    <span class="fn">deepClone</span>(<span class="var">v</span>, <span class="var">visited</span>)));
+    <span class="kw">return</span> <span class="var">m</span>;
+  }
+
+  <span class="kw">const</span> <span class="var">clone</span> <span class="op">=</span> Array.<span class="fn">isArray</span>(<span class="var">obj</span>) ? [] : {};
+  <span class="var">visited</span>.<span class="fn">set</span>(<span class="var">obj</span>, <span class="var">clone</span>);
+
+  <span class="kw">for</span> (<span class="kw">const</span> <span class="var">key</span> <span class="kw">of</span> Object.<span class="fn">keys</span>(<span class="var">obj</span>)) {
+    <span class="var">clone</span>[<span class="var">key</span>] <span class="op">=</span> <span class="fn">deepClone</span>(<span class="var">obj</span>[<span class="var">key</span>], <span class="var">visited</span>);
+  }
+  <span class="kw">return</span> <span class="var">clone</span>;
+}</pre></div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <table>
+          <tr><th>Method</th><th>Shallow?</th><th>Handles Date/RegExp?</th><th>Circular?</th></tr>
+          <tr><td><code>{ ...obj }</code></td><td>✅ shallow</td><td>❌</td><td>❌</td></tr>
+          <tr><td><code>Object.assign</code></td><td>✅ shallow</td><td>❌</td><td>❌</td></tr>
+          <tr><td><code>JSON.parse/stringify</code></td><td>Deep ✅</td><td>❌ loses Date/RegExp</td><td>❌ throws</td></tr>
+          <tr><td><code>structuredClone</code></td><td>Deep ✅</td><td>✅</td><td>✅</td></tr>
+          <tr><td>Custom (above)</td><td>Deep ✅</td><td>✅</td><td>✅</td></tr>
+        </table>
+        <div class="card accent-green">
+          <h3>Use structuredClone() (Modern)</h3>
+          <pre style="font-family:Consolas,monospace;font-size:12px;color:#e6edf3;background:#0d1117;padding:8px;border-radius:4px;"><span class="kw">const</span> <span class="var">clone</span> <span class="op">=</span> <span class="fn">structuredClone</span>(<span class="var">original</span>);</pre>
+          <p style="margin-top:6px;">Native, fast, handles circular refs &amp; typed arrays. Available in Node 17+ and all modern browsers.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SLIDE 14 — Q13: Flatten Array
+══════════════════════════════════════════ -->
+<div class="slide" id="s14">
+  <div class="slide-header">
+    <span class="topic-badge medium">Medium</span>
+    <h1>Q13 — Flatten a Deeply Nested Array</h1>
+  </div>
+  <div class="content">
+    <div class="question-label">The Question</div>
+    <div class="highlight-box">
+      <p>Implement <code>flatten(arr, depth)</code> without using <code>Array.prototype.flat</code>. Provide 3 different approaches: recursive, iterative (stack), and reduce-based.</p>
+    </div>
+    <div class="two-col">
+      <div class="code-block"><pre><span class="kw">const</span> <span class="var">input</span> <span class="op">=</span> [<span class="num">1</span>, [<span class="num">2</span>, [<span class="num">3</span>, [<span class="num">4</span>]], <span class="num">5</span>]];
+
+<span class="cmt">// 1. Recursive — infinite depth</span>
+<span class="kw">function</span> <span class="fn">flattenRecursive</span>(<span class="var">arr</span>) {
+  <span class="kw">return</span> <span class="var">arr</span>.<span class="fn">reduce</span>((<span class="var">acc</span>, <span class="var">item</span>) <span class="op">=&gt;</span>
+    <span class="var">acc</span>.<span class="fn">concat</span>(Array.<span class="fn">isArray</span>(<span class="var">item</span>) ? <span class="fn">flattenRecursive</span>(<span class="var">item</span>) : <span class="var">item</span>), []);
+}
+
+<span class="cmt">// 2. Iterative stack — avoids call stack overflow</span>
+<span class="kw">function</span> <span class="fn">flattenStack</span>(<span class="var">arr</span>) {
+  <span class="kw">const</span> <span class="var">stack</span> <span class="op">=</span> [...<span class="var">arr</span>];
+  <span class="kw">const</span> <span class="var">result</span> <span class="op">=</span> [];
+  <span class="kw">while</span> (<span class="var">stack</span>.<span class="var">length</span>) {
+    <span class="kw">const</span> <span class="var">item</span> <span class="op">=</span> <span class="var">stack</span>.<span class="fn">shift</span>();
+    <span class="kw">if</span> (Array.<span class="fn">isArray</span>(<span class="var">item</span>)) <span class="var">stack</span>.<span class="fn">unshift</span>(...<span class="var">item</span>);
+    <span class="kw">else</span> <span class="var">result</span>.<span class="fn">push</span>(<span class="var">item</span>);
+  }
+  <span class="kw">return</span> <span class="var">result</span>;
+}
+
+<span class="cmt">// 3. With depth control</span>
+<span class="kw">function</span> <span class="fn">flatten</span>(<span class="var">arr</span>, <span class="var">depth</span> <span class="op">=</span> Infinity) {
+  <span class="kw">if</span> (<span class="var">depth</span> <span class="op">===</span> <span class="num">0</span>) <span class="kw">return</span> [...<span class="var">arr</span>];
+  <span class="kw">return</span> <span class="var">arr</span>.<span class="fn">reduce</span>((<span class="var">acc</span>, <span class="var">item</span>) <span class="op">=&gt;</span>
+    <span class="var">acc</span>.<span class="fn">concat</span>(Array.<span class="fn">isArray</span>(<span class="var">item</span>) ? <span class="fn">flatten</span>(<span class="var">item</span>, <span class="var">depth</span> <span class="op">-</span> <span class="num">1</span>) : <span class="var">item</span>), []);
+}
+
+<span class="fn">flatten</span>(<span class="var">input</span>);     <span class="cmt">// [1, 2, 3, 4, 5]</span>
+<span class="fn">flatten</span>(<span class="var">input</span>, <span class="num">1</span>); <span class="cmt">// [1, 2, [3, [4]], 5]</span>
+
+<span class="cmt">// Native (ES2019)</span>
+<span class="var">input</span>.<span class="fn">flat</span>(Infinity);  <span class="cmt">// [1, 2, 3, 4, 5]</span></pre></div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div class="card accent-blue">
+          <h3>Performance Notes</h3>
+          <ul>
+            <li>Recursive: simple, but risks stack overflow for very deep nesting</li>
+            <li>Iterative stack: O(n) space, safer for large data</li>
+            <li>Native <code>.flat()</code>: fastest — use in production</li>
+          </ul>
+        </div>
+        <div class="card accent-orange">
+          <h3>Related: flatMap</h3>
+          <pre style="font-family:Consolas,monospace;font-size:12px;color:#e6edf3;background:#0d1117;padding:8px;border-radius:4px;line-height:1.5;">[<span class="num">1</span>,<span class="num">2</span>,<span class="num">3</span>].<span class="fn">flatMap</span>(<span class="var">x</span> <span class="op">=&gt;</span> [<span class="var">x</span>, <span class="var">x</span> <span class="op">*</span> <span class="num">2</span>])
+<span class="cmt">// [1,2, 2,4, 3,6]</span></pre>
+          <p>Equivalent to <code>.map().flat(1)</code>. Useful for expanding each item into multiple results.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SLIDE 15 — Q14: Array Methods
+══════════════════════════════════════════ -->
+<div class="slide" id="s15">
+  <div class="slide-header">
+    <span class="topic-badge medium">Medium</span>
+    <h1>Q14 — map, filter, reduce — Implement Each</h1>
+  </div>
+  <div class="content">
+    <div class="question-label">The Question</div>
+    <div class="highlight-box">
+      <p>Implement <code>Array.prototype.myMap</code>, <code>myFilter</code>, and <code>myReduce</code> from scratch. Then use them to solve: group an array of orders by status and calculate total per group.</p>
+    </div>
+    <div class="two-col">
+      <div class="code-block"><pre><span class="cls">Array</span>.<span class="var">prototype</span>.<span class="fn">myMap</span> <span class="op">=</span> <span class="kw">function</span>(<span class="var">cb</span>) {
+  <span class="kw">const</span> <span class="var">result</span> <span class="op">=</span> [];
+  <span class="kw">for</span> (<span class="kw">let</span> <span class="var">i</span> <span class="op">=</span> <span class="num">0</span>; <span class="var">i</span> <span class="op">&lt;</span> <span class="kw">this</span>.<span class="var">length</span>; <span class="var">i</span><span class="op">++</span>)
+    <span class="var">result</span>.<span class="fn">push</span>(<span class="fn">cb</span>(<span class="kw">this</span>[<span class="var">i</span>], <span class="var">i</span>, <span class="kw">this</span>));
+  <span class="kw">return</span> <span class="var">result</span>;
+};
+
+<span class="cls">Array</span>.<span class="var">prototype</span>.<span class="fn">myFilter</span> <span class="op">=</span> <span class="kw">function</span>(<span class="var">cb</span>) {
+  <span class="kw">const</span> <span class="var">result</span> <span class="op">=</span> [];
+  <span class="kw">for</span> (<span class="kw">let</span> <span class="var">i</span> <span class="op">=</span> <span class="num">0</span>; <span class="var">i</span> <span class="op">&lt;</span> <span class="kw">this</span>.<span class="var">length</span>; <span class="var">i</span><span class="op">++</span>)
+    <span class="kw">if</span> (<span class="fn">cb</span>(<span class="kw">this</span>[<span class="var">i</span>], <span class="var">i</span>, <span class="kw">this</span>)) <span class="var">result</span>.<span class="fn">push</span>(<span class="kw">this</span>[<span class="var">i</span>]);
+  <span class="kw">return</span> <span class="var">result</span>;
+};
+
+<span class="cls">Array</span>.<span class="var">prototype</span>.<span class="fn">myReduce</span> <span class="op">=</span> <span class="kw">function</span>(<span class="var">cb</span>, <span class="var">init</span>) {
+  <span class="kw">let</span> <span class="var">acc</span> <span class="op">=</span> <span class="var">init</span> <span class="op">!==</span> <span class="kw">undefined</span> ? <span class="var">init</span> : <span class="kw">this</span>[<span class="num">0</span>];
+  <span class="kw">let</span> <span class="var">start</span> <span class="op">=</span> <span class="var">init</span> <span class="op">!==</span> <span class="kw">undefined</span> ? <span class="num">0</span> : <span class="num">1</span>;
+  <span class="kw">for</span> (<span class="kw">let</span> <span class="var">i</span> <span class="op">=</span> <span class="var">start</span>; <span class="var">i</span> <span class="op">&lt;</span> <span class="kw">this</span>.<span class="var">length</span>; <span class="var">i</span><span class="op">++</span>)
+    <span class="var">acc</span> <span class="op">=</span> <span class="fn">cb</span>(<span class="var">acc</span>, <span class="kw">this</span>[<span class="var">i</span>], <span class="var">i</span>, <span class="kw">this</span>);
+  <span class="kw">return</span> <span class="var">acc</span>;
+};
+
+<span class="cmt">// Real-world: group orders by status + total</span>
+<span class="kw">const</span> <span class="var">orders</span> <span class="op">=</span> [
+  { <span class="var">id</span>:<span class="num">1</span>, <span class="var">status</span>:<span class="str">'paid'</span>,    <span class="var">total</span>:<span class="num">100</span> },
+  { <span class="var">id</span>:<span class="num">2</span>, <span class="var">status</span>:<span class="str">'pending'</span>, <span class="var">total</span>:<span class="num">200</span> },
+  { <span class="var">id</span>:<span class="num">3</span>, <span class="var">status</span>:<span class="str">'paid'</span>,    <span class="var">total</span>:<span class="num">150</span> },
+];
+
+<span class="kw">const</span> <span class="var">grouped</span> <span class="op">=</span> <span class="var">orders</span>.<span class="fn">reduce</span>((<span class="var">acc</span>, <span class="var">o</span>) <span class="op">=&gt;</span> {
+  (<span class="var">acc</span>[<span class="var">o</span>.<span class="var">status</span>] <span class="op">??=</span> { <span class="var">orders</span>:[], <span class="var">total</span>:<span class="num">0</span> });
+  <span class="var">acc</span>[<span class="var">o</span>.<span class="var">status</span>].<span class="var">orders</span>.<span class="fn">push</span>(<span class="var">o</span>);
+  <span class="var">acc</span>[<span class="var">o</span>.<span class="var">status</span>].<span class="var">total</span> <span class="op">+=</span> <span class="var">o</span>.<span class="var">total</span>;
+  <span class="kw">return</span> <span class="var">acc</span>;
+}, {}); <span class="cmt">// { paid:{orders:[..],total:250}, pending:{...} }</span></pre></div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div class="card accent-blue">
+          <h3>Key Signatures</h3>
+          <ul>
+            <li><code>map(cb(item, i, arr))</code> → new array, same length</li>
+            <li><code>filter(cb(item, i, arr))</code> → new array, shorter/equal</li>
+            <li><code>reduce(cb(acc, item, i, arr), init)</code> → single value</li>
+          </ul>
+        </div>
+        <div class="card accent-purple">
+          <h3>Compose Them</h3>
+          <pre style="font-family:Consolas,monospace;font-size:12px;color:#e6edf3;background:#0d1117;padding:8px;border-radius:4px;line-height:1.5;"><span class="var">orders</span>
+  .<span class="fn">filter</span>(<span class="var">o</span> <span class="op">=&gt;</span> <span class="var">o</span>.<span class="var">status</span> <span class="op">===</span> <span class="str">'paid'</span>)
+  .<span class="fn">map</span>(<span class="var">o</span> <span class="op">=&gt;</span> <span class="var">o</span>.<span class="var">total</span>)
+  .<span class="fn">reduce</span>((<span class="var">a</span>, <span class="var">b</span>) <span class="op">=&gt;</span> <span class="var">a</span> <span class="op">+</span> <span class="var">b</span>, <span class="num">0</span>); <span class="cmt">// 250</span></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SLIDE 16 — Q15: Implement Promise.all
+══════════════════════════════════════════ -->
+<div class="slide" id="s16">
+  <div class="slide-header">
+    <span class="topic-badge hard">Hard</span>
+    <h1>Q15 — Implement Promise.all &amp; Promise.allSettled</h1>
+  </div>
+  <div class="content">
+    <div class="question-label">The Question</div>
+    <div class="highlight-box">
+      <p>Implement <code>myPromiseAll(promises)</code> and <code>myPromiseAllSettled(promises)</code> from scratch. This is a very common senior-level question.</p>
+    </div>
+    <div class="two-col">
+      <div class="code-block"><pre><span class="kw">function</span> <span class="fn">myPromiseAll</span>(<span class="var">promises</span>) {
+  <span class="kw">return new</span> Promise((<span class="var">resolve</span>, <span class="var">reject</span>) <span class="op">=&gt;</span> {
+    <span class="kw">if</span> (!<span class="var">promises</span>.<span class="var">length</span>) <span class="kw">return</span> <span class="fn">resolve</span>([]);
+    <span class="kw">const</span> <span class="var">results</span> <span class="op">=</span> [];
+    <span class="kw">let</span> <span class="var">pending</span> <span class="op">=</span> <span class="var">promises</span>.<span class="var">length</span>;
+
+    <span class="var">promises</span>.<span class="fn">forEach</span>((<span class="var">p</span>, <span class="var">i</span>) <span class="op">=&gt;</span> {
+      Promise.<span class="fn">resolve</span>(<span class="var">p</span>)
+        .<span class="fn">then</span>(<span class="var">val</span> <span class="op">=&gt;</span> {
+          <span class="var">results</span>[<span class="var">i</span>] <span class="op">=</span> <span class="var">val</span>;          <span class="cmt">// preserve order</span>
+          <span class="kw">if</span> (<span class="op">--</span><span class="var">pending</span> <span class="op">===</span> <span class="num">0</span>) <span class="fn">resolve</span>(<span class="var">results</span>);
+        })
+        .<span class="fn">catch</span>(<span class="var">reject</span>);               <span class="cmt">// first failure → reject all</span>
+    });
+  });
+}
+
+<span class="kw">function</span> <span class="fn">myPromiseAllSettled</span>(<span class="var">promises</span>) {
+  <span class="kw">return new</span> Promise(<span class="var">resolve</span> <span class="op">=&gt;</span> {
+    <span class="kw">if</span> (!<span class="var">promises</span>.<span class="var">length</span>) <span class="kw">return</span> <span class="fn">resolve</span>([]);
+    <span class="kw">const</span> <span class="var">results</span> <span class="op">=</span> [];
+    <span class="kw">let</span> <span class="var">pending</span> <span class="op">=</span> <span class="var">promises</span>.<span class="var">length</span>;
+
+    <span class="var">promises</span>.<span class="fn">forEach</span>((<span class="var">p</span>, <span class="var">i</span>) <span class="op">=&gt;</span> {
+      Promise.<span class="fn">resolve</span>(<span class="var">p</span>)
+        .<span class="fn">then</span>(<span class="var">value</span> <span class="op">=&gt;</span> {
+          <span class="var">results</span>[<span class="var">i</span>] <span class="op">=</span> { <span class="var">status</span>: <span class="str">'fulfilled'</span>, <span class="var">value</span> };
+          <span class="kw">if</span> (<span class="op">--</span><span class="var">pending</span> <span class="op">===</span> <span class="num">0</span>) <span class="fn">resolve</span>(<span class="var">results</span>);
+        })
+        .<span class="fn">catch</span>(<span class="var">reason</span> <span class="op">=&gt;</span> {
+          <span class="var">results</span>[<span class="var">i</span>] <span class="op">=</span> { <span class="var">status</span>: <span class="str">'rejected'</span>, <span class="var">reason</span> };
+          <span class="kw">if</span> (<span class="op">--</span><span class="var">pending</span> <span class="op">===</span> <span class="num">0</span>) <span class="fn">resolve</span>(<span class="var">results</span>);
+        });
+    });
+  });
+}
+
+<span class="cmt">// Bonus: Promise.race</span>
+<span class="kw">function</span> <span class="fn">myPromiseRace</span>(<span class="var">promises</span>) {
+  <span class="kw">return new</span> Promise((<span class="var">resolve</span>, <span class="var">reject</span>) <span class="op">=&gt;</span> {
+    <span class="var">promises</span>.<span class="fn">forEach</span>(<span class="var">p</span> <span class="op">=&gt;</span> Promise.<span class="fn">resolve</span>(<span class="var">p</span>).<span class="fn">then</span>(<span class="var">resolve</span>, <span class="var">reject</span>));
+  });
+}</pre></div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div class="card accent-blue">
+          <h3>Key Implementation Details</h3>
+          <ul>
+            <li>Wrap each in <code>Promise.resolve(p)</code> to handle non-Promise values</li>
+            <li>Track count with <code>pending</code> counter — don't use <code>results.length</code> (indices may be sparse)</li>
+            <li>Preserve insertion order by using index <code>results[i]</code></li>
+            <li>For <code>allSettled</code>: never call <code>reject</code> — always resolve with status objects</li>
+          </ul>
+        </div>
+        <div class="card accent-green">
+          <h3>Concurrency Limit (bonus)</h3>
+          <pre style="font-family:Consolas,monospace;font-size:12px;color:#e6edf3;background:#0d1117;padding:8px;border-radius:4px;line-height:1.5;"><span class="cmt">// Run at most N promises at a time</span>
+<span class="kw">async function</span> <span class="fn">poolAll</span>(<span class="var">fns</span>, <span class="var">limit</span>) {
+  <span class="kw">const</span> <span class="var">pool</span> <span class="op">=</span> <span class="kw">new</span> Set();
+  <span class="kw">for</span> (<span class="kw">const</span> <span class="var">fn</span> <span class="kw">of</span> <span class="var">fns</span>) {
+    <span class="kw">const</span> <span class="var">p</span> <span class="op">=</span> <span class="fn">fn</span>().<span class="fn">finally</span>(<span class="op">()</span> <span class="op">=&gt;</span> <span class="var">pool</span>.<span class="fn">delete</span>(<span class="var">p</span>));
+    <span class="var">pool</span>.<span class="fn">add</span>(<span class="var">p</span>);
+    <span class="kw">if</span> (<span class="var">pool</span>.<span class="var">size</span> <span class="op">&gt;=</span> <span class="var">limit</span>) <span class="kw">await</span> Promise.<span class="fn">race</span>(<span class="var">pool</span>);
+  }
+  <span class="kw">return</span> Promise.<span class="fn">allSettled</span>(<span class="var">pool</span>);
+}</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SLIDE 17 — Q16: Event Delegation
+══════════════════════════════════════════ -->
+<div class="slide" id="s17">
+  <div class="slide-header">
+    <span class="topic-badge medium">Medium</span>
+    <h1>Q16 — Event Delegation &amp; Custom Event Emitter</h1>
+  </div>
+  <div class="content">
+    <div class="question-label">The Question</div>
+    <div class="highlight-box">
+      <p>Explain event bubbling and delegation. Then implement a simple <code>EventEmitter</code> class (Node.js <code>EventEmitter</code>-style) with <code>on</code>, <code>off</code>, <code>emit</code>, and <code>once</code>.</p>
+    </div>
+    <div class="two-col">
+      <div class="code-block"><pre><span class="cmt">// Event Delegation pattern</span>
+<span class="cmt">// Instead of 1000 listeners, add ONE to the parent</span>
+document.<span class="fn">querySelector</span>(<span class="str">'#list'</span>)
+  .<span class="fn">addEventListener</span>(<span class="str">'click'</span>, (<span class="var">e</span>) <span class="op">=&gt;</span> {
+    <span class="kw">const</span> <span class="var">item</span> <span class="op">=</span> <span class="var">e</span>.<span class="var">target</span>.<span class="fn">closest</span>(<span class="str">'[data-id]'</span>);
+    <span class="kw">if</span> (<span class="var">item</span>) console.<span class="fn">log</span>(<span class="var">item</span>.<span class="var">dataset</span>.<span class="var">id</span>);
+  });
+
+<span class="cmt">// Custom EventEmitter</span>
+<span class="kw">class</span> <span class="cls">EventEmitter</span> {
+  <span class="fn">constructor</span>() { <span class="kw">this</span>.<span class="var">events</span> <span class="op">=</span> {}; }
+
+  <span class="fn">on</span>(<span class="var">event</span>, <span class="var">listener</span>) {
+    (<span class="kw">this</span>.<span class="var">events</span>[<span class="var">event</span>] <span class="op">??=</span> []).<span class="fn">push</span>(<span class="var">listener</span>);
+    <span class="kw">return</span> <span class="kw">this</span>; <span class="cmt">// chainable</span>
+  }
+
+  <span class="fn">off</span>(<span class="var">event</span>, <span class="var">listener</span>) {
+    <span class="kw">this</span>.<span class="var">events</span>[<span class="var">event</span>] <span class="op">=</span>
+      (<span class="kw">this</span>.<span class="var">events</span>[<span class="var">event</span>] <span class="op">||</span> []).<span class="fn">filter</span>(<span class="var">l</span> <span class="op">=&gt;</span> <span class="var">l</span> <span class="op">!==</span> <span class="var">listener</span>);
+    <span class="kw">return</span> <span class="kw">this</span>;
+  }
+
+  <span class="fn">emit</span>(<span class="var">event</span>, ...<span class="var">args</span>) {
+    (<span class="kw">this</span>.<span class="var">events</span>[<span class="var">event</span>] <span class="op">||</span> []).<span class="fn">forEach</span>(<span class="var">l</span> <span class="op">=&gt;</span> <span class="var">l</span>(...<span class="var">args</span>));
+    <span class="kw">return</span> <span class="kw">this</span>;
+  }
+
+  <span class="fn">once</span>(<span class="var">event</span>, <span class="var">listener</span>) {
+    <span class="kw">const</span> <span class="var">wrapper</span> <span class="op">=</span> (...<span class="var">args</span>) <span class="op">=&gt;</span> {
+      <span class="var">listener</span>(...<span class="var">args</span>);
+      <span class="kw">this</span>.<span class="fn">off</span>(<span class="var">event</span>, <span class="var">wrapper</span>); <span class="cmt">// self-removes</span>
+    };
+    <span class="kw">return</span> <span class="kw">this</span>.<span class="fn">on</span>(<span class="var">event</span>, <span class="var">wrapper</span>);
+  }
+}
+
+<span class="kw">const</span> <span class="var">bus</span> <span class="op">=</span> <span class="kw">new</span> <span class="cls">EventEmitter</span>();
+<span class="var">bus</span>.<span class="fn">on</span>(<span class="str">'login'</span>, <span class="var">user</span> <span class="op">=&gt;</span> console.<span class="fn">log</span>(<span class="str">'Welcome'</span>, <span class="var">user</span>));
+<span class="var">bus</span>.<span class="fn">once</span>(<span class="str">'init'</span>, <span class="op">()</span> <span class="op">=&gt;</span> console.<span class="fn">log</span>(<span class="str">'App started'</span>));
+<span class="var">bus</span>.<span class="fn">emit</span>(<span class="str">'login'</span>, <span class="str">'Nitin'</span>);
+<span class="var">bus</span>.<span class="fn">emit</span>(<span class="str">'init'</span>); <span class="cmt">// fires</span>
+<span class="var">bus</span>.<span class="fn">emit</span>(<span class="str">'init'</span>); <span class="cmt">// no-op — already removed</span></pre></div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div class="card accent-blue">
+          <h3>Event Phases</h3>
+          <ul>
+            <li><strong>Capturing</strong>: window → target (3rd arg: <code>true</code>)</li>
+            <li><strong>Bubbling</strong>: target → window (default)</li>
+            <li><code>e.stopPropagation()</code> stops bubbling</li>
+            <li><code>e.preventDefault()</code> stops default browser action</li>
+          </ul>
+        </div>
+        <div class="warn-box"><p>⚡ Angular: The <code>EventEmitter</code> class in Angular IS a Subject (RxJS) under the hood. The pattern above is the conceptual model for how component <code>@Output()</code> events work.</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SLIDE 18 — Q17: Generators
+══════════════════════════════════════════ -->
+<div class="slide" id="s18">
+  <div class="slide-header">
+    <span class="topic-badge hard">Hard</span>
+    <h1>Q17 — Generator Functions &amp; Iterators</h1>
+  </div>
+  <div class="content">
+    <div class="question-label">The Question</div>
+    <div class="highlight-box">
+      <p>Implement an infinite ID generator, a <code>range(start, end, step)</code> generator, and explain how generators enable lazy evaluation and async control flow.</p>
+    </div>
+    <div class="two-col">
+      <div class="code-block"><pre><span class="cmt">// Infinite unique ID generator</span>
+<span class="kw">function*</span> <span class="fn">idGenerator</span>(<span class="var">start</span> <span class="op">=</span> <span class="num">1</span>) {
+  <span class="kw">while</span> (<span class="kw">true</span>) <span class="kw">yield</span> <span class="var">start</span><span class="op">++</span>;
+}
+<span class="kw">const</span> <span class="var">ids</span> <span class="op">=</span> <span class="fn">idGenerator</span>();
+<span class="var">ids</span>.<span class="fn">next</span>().<span class="var">value</span>; <span class="cmt">// 1</span>
+<span class="var">ids</span>.<span class="fn">next</span>().<span class="var">value</span>; <span class="cmt">// 2 — paused between yields</span>
+
+<span class="cmt">// Range generator (lazy — no array created)</span>
+<span class="kw">function*</span> <span class="fn">range</span>(<span class="var">start</span>, <span class="var">end</span>, <span class="var">step</span> <span class="op">=</span> <span class="num">1</span>) {
+  <span class="kw">for</span> (<span class="kw">let</span> <span class="var">i</span> <span class="op">=</span> <span class="var">start</span>; <span class="var">i</span> <span class="op">&lt;</span> <span class="var">end</span>; <span class="var">i</span> <span class="op">+=</span> <span class="var">step</span>) <span class="kw">yield</span> <span class="var">i</span>;
+}
+[...<span class="fn">range</span>(<span class="num">0</span>, <span class="num">10</span>, <span class="num">2</span>)]; <span class="cmt">// [0, 2, 4, 6, 8]</span>
+
+<span class="cmt">// Two-way communication</span>
+<span class="kw">function*</span> <span class="fn">calculator</span>() {
+  <span class="kw">let</span> <span class="var">total</span> <span class="op">=</span> <span class="num">0</span>;
+  <span class="kw">while</span> (<span class="kw">true</span>) {
+    <span class="kw">const</span> <span class="var">input</span> <span class="op">=</span> <span class="kw">yield</span> <span class="var">total</span>; <span class="cmt">// yield sends, receives</span>
+    <span class="kw">if</span> (<span class="var">input</span> <span class="op">===</span> <span class="kw">null</span>) <span class="kw">return</span> <span class="var">total</span>;
+    <span class="var">total</span> <span class="op">+=</span> <span class="var">input</span>;
+  }
+}
+<span class="kw">const</span> <span class="var">calc</span> <span class="op">=</span> <span class="fn">calculator</span>();
+<span class="var">calc</span>.<span class="fn">next</span>();    <span class="cmt">// start: { value:0, done:false }</span>
+<span class="var">calc</span>.<span class="fn">next</span>(<span class="num">10</span>); <span class="cmt">// { value:10, done:false }</span>
+<span class="var">calc</span>.<span class="fn">next</span>(<span class="num">5</span>);  <span class="cmt">// { value:15, done:false }</span>
+<span class="var">calc</span>.<span class="fn">next</span>(<span class="kw">null</span>); <span class="cmt">// { value:15, done:true }</span>
+
+<span class="cmt">// Async generators (for async streams)</span>
+<span class="kw">async function*</span> <span class="fn">paginate</span>(<span class="var">url</span>) {
+  <span class="kw">let</span> <span class="var">page</span> <span class="op">=</span> <span class="num">1</span>;
+  <span class="kw">while</span> (<span class="kw">true</span>) {
+    <span class="kw">const</span> <span class="var">data</span> <span class="op">=</span> <span class="kw">await</span> <span class="fn">fetch</span>(<span class="str">`${<span class="var">url</span>}?page=${<span class="var">page</span>++}`</span>).<span class="fn">then</span>(<span class="var">r</span> <span class="op">=&gt;</span> <span class="var">r</span>.<span class="fn">json</span>());
+    <span class="kw">if</span> (!<span class="var">data</span>.<span class="var">length</span>) <span class="kw">break</span>;
+    <span class="kw">yield</span> <span class="var">data</span>;
+  }
+}
+<span class="kw">for await</span> (<span class="kw">const</span> <span class="var">page</span> <span class="kw">of</span> <span class="fn">paginate</span>(<span class="str">'/api/items'</span>))
+  console.<span class="fn">log</span>(<span class="var">page</span>);</pre></div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div class="card accent-purple">
+          <h3>Generator Protocol</h3>
+          <ul>
+            <li><code>function*</code> creates a generator factory</li>
+            <li>Calling it returns an <strong>iterator</strong> object</li>
+            <li><code>.next(val)</code> resumes; <code>val</code> becomes the result of the <code>yield</code> expression</li>
+            <li><code>.return(v)</code> terminates; <code>.throw(e)</code> injects an error</li>
+          </ul>
+        </div>
+        <div class="warn-box"><p>⚡ Angular/RxJS: Generators power async iterables. The <code>from(asyncIterable)</code> RxJS operator can wrap async generators into Observables.</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SLIDE 19 — Q18: WeakMap / WeakSet
+══════════════════════════════════════════ -->
+<div class="slide" id="s19">
+  <div class="slide-header">
+    <span class="topic-badge medium">Medium</span>
+    <h1>Q18 — WeakMap, WeakSet &amp; Memory Management</h1>
+  </div>
+  <div class="content">
+    <div class="question-label">The Question</div>
+    <div class="highlight-box">
+      <p>What is the difference between <code>Map</code>/<code>Set</code> and <code>WeakMap</code>/<code>WeakSet</code>? Give a practical use case for WeakMap that avoids memory leaks.</p>
+    </div>
+    <div class="two-col">
+      <div class="code-block"><pre><span class="cmt">// Map holds strong reference — memory leak risk</span>
+<span class="kw">const</span> <span class="var">cache</span> <span class="op">=</span> <span class="kw">new</span> Map();
+<span class="kw">let</span> <span class="var">domNode</span> <span class="op">=</span> document.<span class="fn">querySelector</span>(<span class="str">'#btn'</span>);
+<span class="var">cache</span>.<span class="fn">set</span>(<span class="var">domNode</span>, { <span class="var">clicks</span>: <span class="num">0</span> });
+<span class="var">domNode</span> <span class="op">=</span> <span class="kw">null</span>; <span class="cmt">// ❌ Map still holds reference!</span>
+
+<span class="cmt">// WeakMap — GC can collect when object unreachable</span>
+<span class="kw">const</span> <span class="var">wCache</span> <span class="op">=</span> <span class="kw">new</span> WeakMap();
+<span class="kw">let</span> <span class="var">domNode2</span> <span class="op">=</span> document.<span class="fn">querySelector</span>(<span class="str">'#btn'</span>);
+<span class="var">wCache</span>.<span class="fn">set</span>(<span class="var">domNode2</span>, { <span class="var">clicks</span>: <span class="num">0</span> });
+<span class="var">domNode2</span> <span class="op">=</span> <span class="kw">null</span>; <span class="cmt">// ✅ entry auto-removed by GC</span>
+
+<span class="cmt">// Use case 1: Private class data</span>
+<span class="kw">const</span> <span class="var">_private</span> <span class="op">=</span> <span class="kw">new</span> WeakMap();
+<span class="kw">class</span> <span class="cls">BankAccount</span> {
+  <span class="fn">constructor</span>(<span class="var">balance</span>) {
+    <span class="var">_private</span>.<span class="fn">set</span>(<span class="kw">this</span>, { <span class="var">balance</span> }); <span class="cmt">// truly private</span>
+  }
+  <span class="fn">deposit</span>(<span class="var">amount</span>) {
+    <span class="var">_private</span>.<span class="fn">get</span>(<span class="kw">this</span>).<span class="var">balance</span> <span class="op">+=</span> <span class="var">amount</span>;
+  }
+  <span class="fn">getBalance</span>() { <span class="kw">return</span> <span class="var">_private</span>.<span class="fn">get</span>(<span class="kw">this</span>).<span class="var">balance</span>; }
+}
+
+<span class="cmt">// Use case 2: Memoization tied to object lifecycle</span>
+<span class="kw">const</span> <span class="var">memo</span> <span class="op">=</span> <span class="kw">new</span> WeakMap();
+<span class="kw">function</span> <span class="fn">expensiveCalc</span>(<span class="var">obj</span>) {
+  <span class="kw">if</span> (<span class="var">memo</span>.<span class="fn">has</span>(<span class="var">obj</span>)) <span class="kw">return</span> <span class="var">memo</span>.<span class="fn">get</span>(<span class="var">obj</span>);
+  <span class="kw">const</span> <span class="var">result</span> <span class="op">=</span> <span class="cmt">/* heavy computation */</span> <span class="var">obj</span>.<span class="var">value</span> <span class="op">*</span> <span class="num">2</span>;
+  <span class="var">memo</span>.<span class="fn">set</span>(<span class="var">obj</span>, <span class="var">result</span>);
+  <span class="kw">return</span> <span class="var">result</span>;
+}
+
+<span class="cmt">// WeakSet: tracking visited nodes</span>
+<span class="kw">const</span> <span class="var">seen</span> <span class="op">=</span> <span class="kw">new</span> WeakSet();
+<span class="kw">function</span> <span class="fn">processNode</span>(<span class="var">node</span>) {
+  <span class="kw">if</span> (<span class="var">seen</span>.<span class="fn">has</span>(<span class="var">node</span>)) <span class="kw">return</span>;
+  <span class="var">seen</span>.<span class="fn">add</span>(<span class="var">node</span>);
+  <span class="cmt">// process...</span>
+}</pre></div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <table>
+          <tr><th></th><th>Map/Set</th><th>WeakMap/WeakSet</th></tr>
+          <tr><td>Key type</td><td>Any</td><td>Objects only</td></tr>
+          <tr><td>Iterable?</td><td>✅</td><td>❌ No</td></tr>
+          <tr><td>.size prop?</td><td>✅</td><td>❌ No</td></tr>
+          <tr><td>GC eligible</td><td>❌ Holds refs</td><td>✅ Weak ref</td></tr>
+        </table>
+        <div class="card accent-orange">
+          <h3>When to Reach for WeakMap</h3>
+          <ul>
+            <li>Caching computed metadata about objects</li>
+            <li>Private class field polyfills</li>
+            <li>Tracking objects without preventing GC</li>
+            <li>Managing per-instance state in decorators</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SLIDE 20 — Q19: Proxy & Reflect
+══════════════════════════════════════════ -->
+<div class="slide" id="s20">
+  <div class="slide-header">
+    <span class="topic-badge hard">Hard</span>
+    <h1>Q19 — Proxy &amp; Reflect: Reactive Object</h1>
+  </div>
+  <div class="content">
+    <div class="question-label">The Question</div>
+    <div class="highlight-box">
+      <p>Use <code>Proxy</code> to create an observable object that logs every property access and mutation. Then implement input validation using a Proxy.</p>
+    </div>
+    <div class="two-col">
+      <div class="code-block"><pre><span class="cmt">// Observable object via Proxy</span>
+<span class="kw">function</span> <span class="fn">createReactive</span>(<span class="var">target</span>, <span class="var">onChange</span>) {
+  <span class="kw">return new</span> Proxy(<span class="var">target</span>, {
+    <span class="fn">get</span>(<span class="var">obj</span>, <span class="var">key</span>) {
+      console.<span class="fn">log</span>(<span class="str">`GET: ${String(<span class="var">key</span>)}`</span>);
+      <span class="kw">return</span> Reflect.<span class="fn">get</span>(<span class="var">obj</span>, <span class="var">key</span>); <span class="cmt">// forward correctly</span>
+    },
+    <span class="fn">set</span>(<span class="var">obj</span>, <span class="var">key</span>, <span class="var">value</span>) {
+      <span class="kw">const</span> <span class="var">old</span> <span class="op">=</span> <span class="var">obj</span>[<span class="var">key</span>];
+      <span class="kw">const</span> <span class="var">result</span> <span class="op">=</span> Reflect.<span class="fn">set</span>(<span class="var">obj</span>, <span class="var">key</span>, <span class="var">value</span>);
+      <span class="kw">if</span> (<span class="var">old</span> <span class="op">!==</span> <span class="var">value</span>) <span class="fn">onChange</span>(<span class="var">key</span>, <span class="var">old</span>, <span class="var">value</span>);
+      <span class="kw">return</span> <span class="var">result</span>; <span class="cmt">// must return true</span>
+    },
+    <span class="fn">deleteProperty</span>(<span class="var">obj</span>, <span class="var">key</span>) {
+      console.<span class="fn">log</span>(<span class="str">`DELETE: ${String(<span class="var">key</span>)}`</span>);
+      <span class="kw">return</span> Reflect.<span class="fn">deleteProperty</span>(<span class="var">obj</span>, <span class="var">key</span>);
+    }
+  });
+}
+
+<span class="kw">const</span> <span class="var">state</span> <span class="op">=</span> <span class="fn">createReactive</span>(
+  { <span class="var">count</span>: <span class="num">0</span> },
+  (<span class="var">k</span>, <span class="var">o</span>, <span class="var">n</span>) <span class="op">=&gt;</span> console.<span class="fn">log</span>(<span class="str">`${<span class="var">k</span>}: ${<span class="var">o</span>} → ${<span class="var">n</span>}`</span>)
+);
+<span class="var">state</span>.<span class="var">count</span><span class="op">++</span>; <span class="cmt">// GET: count, count: 0 → 1</span>
+
+<span class="cmt">// Validation Proxy</span>
+<span class="kw">function</span> <span class="fn">validated</span>(<span class="var">target</span>, <span class="var">schema</span>) {
+  <span class="kw">return new</span> Proxy(<span class="var">target</span>, {
+    <span class="fn">set</span>(<span class="var">obj</span>, <span class="var">key</span>, <span class="var">value</span>) {
+      <span class="kw">if</span> (<span class="var">schema</span>[<span class="var">key</span>] <span class="op">&amp;&amp;</span> !<span class="var">schema</span>[<span class="var">key</span>](<span class="var">value</span>))
+        <span class="kw">throw new</span> <span class="cls">TypeError</span>(<span class="str">`Invalid value for ${String(<span class="var">key</span>)}: ${<span class="var">value</span>}`</span>);
+      <span class="kw">return</span> Reflect.<span class="fn">set</span>(<span class="var">obj</span>, <span class="var">key</span>, <span class="var">value</span>);
+    }
+  });
+}
+
+<span class="kw">const</span> <span class="var">user</span> <span class="op">=</span> <span class="fn">validated</span>({}, {
+  <span class="fn">age</span>: <span class="var">v</span> <span class="op">=&gt;</span> Number.<span class="fn">isInteger</span>(<span class="var">v</span>) <span class="op">&amp;&amp;</span> <span class="var">v</span> <span class="op">&gt;</span> <span class="num">0</span>,
+  <span class="fn">email</span>: <span class="var">v</span> <span class="op">=&gt;</span> /<span class="str">.+@.+\..+</span>/.<span class="fn">test</span>(<span class="var">v</span>)
+});
+<span class="var">user</span>.<span class="var">age</span> <span class="op">=</span> <span class="num">25</span>;        <span class="cmt">// ✅ ok</span>
+<span class="var">user</span>.<span class="var">age</span> <span class="op">=</span> <span class="str">'old'</span>;     <span class="cmt">// ❌ TypeError</span>
+<span class="var">user</span>.<span class="var">email</span> <span class="op">=</span> <span class="str">'bad'</span>;  <span class="cmt">// ❌ TypeError</span></pre></div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div class="card accent-blue">
+          <h3>Available Traps</h3>
+          <ul>
+            <li><code>get</code>, <code>set</code>, <code>has</code> (<code>in</code> operator)</li>
+            <li><code>deleteProperty</code>, <code>ownKeys</code></li>
+            <li><code>apply</code> (function calls), <code>construct</code> (<code>new</code>)</li>
+            <li><code>getPrototypeOf</code>, <code>defineProperty</code></li>
+          </ul>
+        </div>
+        <div class="card accent-green">
+          <h3>Always use Reflect</h3>
+          <p>Always forward operations using <code>Reflect.*</code> to maintain correct semantics (<code>this</code>, inheritance, descriptor invariants). Returning wrong values from traps can throw <code>TypeError</code>.</p>
+        </div>
+        <div class="warn-box"><p>⚡ Angular: Vue 3's reactivity system is built on Proxy. Angular uses a different model (Zone.js / signals) but understanding Proxy helps when debugging or writing framework-agnostic utilities.</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SLIDE 21 — Q20: Design Patterns
+══════════════════════════════════════════ -->
+<div class="slide" id="s21">
+  <div class="slide-header">
+    <span class="topic-badge hard">Hard</span>
+    <h1>Q20 — Design Patterns: Module, Observer, Singleton</h1>
+  </div>
+  <div class="content">
+    <div class="question-label">The Question</div>
+    <div class="highlight-box">
+      <p>Implement the <strong>Module</strong> pattern (revealing module), the <strong>Observer/Pub-Sub</strong> pattern, and a thread-safe <strong>Singleton</strong> in JavaScript. Explain where each is used in Angular.</p>
+    </div>
+    <div class="two-col">
+      <div class="code-block"><pre><span class="cmt">// 1. Revealing Module Pattern</span>
+<span class="kw">const</span> <span class="var">ShoppingCart</span> <span class="op">=</span> (() <span class="op">=&gt;</span> {
+  <span class="kw">let</span> <span class="var">items</span> <span class="op">=</span> [];  <span class="cmt">// private</span>
+  <span class="kw">const</span> <span class="fn">add</span>    <span class="op">=</span> <span class="var">item</span> <span class="op">=&gt;</span> <span class="var">items</span>.<span class="fn">push</span>(<span class="var">item</span>);
+  <span class="kw">const</span> <span class="fn">remove</span> <span class="op">=</span> <span class="var">id</span>   <span class="op">=&gt;</span> <span class="var">items</span> <span class="op">=</span> <span class="var">items</span>.<span class="fn">filter</span>(<span class="var">i</span> <span class="op">=&gt;</span> <span class="var">i</span>.<span class="var">id</span> <span class="op">!==</span> <span class="var">id</span>);
+  <span class="kw">const</span> <span class="fn">total</span>  <span class="op">=</span> ()   <span class="op">=&gt;</span> <span class="var">items</span>.<span class="fn">reduce</span>((<span class="var">s</span>, <span class="var">i</span>) <span class="op">=&gt;</span> <span class="var">s</span> <span class="op">+</span> <span class="var">i</span>.<span class="var">price</span>, <span class="num">0</span>);
+  <span class="kw">return</span> { <span class="var">add</span>, <span class="var">remove</span>, <span class="var">total</span> }; <span class="cmt">// public API</span>
+})();
+
+<span class="cmt">// 2. Observer / Pub-Sub</span>
+<span class="kw">class</span> <span class="cls">PubSub</span> {
+  <span class="fn">constructor</span>() { <span class="kw">this</span>.<span class="var">subs</span> <span class="op">=</span> {}; }
+  <span class="fn">subscribe</span>(<span class="var">topic</span>, <span class="var">fn</span>) {
+    (<span class="kw">this</span>.<span class="var">subs</span>[<span class="var">topic</span>] <span class="op">??=</span> []).<span class="fn">push</span>(<span class="var">fn</span>);
+    <span class="kw">return</span> () <span class="op">=&gt;</span> <span class="kw">this</span>.<span class="fn">unsubscribe</span>(<span class="var">topic</span>, <span class="var">fn</span>); <span class="cmt">// unsubscriber</span>
+  }
+  <span class="fn">publish</span>(<span class="var">topic</span>, <span class="var">data</span>) {
+    (<span class="kw">this</span>.<span class="var">subs</span>[<span class="var">topic</span>] <span class="op">||</span> []).<span class="fn">forEach</span>(<span class="var">fn</span> <span class="op">=&gt;</span> <span class="fn">fn</span>(<span class="var">data</span>));
+  }
+  <span class="fn">unsubscribe</span>(<span class="var">topic</span>, <span class="var">fn</span>) {
+    <span class="kw">this</span>.<span class="var">subs</span>[<span class="var">topic</span>] <span class="op">=</span> (<span class="kw">this</span>.<span class="var">subs</span>[<span class="var">topic</span>] <span class="op">||</span> []).<span class="fn">filter</span>(<span class="var">f</span> <span class="op">=&gt;</span> <span class="var">f</span> <span class="op">!==</span> <span class="var">fn</span>);
+  }
+}
+
+<span class="cmt">// 3. Singleton (module-level — JS modules are singletons)</span>
+<span class="kw">class</span> <span class="cls">AppConfig</span> {
+  <span class="kw">static</span> #<span class="var">instance</span> <span class="op">=</span> <span class="kw">null</span>;
+  #<span class="var">settings</span> <span class="op">=</span> {};
+
+  <span class="kw">static</span> <span class="fn">getInstance</span>() {
+    <span class="kw">if</span> (!<span class="cls">AppConfig</span>.#<span class="var">instance</span>)
+      <span class="cls">AppConfig</span>.#<span class="var">instance</span> <span class="op">=</span> <span class="kw">new</span> <span class="cls">AppConfig</span>();
+    <span class="kw">return</span> <span class="cls">AppConfig</span>.#<span class="var">instance</span>;
+  }
+  <span class="fn">set</span>(<span class="var">k</span>, <span class="var">v</span>) { <span class="kw">this</span>.#<span class="var">settings</span>[<span class="var">k</span>] <span class="op">=</span> <span class="var">v</span>; }
+  <span class="fn">get</span>(<span class="var">k</span>)    { <span class="kw">return</span> <span class="kw">this</span>.#<span class="var">settings</span>[<span class="var">k</span>]; }
+}
+<span class="kw">const</span> <span class="var">cfg</span> <span class="op">=</span> <span class="cls">AppConfig</span>.<span class="fn">getInstance</span>();</pre></div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <table>
+          <tr><th>Pattern</th><th>Angular Equivalent</th></tr>
+          <tr><td>Module</td><td><code>NgModule</code>, barrel exports</td></tr>
+          <tr><td>Observer</td><td>RxJS <code>Subject</code>, <code>@Output() EventEmitter</code></td></tr>
+          <tr><td>Singleton</td><td>Services with <code>providedIn: 'root'</code></td></tr>
+          <tr><td>Factory</td><td>Angular DI with factory providers</td></tr>
+          <tr><td>Decorator</td><td><code>@Component</code>, <code>@Injectable</code></td></tr>
+        </table>
+        <div class="card accent-orange">
+          <h3>Factory Pattern (Bonus)</h3>
+          <pre style="font-family:Consolas,monospace;font-size:12px;color:#e6edf3;background:#0d1117;padding:8px;border-radius:4px;line-height:1.5;"><span class="kw">function</span> <span class="fn">createAnimal</span>(<span class="var">type</span>) {
+  <span class="kw">const</span> <span class="var">types</span> <span class="op">=</span> { <span class="cls">Dog</span>, <span class="cls">Cat</span>, <span class="cls">Bird</span> };
+  <span class="kw">if</span> (!<span class="var">types</span>[<span class="var">type</span>]) <span class="kw">throw new</span> <span class="cls">Error</span>(<span class="str">'Unknown'</span>);
+  <span class="kw">return new</span> <span class="var">types</span>[<span class="var">type</span>]();
+}</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SLIDE 22 — Quick Cheat Sheet
+══════════════════════════════════════════ -->
+<div class="slide" id="s22">
+  <div class="slide-header">
+    <span class="topic-badge easy">Summary</span>
+    <h1>Interview Cheat Sheet — Key Patterns to Remember</h1>
+  </div>
+  <div class="content">
+    <div class="three-col">
+      <div class="card accent-blue">
+        <h3>Core Concepts</h3>
+        <ul>
+          <li>Closure = function + its lexical scope</li>
+          <li>Hoisting: <code>var</code> → undefined; <code>let/const</code> → TDZ</li>
+          <li>Event Loop: sync → microtask → macrotask</li>
+          <li>Prototype chain ends at <code>null</code></li>
+          <li><code>this</code>: new &gt; explicit &gt; implicit &gt; default</li>
+        </ul>
+      </div>
+      <div class="card accent-green">
+        <h3>Must-Implement</h3>
+        <ul>
+          <li>Debounce &amp; Throttle</li>
+          <li>Curry &amp; Memoize</li>
+          <li>Deep Clone (structuredClone)</li>
+          <li>Flatten array</li>
+          <li>Promise.all / allSettled</li>
+          <li>EventEmitter (on/off/emit/once)</li>
+          <li>call / apply / bind</li>
+        </ul>
+      </div>
+      <div class="card accent-orange">
+        <h3>Angular Connections</h3>
+        <ul>
+          <li>Zone.js patches event loop APIs</li>
+          <li><code>debounceTime</code> = debounce on Observable</li>
+          <li>RxJS Subject = Observer pattern</li>
+          <li>Services = Singletons</li>
+          <li><code>createSelector</code> = Memoization</li>
+          <li>Angular signals = Proxy-like reactivity</li>
+          <li><code>forkJoin</code> = Promise.all equivalent</li>
+        </ul>
+      </div>
+    </div>
+    <div class="two-col" style="margin-top:4px;">
+      <div class="card accent-purple">
+        <h3>Async Gotchas</h3>
+        <ul>
+          <li><code>Promise.all</code> short-circuits on first rejection — use <code>allSettled</code> for independence</li>
+          <li><code>async</code> function always returns a Promise, even if you return a plain value</li>
+          <li>Unhandled promise rejections crash Node.js in modern versions</li>
+          <li>Never <code>await</code> in a <code>forEach</code> — use <code>for...of</code> or <code>Promise.all(arr.map(...))</code></li>
+        </ul>
+      </div>
+      <div class="card accent-red">
+        <h3>Common Interview Traps</h3>
+        <ul>
+          <li><code>typeof null === 'object'</code> — a historic bug</li>
+          <li><code>NaN !== NaN</code> — use <code>Number.isNaN()</code></li>
+          <li><code>0 === -0</code> is true — use <code>Object.is(0, -0)</code></li>
+          <li><code>[]+[]</code> → <code>""</code> | <code>[]+{}</code> → <code>"[object Object]"</code></li>
+          <li>Arrow functions have no <code>arguments</code> object</li>
+          <li><code>const arr = []</code> — arr is const, its contents are not</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /#deck -->
+
+<!-- Navigation -->
+<nav id="nav">
+  <button id="btnFirst" title="First slide" onclick="goTo(0)">⏮</button>
+  <button id="btnPrev"  title="Previous"    onclick="prev()">◀</button>
+  <span   id="counter"></span>
+  <button id="btnNext"  title="Next"        onclick="next()">▶</button>
+  <button id="btnLast"  title="Last slide"  onclick="goTo(totalSlides-1)">⏭</button>
+</nav>
+<div id="hint">← → Arrow keys to navigate</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const totalSlides = slides.length;
+  let current = 0;
+
+  function goTo(n) {
+    slides[current].classList.remove('active');
+    current = Math.max(0, Math.min(n, totalSlides - 1));
+    slides[current].classList.add('active');
+    slides[current].scrollTop = 0;
+    update();
+  }
+
+  function next() { goTo(current + 1); }
+  function prev() { goTo(current - 1); }
+
+  function update() {
+    document.getElementById('counter').textContent = `${current + 1} / ${totalSlides}`;
+    document.getElementById('btnPrev').disabled  = current === 0;
+    document.getElementById('btnNext').disabled  = current === totalSlides - 1;
+    document.getElementById('btnFirst').disabled = current === 0;
+    document.getElementById('btnLast').disabled  = current === totalSlides - 1;
+    document.getElementById('progress-bar').style.width =
+      `${((current + 1) / totalSlides) * 100}%`;
+    document.getElementById('slideNum').textContent =
+      current === 0 ? '' : `${current} / ${totalSlides - 1}`;
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown')  next();
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')    prev();
+    if (e.key === 'Home') goTo(0);
+    if (e.key === 'End')  goTo(totalSlides - 1);
+  });
+
+  update();
+</script>
+</body>
+</html>
