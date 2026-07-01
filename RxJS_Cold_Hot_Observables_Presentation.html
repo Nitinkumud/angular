@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cold vs Hot Observables – RxJS Interview</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; overflow: hidden; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #0d1117;
+      color: #e6edf3;
+    }
+
+    #deck { width: 100vw; height: 100vh; position: relative; }
+
+    .slide {
+      display: none;
+      flex-direction: column;
+      justify-content: flex-start;
+      padding: 48px 60px 80px;
+      width: 100%;
+      height: 100%;
+      overflow-y: auto;
+      gap: 18px;
+      animation: fadeIn .35s ease;
+    }
+    .slide.active { display: flex; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+
+    .slide-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      border-bottom: 2px solid #21262d;
+      padding-bottom: 14px;
+      flex-shrink: 0;
+    }
+    .topic-badge {
+      background: #7c3aed;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: 20px;
+      white-space: nowrap;
+    }
+
+    h1 { font-size: 28px; font-weight: 700; color: #ff6b6b; }
+    h2 { font-size: 20px; font-weight: 600; color: #ffa657; margin-bottom: 6px; }
+    h3 { font-size: 15px; font-weight: 600; color: #ffa657; margin-bottom: 4px; }
+
+    .title-slide {
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      background: radial-gradient(ellipse at 50% 0%, #1a0a2e 0%, #0d1117 70%);
+    }
+    .title-slide h1 { font-size: 46px; margin-bottom: 10px; color: #d2a8ff; }
+    .title-slide .subtitle { font-size: 17px; color: #8b949e; max-width: 680px; line-height: 1.6; }
+    .rxjs-logo { font-size: 64px; margin-bottom: 16px; }
+    .topic-chips { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 22px; }
+    .chip {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 20px;
+      padding: 5px 14px;
+      font-size: 13px;
+      color: #8b949e;
+    }
+
+    .content { flex: 1; display: flex; flex-direction: column; gap: 16px; }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+
+    .card {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 10px;
+      padding: 16px 18px;
+    }
+    .card.accent-red    { border-left: 4px solid #f85149; }
+    .card.accent-blue   { border-left: 4px solid #1f6feb; }
+    .card.accent-green  { border-left: 4px solid #3fb950; }
+    .card.accent-orange { border-left: 4px solid #f78166; }
+    .card.accent-purple { border-left: 4px solid #d2a8ff; }
+    .card.accent-yellow { border-left: 4px solid #e3b341; }
+    .card.accent-pink   { border-left: 4px solid #ff6eb4; }
+    .card.accent-cyan   { border-left: 4px solid #39d0d8; }
+
+    p  { font-size: 14px; line-height: 1.75; color: #c9d1d9; }
+    li { font-size: 13.5px; line-height: 1.85; color: #c9d1d9; margin-left: 18px; }
+    ul { padding-left: 4px; }
+    strong { color: #f0f6fc; }
+    code {
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 12.5px;
+      background: #1c2128;
+      color: #79c0ff;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .code-block {
+      background: #1c2128;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 16px 18px;
+      overflow-x: auto;
+      flex-shrink: 0;
+    }
+    .code-block pre {
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 13px;
+      line-height: 1.7;
+      color: #e6edf3;
+      white-space: pre;
+      margin: 0;
+    }
+    .kw  { color: #ff7b72; }
+    .fn  { color: #d2a8ff; }
+    .str { color: #a5d6ff; }
+    .num { color: #79c0ff; }
+    .cmt { color: #8b949e; font-style: italic; }
+    .var { color: #ffa657; }
+    .dec { color: #ff6b6b; }
+    .cls { color: #f0c674; }
+    .int { color: #39d0d8; }
+    .op  { color: #7ee787; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th {
+      background: #161b22;
+      color: #d2a8ff;
+      text-align: left;
+      padding: 9px 13px;
+      border-bottom: 2px solid #30363d;
+      font-weight: 600;
+    }
+    td {
+      padding: 8px 13px;
+      border-bottom: 1px solid #21262d;
+      color: #c9d1d9;
+      vertical-align: top;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #161b22; }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 9px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .badge-red    { background: #3a1818; color: #f85149; }
+    .badge-green  { background: #1a3c1a; color: #3fb950; }
+    .badge-blue   { background: #0d2340; color: #58a6ff; }
+    .badge-orange { background: #3a2000; color: #ffa657; }
+    .badge-purple { background: #2a1a3e; color: #d2a8ff; }
+    .badge-yellow { background: #2e2200; color: #e3b341; }
+    .badge-cyan   { background: #0a2e2e; color: #39d0d8; }
+
+    /* Timeline / marble diagram */
+    .timeline {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      font-family: 'Consolas', monospace;
+      font-size: 13px;
+      margin: 6px 0;
+    }
+    .tl-label { color: #8b949e; min-width: 100px; font-size: 12px; }
+    .tl-line  { flex: 1; height: 2px; background: #30363d; position: relative; display: flex; align-items: center; gap: 0; }
+    .tl-dot {
+      width: 28px; height: 28px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700; color: #fff;
+      position: relative; flex-shrink: 0; margin: 0 6px;
+    }
+    .tl-dot.cold { background: #1f6feb; }
+    .tl-dot.hot  { background: #f85149; }
+    .tl-dot.green{ background: #3fb950; }
+    .tl-arrow { color: #484f58; font-size: 18px; padding-left: 4px; }
+
+    /* Analogy visual */
+    .analogy-box {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 10px;
+      padding: 16px 20px;
+    }
+    .analogy-icon { font-size: 40px; flex-shrink: 0; }
+    .analogy-text h3 { margin-bottom: 4px; }
+    .analogy-text p  { font-size: 13px; }
+
+    /* Tip box */
+    .tip-box {
+      background: #1c2a1c;
+      border: 1px solid #3fb950;
+      border-left: 4px solid #3fb950;
+      border-radius: 8px;
+      padding: 12px 16px;
+    }
+    .tip-box .tip-header { font-size: 12px; font-weight: 700; color: #3fb950; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
+    .tip-box p, .tip-box li { font-size: 13px; color: #c9d1d9; }
+
+    /* Memory trick box */
+    .memory-box {
+      background: #1e1a2e;
+      border: 1px solid #d2a8ff;
+      border-left: 4px solid #d2a8ff;
+      border-radius: 8px;
+      padding: 12px 16px;
+    }
+    .memory-box .mem-header { font-size: 12px; font-weight: 700; color: #d2a8ff; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
+    .memory-box p, .memory-box li { font-size: 13px; color: #c9d1d9; }
+
+    .iq-item {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 14px 16px;
+      margin-bottom: 6px;
+    }
+    .iq-q { font-size: 14px; font-weight: 600; color: #f0f6fc; margin-bottom: 6px; }
+    .iq-a { font-size: 13px; color: #c9d1d9; line-height: 1.7; }
+
+    #nav {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: #161b22cc;
+      backdrop-filter: blur(8px);
+      border: 1px solid #30363d;
+      border-radius: 40px;
+      padding: 10px 24px;
+      z-index: 1000;
+    }
+    #nav button {
+      background: none;
+      border: none;
+      color: #8b949e;
+      cursor: pointer;
+      font-size: 20px;
+      padding: 4px 8px;
+      border-radius: 6px;
+      transition: color .2s, background .2s;
+    }
+    #nav button:hover:not(:disabled) { color: #e6edf3; background: #21262d; }
+    #nav button:disabled { opacity: 0.3; cursor: default; }
+    #counter { font-size: 13px; color: #8b949e; min-width: 64px; text-align: center; }
+
+    #progress-bar {
+      position: fixed;
+      top: 0; left: 0;
+      height: 3px;
+      background: #7c3aed;
+      transition: width .3s ease;
+      z-index: 999;
+    }
+
+    #hint { position: fixed; bottom: 20px; right: 24px; font-size: 11px; color: #484f58; }
+    .slide::-webkit-scrollbar { width: 6px; }
+    .slide::-webkit-scrollbar-track { background: transparent; }
+    .slide::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+<div id="progress-bar"></div>
+<div id="deck">
+
+  <!-- ══════ SLIDE 0 — TITLE ══════ -->
+  <div class="slide title-slide active" id="s0">
+    <div class="rxjs-logo">🌡️</div>
+    <h1>Cold vs Hot Observables</h1>
+    <p class="subtitle">One of the most common RxJS interview topics — understand the producer model, subscription behaviour, memory leaks and real-world patterns.</p>
+    <div class="topic-chips">
+      <span class="chip">What is Cold?</span>
+      <span class="chip">What is Hot?</span>
+      <span class="chip">Code Examples</span>
+      <span class="chip">share() / shareReplay()</span>
+      <span class="chip">Subject</span>
+      <span class="chip">Real-World Use-Cases</span>
+      <span class="chip">Memory Tips</span>
+      <span class="chip">Interview Q&amp;A</span>
+    </div>
+  </div>
+
+  <!-- ══════ SLIDE 1 — CORE DEFINITION ══════ -->
+  <div class="slide" id="s1">
+    <div class="slide-header">
+      <span class="topic-badge">01</span>
+      <h1>The Core Difference</h1>
+    </div>
+    <div class="content">
+      <div class="two-col">
+        <div class="card accent-blue">
+          <h3>🧊 Cold Observable</h3>
+          <p>The <strong>producer is created inside</strong> the Observable. Every subscriber gets its own independent execution — the stream starts fresh for each one.</p>
+          <br/>
+          <ul>
+            <li>New producer per subscriber</li>
+            <li>Data replayed from the beginning</li>
+            <li><strong>Unicast</strong> — 1 subscriber = 1 producer</li>
+            <li>Lazy — nothing runs until subscribed</li>
+          </ul>
+        </div>
+        <div class="card accent-red">
+          <h3>🔥 Hot Observable</h3>
+          <p>The <strong>producer exists outside</strong> the Observable. All subscribers share the same execution — late subscribers miss earlier emissions.</p>
+          <br/>
+          <ul>
+            <li>Single shared producer</li>
+            <li>Late subscribers miss past values</li>
+            <li><strong>Multicast</strong> — N subscribers = 1 producer</li>
+            <li>Active regardless of subscribers</li>
+          </ul>
+        </div>
+      </div>
+      <div class="card accent-yellow">
+        <h3>💡 The Key Mental Model — "Where is the producer?"</h3>
+        <p>
+          <strong>Cold</strong> → producer is <em>created inside</em> the <code>new Observable()</code> callback → each subscribe call creates a brand-new producer.<br/>
+          <strong>Hot</strong> → producer is <em>created outside</em> (before subscribe) → all subscribers tap into the same running stream.
+        </p>
+      </div>
+      <div class="two-col">
+        <div class="analogy-box">
+          <div class="analogy-icon">🎬</div>
+          <div class="analogy-text">
+            <h3>Cold = Netflix / VOD</h3>
+            <p>Every viewer starts the movie from <strong>Episode 1</strong>, independently, at their own time.</p>
+          </div>
+        </div>
+        <div class="analogy-box">
+          <div class="analogy-icon">📺</div>
+          <div class="analogy-text">
+            <h3>Hot = Live TV</h3>
+            <p>You tune in mid-broadcast and see only what's airing <strong>right now</strong>. You miss what aired earlier.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════ SLIDE 2 — COLD OBSERVABLE CODE ══════ -->
+  <div class="slide" id="s2">
+    <div class="slide-header">
+      <span class="topic-badge">02</span>
+      <h1>🧊 Cold Observable — Code Example</h1>
+    </div>
+    <div class="content">
+      <div class="card accent-blue">
+        <h3>Each subscriber gets a completely independent execution</h3>
+        <p>Notice: <strong>"Producer started!"</strong> logs twice — once per subscriber. Each gets a different random value.</p>
+      </div>
+      <div class="code-block">
+        <pre><span class="kw">import</span> { <span class="cls">Observable</span> } <span class="kw">from</span> <span class="str">'rxjs'</span>;
+
+<span class="cmt">// Producer (Math.random) is INSIDE the Observable — Cold!</span>
+<span class="kw">const</span> <span class="var">cold$</span> = <span class="kw">new</span> <span class="cls">Observable</span>(<span class="var">observer</span> => {
+  <span class="kw">const</span> <span class="var">value</span> = <span class="cls">Math</span>.<span class="fn">random</span>();        <span class="cmt">// new value created per subscription</span>
+  console.<span class="fn">log</span>(<span class="str">'Producer started! value='</span>, <span class="var">value</span>);
+  <span class="var">observer</span>.<span class="fn">next</span>(<span class="var">value</span>);
+  <span class="var">observer</span>.<span class="fn">complete</span>();
+});
+
+<span class="cmt">// Subscriber 1</span>
+<span class="var">cold$</span>.<span class="fn">subscribe</span>(<span class="var">val</span> => console.<span class="fn">log</span>(<span class="str">'Sub 1:'</span>, <span class="var">val</span>));
+<span class="cmt">// Producer started! value= 0.4281   →  Sub 1: 0.4281</span>
+
+<span class="cmt">// Subscriber 2</span>
+<span class="var">cold$</span>.<span class="fn">subscribe</span>(<span class="var">val</span> => console.<span class="fn">log</span>(<span class="str">'Sub 2:'</span>, <span class="var">val</span>));
+<span class="cmt">// Producer started! value= 0.8734   →  Sub 2: 0.8734</span>
+
+<span class="cmt">// ✅ Each subscriber gets a DIFFERENT value — completely independent</span></pre>
+      </div>
+      <div class="two-col">
+        <div class="card accent-blue">
+          <h3>Common Cold Sources</h3>
+          <ul>
+            <li><code>new Observable(...)</code></li>
+            <li><code>of(1, 2, 3)</code></li>
+            <li><code>from([1, 2, 3])</code></li>
+            <li><code>interval(1000)</code></li>
+            <li><code>timer(500)</code></li>
+            <li><code>range(1, 10)</code></li>
+            <li><code>this.http.get(...)</code> — Angular HTTP</li>
+            <li><code>ajax(...)</code> — RxJS ajax</li>
+          </ul>
+        </div>
+        <div class="tip-box">
+          <div class="tip-header">⚠️ Real-World Problem with Cold HTTP</div>
+          <p>If 3 components subscribe to the same <code>http.get()</code> Observable, <strong>3 separate HTTP requests</strong> are fired! This is a cold observable pitfall. Solution: use <code>shareReplay(1)</code> to make it hot.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════ SLIDE 3 — HOT OBSERVABLE CODE ══════ -->
+  <div class="slide" id="s3">
+    <div class="slide-header">
+      <span class="topic-badge">03</span>
+      <h1>🔥 Hot Observable — Code Example</h1>
+    </div>
+    <div class="content">
+      <div class="card accent-red">
+        <h3>Single producer, shared by all subscribers</h3>
+        <p>Notice: <strong>Subscriber 2 misses value 1</strong> because it subscribed late. The Subject (producer) is outside the subscription logic.</p>
+      </div>
+      <div class="code-block">
+        <pre><span class="kw">import</span> { <span class="cls">Subject</span> } <span class="kw">from</span> <span class="str">'rxjs'</span>;
+
+<span class="cmt">// Subject is created OUTSIDE — it's Hot!</span>
+<span class="kw">const</span> <span class="var">hot$</span> = <span class="kw">new</span> <span class="cls">Subject</span>&lt;<span class="cls">number</span>&gt;();
+
+<span class="cmt">// Subscriber 1 joins immediately</span>
+<span class="var">hot$</span>.<span class="fn">subscribe</span>(<span class="var">val</span> => console.<span class="fn">log</span>(<span class="str">'Sub 1:'</span>, <span class="var">val</span>));
+
+<span class="var">hot$</span>.<span class="fn">next</span>(<span class="num">1</span>);   <span class="cmt">// Sub 1: 1</span>
+
+<span class="cmt">// Subscriber 2 joins LATE</span>
+<span class="var">hot$</span>.<span class="fn">subscribe</span>(<span class="var">val</span> => console.<span class="fn">log</span>(<span class="str">'Sub 2:'</span>, <span class="var">val</span>));
+
+<span class="var">hot$</span>.<span class="fn">next</span>(<span class="num">2</span>);   <span class="cmt">// Sub 1: 2,  Sub 2: 2</span>
+<span class="var">hot$</span>.<span class="fn">next</span>(<span class="num">3</span>);   <span class="cmt">// Sub 1: 3,  Sub 2: 3</span>
+
+<span class="cmt">// ❌ Sub 2 MISSED value 1 — that's hot behaviour!</span></pre>
+      </div>
+      <div class="two-col">
+        <div class="card accent-red">
+          <h3>Common Hot Sources</h3>
+          <ul>
+            <li><code>Subject</code></li>
+            <li><code>BehaviorSubject</code></li>
+            <li><code>ReplaySubject</code></li>
+            <li><code>AsyncSubject</code></li>
+            <li><code>fromEvent(button, 'click')</code></li>
+            <li><code>fromEvent(window, 'scroll')</code></li>
+            <li>WebSocket streams</li>
+            <li><code>cold$.pipe(share())</code></li>
+          </ul>
+        </div>
+        <div class="card accent-orange">
+          <h3>Hot Timeline Visualised</h3>
+          <div class="timeline" style="margin-top:10px;">
+            <span class="tl-label">Subject$</span>
+            <span style="color:#484f58;">───</span>
+            <span class="tl-dot hot">1</span>
+            <span style="color:#484f58;">────</span>
+            <span class="tl-dot hot">2</span>
+            <span style="color:#484f58;">────</span>
+            <span class="tl-dot hot">3</span>
+            <span style="color:#484f58;">──▶</span>
+          </div>
+          <div class="timeline">
+            <span class="tl-label" style="color:#1f6feb;">Sub 1 (t=0)</span>
+            <span style="color:#484f58;">───</span>
+            <span class="tl-dot cold">1</span>
+            <span style="color:#484f58;">────</span>
+            <span class="tl-dot cold">2</span>
+            <span style="color:#484f58;">────</span>
+            <span class="tl-dot cold">3</span>
+            <span style="color:#484f58;">──▶</span>
+          </div>
+          <div class="timeline">
+            <span class="tl-label" style="color:#f85149;">Sub 2 (late)</span>
+            <span style="color:#484f58;">──────────</span>
+            <span class="tl-dot green">2</span>
+            <span style="color:#484f58;">────</span>
+            <span class="tl-dot green">3</span>
+            <span style="color:#484f58;">──▶</span>
+          </div>
+          <p style="margin-top:8px; font-size:12px; color:#8b949e;">Sub 2 missed value <strong style="color:#f85149;">1</strong> — joined after it was emitted</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════ SLIDE 4 — COLD TO HOT with share() ══════ -->
+  <div class="slide" id="s4">
+    <div class="slide-header">
+      <span class="topic-badge">04</span>
+      <h1>Converting Cold → Hot with <code>share()</code> &amp; <code>shareReplay()</code></h1>
+    </div>
+    <div class="content">
+      <div class="two-col">
+        <div class="card accent-cyan">
+          <h3><code>share()</code></h3>
+          <p>Multicasts the source Observable. All subscribers share one subscription. <strong>Does NOT replay</strong> past values to late subscribers.</p>
+        </div>
+        <div class="card accent-purple">
+          <h3><code>shareReplay(n)</code></h3>
+          <p>Multicasts AND <strong>replays the last n values</strong> to any new subscriber. Perfect for HTTP calls you want cached.</p>
+        </div>
+      </div>
+      <div class="code-block">
+        <pre><span class="kw">import</span> { <span class="fn">interval</span> } <span class="kw">from</span> <span class="str">'rxjs'</span>;
+<span class="kw">import</span> { <span class="fn">share</span>, <span class="fn">shareReplay</span>, <span class="fn">tap</span> } <span class="kw">from</span> <span class="str">'rxjs/operators'</span>;
+
+<span class="cmt">// ─── share() ───────────────────────────────────────────</span>
+<span class="kw">const</span> <span class="var">shared$</span> = <span class="fn">interval</span>(<span class="num">1000</span>).<span class="fn">pipe</span>(
+  <span class="fn">tap</span>(() => console.<span class="fn">log</span>(<span class="str">'Tick!'</span>)),   <span class="cmt">// logs once per tick (not twice!)</span>
+  <span class="fn">share</span>()
+);
+
+<span class="var">shared$</span>.<span class="fn">subscribe</span>(<span class="var">v</span> => console.<span class="fn">log</span>(<span class="str">'Sub A:'</span>, <span class="var">v</span>));   <span class="cmt">// 0, 1, 2, 3...</span>
+<span class="fn">setTimeout</span>(() => {
+  <span class="var">shared$</span>.<span class="fn">subscribe</span>(<span class="var">v</span> => console.<span class="fn">log</span>(<span class="str">'Sub B:'</span>, <span class="var">v</span>)); <span class="cmt">// joins at ~2s → 2, 3...</span>
+}, <span class="num">2000</span>);
+
+
+<span class="cmt">// ─── shareReplay(1) for HTTP caching ───────────────────</span>
+<span class="kw">const</span> <span class="var">user$</span> = <span class="kw">this</span>.<span class="var">http</span>.<span class="fn">get</span>&lt;<span class="cls">User</span>&gt;(<span class="str">'/api/user'</span>).<span class="fn">pipe</span>(
+  <span class="fn">shareReplay</span>(<span class="num">1</span>)   <span class="cmt">// one HTTP call, result shared + replayed to late subscribers</span>
+);
+
+<span class="var">user$</span>.<span class="fn">subscribe</span>(<span class="var">u</span> => console.<span class="fn">log</span>(<span class="str">'Component A:'</span>, <span class="var">u</span>));  <span class="cmt">// fires HTTP</span>
+<span class="var">user$</span>.<span class="fn">subscribe</span>(<span class="var">u</span> => console.<span class="fn">log</span>(<span class="str">'Component B:'</span>, <span class="var">u</span>));  <span class="cmt">// gets cached — no new HTTP!</span></pre>
+      </div>
+      <div class="two-col">
+        <div class="tip-box">
+          <div class="tip-header">✅ When to use share()</div>
+          <ul>
+            <li>Event streams: mouse, WebSocket</li>
+            <li>Interval/timer shared among components</li>
+            <li>Side effects that should run only once</li>
+          </ul>
+        </div>
+        <div class="tip-box">
+          <div class="tip-header">✅ When to use shareReplay(1)</div>
+          <ul>
+            <li>HTTP calls in Angular services</li>
+            <li>Computed data that's expensive to recalculate</li>
+            <li>Late subscribers needing the last value</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════ SLIDE 5 — COMPARISON TABLE ══════ -->
+  <div class="slide" id="s5">
+    <div class="slide-header">
+      <span class="topic-badge">05</span>
+      <h1>Side-by-Side Comparison</h1>
+    </div>
+    <div class="content">
+      <div class="card" style="padding:0; overflow:hidden;">
+        <table>
+          <thead>
+            <tr>
+              <th>Feature</th>
+              <th>🧊 Cold Observable</th>
+              <th>🔥 Hot Observable</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Producer location</strong></td>
+              <td>Inside the Observable callback</td>
+              <td>Outside the Observable / pre-existing</td>
+            </tr>
+            <tr>
+              <td><strong>Per-subscription execution</strong></td>
+              <td><span class="badge badge-green">Yes — independent</span></td>
+              <td><span class="badge badge-red">No — shared</span></td>
+            </tr>
+            <tr>
+              <td><strong>Multicast</strong></td>
+              <td>Unicast (1:1)</td>
+              <td>Multicast (1:N)</td>
+            </tr>
+            <tr>
+              <td><strong>Late subscriber gets past values?</strong></td>
+              <td><span class="badge badge-green">Yes — starts from beginning</span></td>
+              <td><span class="badge badge-red">No — misses past values</span></td>
+            </tr>
+            <tr>
+              <td><strong>Starts without subscribers?</strong></td>
+              <td>No (lazy)</td>
+              <td>Yes (eager)</td>
+            </tr>
+            <tr>
+              <td><strong>Examples</strong></td>
+              <td><code>of()</code>, <code>from()</code>, <code>http.get()</code>, <code>interval()</code></td>
+              <td><code>Subject</code>, <code>fromEvent()</code>, <code>share()</code></td>
+            </tr>
+            <tr>
+              <td><strong>Problem to watch</strong></td>
+              <td>Multiple HTTP calls if subscribed multiple times</td>
+              <td>Late subscribers miss data</td>
+            </tr>
+            <tr>
+              <td><strong>Solution</strong></td>
+              <td>Use <code>share()</code> or <code>shareReplay(1)</code></td>
+              <td>Use <code>BehaviorSubject</code> or <code>ReplaySubject</code></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="two-col">
+        <div class="card accent-blue">
+          <h3>Cold → when to use</h3>
+          <ul>
+            <li>Fetching fresh data every time (e.g., form submission)</li>
+            <li>Each user/component needs isolated data</li>
+            <li>Unit testing — predictable per-subscriber execution</li>
+          </ul>
+        </div>
+        <div class="card accent-red">
+          <h3>Hot → when to use</h3>
+          <ul>
+            <li>Broadcasting events to many consumers (clicks, WebSocket)</li>
+            <li>Shared state across components (<code>BehaviorSubject</code> in a service)</li>
+            <li>Performance — avoid duplicate work / HTTP calls</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════ SLIDE 6 — REAL WORLD ANGULAR ══════ -->
+  <div class="slide" id="s6">
+    <div class="slide-header">
+      <span class="topic-badge">06</span>
+      <h1>Real-World Angular Examples</h1>
+    </div>
+    <div class="content">
+      <div class="two-col">
+        <div>
+          <div class="card accent-blue" style="margin-bottom:14px;">
+            <h3>🧊 Cold — Angular HTTP Service</h3>
+            <p>Every call to <code>getUser()</code> fires a fresh HTTP request — cold by default.</p>
+          </div>
+          <div class="code-block">
+            <pre><span class="cmt">// ❌ Problem: 3 components → 3 HTTP calls</span>
+<span class="dec">@Injectable</span>({ <span class="var">providedIn</span>: <span class="str">'root'</span> })
+<span class="kw">export class</span> <span class="cls">UserService</span> {
+  <span class="fn">getUser</span>() {
+    <span class="kw">return</span> <span class="kw">this</span>.<span class="var">http</span>.<span class="fn">get</span>(<span class="str">'/api/user'</span>); <span class="cmt">// Cold!</span>
+  }
+}
+
+<span class="cmt">// ✅ Fix: shareReplay makes it Hot + cached</span>
+<span class="dec">@Injectable</span>({ <span class="var">providedIn</span>: <span class="str">'root'</span> })
+<span class="kw">export class</span> <span class="cls">UserService</span> {
+  <span class="kw">private</span> <span class="var">user$</span> = <span class="kw">this</span>.<span class="var">http</span>.<span class="fn">get</span>(<span class="str">'/api/user'</span>).<span class="fn">pipe</span>(
+    <span class="fn">shareReplay</span>(<span class="num">1</span>)  <span class="cmt">// one call, shared result</span>
+  );
+  <span class="fn">getUser</span>() { <span class="kw">return</span> <span class="kw">this</span>.<span class="var">user$</span>; }
+}</pre>
+          </div>
+        </div>
+        <div>
+          <div class="card accent-red" style="margin-bottom:14px;">
+            <h3>🔥 Hot — BehaviorSubject State Store</h3>
+            <p>Components share the same state stream via a <code>BehaviorSubject</code> — classic hot pattern.</p>
+          </div>
+          <div class="code-block">
+            <pre><span class="dec">@Injectable</span>({ <span class="var">providedIn</span>: <span class="str">'root'</span> })
+<span class="kw">export class</span> <span class="cls">CartService</span> {
+  <span class="cmt">// BehaviorSubject = Hot + replays last value</span>
+  <span class="kw">private</span> <span class="var">_cart$</span> = <span class="kw">new</span> <span class="cls">BehaviorSubject</span>&lt;<span class="cls">Item</span>[]&gt;([]);
+
+  <span class="cmt">// Expose as read-only Observable</span>
+  <span class="var">cart$</span> = <span class="kw">this</span>.<span class="var">_cart$</span>.<span class="fn">asObservable</span>();
+
+  <span class="fn">addItem</span>(<span class="var">item</span>: <span class="cls">Item</span>) {
+    <span class="kw">const</span> <span class="var">current</span> = <span class="kw">this</span>.<span class="var">_cart$</span>.<span class="fn">getValue</span>();
+    <span class="kw">this</span>.<span class="var">_cart$</span>.<span class="fn">next</span>([...<span class="var">current</span>, <span class="var">item</span>]);
+  }
+}
+<span class="cmt">// All components subscribing to cart$ share
+// the SAME subject — hot multicast!</span></pre>
+          </div>
+        </div>
+      </div>
+      <div class="card accent-green">
+        <h3>🔥 Hot — DOM Events (always hot)</h3>
+        <p style="margin-bottom:8px;"><code>fromEvent()</code> wraps an existing DOM event listener — the event source (button, window) exists independently.</p>
+        <div class="code-block" style="margin-top:6px;">
+          <pre><span class="kw">import</span> { <span class="fn">fromEvent</span> } <span class="kw">from</span> <span class="str">'rxjs'</span>;
+<span class="kw">import</span> { <span class="fn">debounceTime</span>, <span class="fn">map</span> } <span class="kw">from</span> <span class="str">'rxjs/operators'</span>;
+
+<span class="kw">const</span> <span class="var">search$</span> = <span class="fn">fromEvent</span>(<span class="var">inputEl</span>, <span class="str">'input'</span>).<span class="fn">pipe</span>(  <span class="cmt">// Hot!</span>
+  <span class="fn">debounceTime</span>(<span class="num">300</span>),
+  <span class="fn">map</span>(<span class="var">e</span> => (<span class="var">e</span>.<span class="var">target</span> <span class="kw">as</span> <span class="cls">HTMLInputElement</span>).<span class="var">value</span>)
+);
+<span class="cmt">// Multiple subscribers all hear the SAME keystrokes — hot!</span></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════ SLIDE 7 — MEMORY TIPS ══════ -->
+  <div class="slide" id="s7">
+    <div class="slide-header">
+      <span class="topic-badge">07</span>
+      <h1>🧠 Memory Tips &amp; Mnemonics</h1>
+    </div>
+    <div class="content">
+      <div class="two-col">
+        <div class="memory-box">
+          <div class="mem-header">🎬 Netflix vs 📺 Live TV</div>
+          <p><strong>Cold = Netflix</strong> — You always watch from Episode 1. Each viewer gets their own private stream.</p>
+          <br/>
+          <p><strong>Hot = Live TV</strong> — You tune in and see only what's on <em>right now</em>. Miss anything that aired before you joined.</p>
+        </div>
+        <div class="memory-box">
+          <div class="mem-header">💧 Tap vs Pipe</div>
+          <p><strong>Cold = Tap water</strong> — You open the tap and fresh water flows <em>just for you</em>. Turn off the tap, water stops.</p>
+          <br/>
+          <p><strong>Hot = A pipe in the wall</strong> — Water is always flowing inside the pipe. You just plug in your cup when ready.</p>
+        </div>
+      </div>
+      <div class="memory-box" style="margin-top:0;">
+        <div class="mem-header">🔑 The "Where is the producer?" Rule</div>
+        <ul>
+          <li>Producer is <strong>inside</strong> <code>new Observable(observer => { ... })</code> → <strong>COLD</strong></li>
+          <li>Producer is <strong>outside</strong> (before subscribe, like a Subject or DOM event) → <strong>HOT</strong></li>
+        </ul>
+      </div>
+      <div class="three-col">
+        <div class="tip-box">
+          <div class="tip-header">🧊 C O L D</div>
+          <p><strong>C</strong>reated per subscriber<br/><strong>O</strong>wn independent execution<br/><strong>L</strong>azy (starts on subscribe)<br/><strong>D</strong>uplicated work risk</p>
+        </div>
+        <div class="tip-box">
+          <div class="tip-header">🔥 H O T</div>
+          <p><strong>H</strong>appens regardless (eager)<br/><strong>O</strong>ne shared producer<br/><strong>T</strong>une in late = miss values</p>
+        </div>
+        <div class="tip-box">
+          <div class="tip-header">🔄 SHARE trick</div>
+          <p>Cold → Hot = <code>pipe(share())</code><br/>Cold → Hot + Cache = <code>pipe(shareReplay(1))</code><br/>Use <strong>BehaviorSubject</strong> when late subscribers need the last value.</p>
+        </div>
+      </div>
+      <div class="card accent-yellow">
+        <h3>Quick-Fire Recall Table</h3>
+        <table style="margin-top:8px;">
+          <thead><tr><th>Question</th><th>Cold</th><th>Hot</th></tr></thead>
+          <tbody>
+            <tr><td>New producer per sub?</td><td>✅ Yes</td><td>❌ No</td></tr>
+            <tr><td>Late subscriber misses data?</td><td>❌ No (gets all)</td><td>✅ Yes</td></tr>
+            <tr><td>Multiple HTTP calls risk?</td><td>✅ Yes</td><td>❌ No</td></tr>
+            <tr><td>Subject is…?</td><td>—</td><td>Hot ✅</td></tr>
+            <tr><td>fromEvent is…?</td><td>—</td><td>Hot ✅</td></tr>
+            <tr><td>http.get() is…?</td><td>Cold ✅</td><td>—</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════ SLIDE 8 — INTERVIEW Q&A ══════ -->
+  <div class="slide" id="s8">
+    <div class="slide-header">
+      <span class="topic-badge">08</span>
+      <h1>Interview Q&amp;A</h1>
+    </div>
+    <div class="content">
+      <div class="iq-item">
+        <div class="iq-q">Q1. What is the difference between a Cold and Hot Observable?</div>
+        <div class="iq-a">A Cold Observable creates a <strong>new producer for each subscriber</strong> — each gets an independent execution from the start. A Hot Observable has a <strong>shared producer</strong> — all subscribers tap into the same stream and late subscribers miss past values.</div>
+      </div>
+      <div class="iq-item">
+        <div class="iq-q">Q2. Is Angular's <code>HttpClient.get()</code> cold or hot? What problem can this cause?</div>
+        <div class="iq-a">It is <strong>Cold</strong>. If 3 components subscribe to the same Observable returned by a service method, <strong>3 separate HTTP requests</strong> are fired. Fix: store the Observable in the service with <code>shareReplay(1)</code> so one HTTP call is made and the result is cached + replayed.</div>
+      </div>
+      <div class="iq-item">
+        <div class="iq-q">Q3. How do you convert a Cold Observable into a Hot one?</div>
+        <div class="iq-a">Use the <code>share()</code> operator (multicast without replay) or <code>shareReplay(n)</code> (multicast + replay last n values). Alternatively, pipe through a <code>Subject</code> manually, or use a <code>BehaviorSubject</code> / <code>ReplaySubject</code> as the source.</div>
+      </div>
+      <div class="iq-item">
+        <div class="iq-q">Q4. Is <code>fromEvent(button, 'click')</code> cold or hot? Why?</div>
+        <div class="iq-a">It is <strong>Hot</strong>, because the event source (the DOM button) exists <em>outside</em> the Observable. All subscribers share the same click events; a late subscriber will not receive clicks that happened before it subscribed.</div>
+      </div>
+      <div class="iq-item">
+        <div class="iq-q">Q5. What is the difference between <code>share()</code> and <code>shareReplay(1)</code>?</div>
+        <div class="iq-a"><code>share()</code> multicasts the source but <strong>does not replay</strong> past values to late subscribers. <code>shareReplay(1)</code> multicasts <strong>AND replays the last 1 emission</strong> to any new subscriber — ideal for caching HTTP responses so late subscribers immediately get the cached result.</div>
+      </div>
+      <div class="iq-item">
+        <div class="iq-q">Q6. Is a <code>Subject</code> cold or hot?</div>
+        <div class="iq-a">A <code>Subject</code> is always <strong>Hot</strong>. It is both an Observable and an Observer, and its values are emitted from outside. All subscribers share the same multicast stream.</div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /deck -->
+
+<!-- Navigation -->
+<nav id="nav">
+  <button id="btn-prev" disabled title="Previous (←)">&#8592;</button>
+  <span id="counter">1 / 9</span>
+  <button id="btn-next" title="Next (→)">&#8594;</button>
+</nav>
+<div id="hint">← → arrow keys to navigate</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const total  = slides.length;
+  let cur = 0;
+
+  const bar    = document.getElementById('progress-bar');
+  const counter= document.getElementById('counter');
+  const btnPrev= document.getElementById('btn-prev');
+  const btnNext= document.getElementById('btn-next');
+
+  function goTo(n) {
+    slides[cur].classList.remove('active');
+    cur = Math.max(0, Math.min(n, total - 1));
+    slides[cur].classList.add('active');
+    counter.textContent = `${cur + 1} / ${total}`;
+    bar.style.width = `${((cur + 1) / total) * 100}%`;
+    btnPrev.disabled = cur === 0;
+    btnNext.disabled = cur === total - 1;
+    slides[cur].scrollTop = 0;
+  }
+
+  btnPrev.addEventListener('click', () => goTo(cur - 1));
+  btnNext.addEventListener('click', () => goTo(cur + 1));
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown')  goTo(cur + 1);
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')    goTo(cur - 1);
+  });
+
+  goTo(0);
+</script>
+</body>
+</html>
