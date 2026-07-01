@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nitin Kumar — Senior Angular Engineer</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', system-ui, Arial, sans-serif;
+      background: #f4f6f9;
+      color: #1a1a2e;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    /* ── PRINT ── */
+    @media print {
+      body { background: #fff; font-size: 12px; }
+      .no-print { display: none !important; }
+      .page { box-shadow: none; margin: 0; border-radius: 0; max-width: 100%; }
+      .sidebar { background: #1a237e !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      a { color: inherit; text-decoration: none; }
+    }
+
+    /* ── LAYOUT ── */
+    .page {
+      max-width: 1100px;
+      margin: 32px auto;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.13);
+      display: grid;
+      grid-template-columns: 290px 1fr;
+      overflow: hidden;
+    }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      background: #1a237e;
+      color: #e8eaf6;
+      padding: 36px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+    }
+    .avatar {
+      width: 90px; height: 90px;
+      border-radius: 50%;
+      background: #3949ab;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 36px; font-weight: 700; color: #fff;
+      border: 3px solid #7986cb;
+      margin: 0 auto 4px;
+    }
+    .sidebar-name { text-align: center; }
+    .sidebar-name h1 { font-size: 20px; font-weight: 700; color: #fff; line-height: 1.3; }
+    .sidebar-name p { font-size: 11.5px; color: #9fa8da; margin-top: 4px; line-height: 1.5; text-align: center; }
+
+    .s-section-title {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: #7986cb;
+      margin-bottom: 10px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #283593;
+    }
+
+    /* contact */
+    .contact-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+    .contact-list li { display: flex; align-items: flex-start; gap: 8px; font-size: 12.5px; color: #c5cae9; }
+    .contact-list .icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+    .contact-list a { color: #90caf9; text-decoration: none; word-break: break-all; }
+    .contact-list a:hover { text-decoration: underline; }
+
+    /* skills */
+    .skill-group { margin-bottom: 10px; }
+    .skill-group-label { font-size: 11px; color: #9fa8da; margin-bottom: 5px; font-weight: 600; }
+    .skill-tags { display: flex; flex-wrap: wrap; gap: 5px; }
+    .skill-tag {
+      background: #283593;
+      color: #c5cae9;
+      border-radius: 4px;
+      padding: 2px 8px;
+      font-size: 11px;
+      border: 1px solid #3949ab;
+    }
+    .skill-tag.highlight { background: #1565c0; color: #90caf9; border-color: #1976d2; }
+
+    /* education */
+    .edu-item { margin-bottom: 12px; }
+    .edu-degree { font-size: 12.5px; font-weight: 600; color: #e8eaf6; }
+    .edu-school { font-size: 11px; color: #9fa8da; margin-top: 2px; }
+    .edu-year { font-size: 11px; color: #7986cb; margin-top: 1px; }
+
+    /* certs */
+    .cert-item { font-size: 12px; color: #c5cae9; padding: 4px 0; border-bottom: 1px solid #283593; }
+    .cert-item:last-child { border-bottom: none; }
+
+    /* ── MAIN ── */
+    .main { padding: 36px 40px; display: flex; flex-direction: column; gap: 28px; }
+
+    /* section */
+    .section-title {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: #1a237e;
+      margin-bottom: 14px;
+      padding-bottom: 6px;
+      border-bottom: 2px solid #e8eaf6;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .section-title::before {
+      content: '';
+      display: inline-block;
+      width: 4px; height: 16px;
+      background: #1a237e;
+      border-radius: 2px;
+    }
+
+    /* summary */
+    .summary-text {
+      font-size: 13.5px;
+      color: #37474f;
+      line-height: 1.8;
+      background: #f5f7ff;
+      border-left: 4px solid #1a237e;
+      padding: 12px 16px;
+      border-radius: 0 6px 6px 0;
+    }
+
+    /* experience */
+    .exp-item { margin-bottom: 22px; }
+    .exp-item:last-child { margin-bottom: 0; }
+    .exp-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 4px; }
+    .exp-title { font-size: 15px; font-weight: 700; color: #1a237e; }
+    .exp-company { font-size: 13px; color: #3949ab; font-weight: 600; }
+    .exp-meta { text-align: right; flex-shrink: 0; }
+    .exp-date {
+      font-size: 11.5px;
+      color: #fff;
+      background: #3949ab;
+      padding: 2px 10px;
+      border-radius: 20px;
+      white-space: nowrap;
+    }
+    .exp-location { font-size: 11px; color: #90a4ae; margin-top: 3px; text-align: right; }
+    .exp-bullets { margin-top: 8px; padding-left: 2px; list-style: none; display: flex; flex-direction: column; gap: 4px; }
+    .exp-bullets li {
+      font-size: 13px;
+      color: #455a64;
+      padding-left: 16px;
+      position: relative;
+      line-height: 1.65;
+    }
+    .exp-bullets li::before {
+      content: '▸';
+      position: absolute;
+      left: 0;
+      color: #3949ab;
+      font-size: 11px;
+      top: 2px;
+    }
+    .exp-project-badge {
+      display: inline-block;
+      background: #e8eaf6;
+      color: #3949ab;
+      border: 1px solid #c5cae9;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 1px 9px;
+      margin-bottom: 6px;
+    }
+
+    /* projects */
+    .projects-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .project-card {
+      border: 1px solid #e8eaf6;
+      border-radius: 8px;
+      padding: 14px 16px;
+      border-top: 3px solid #3949ab;
+      background: #fafbff;
+    }
+    .project-card:hover { box-shadow: 0 2px 12px rgba(26,35,126,0.1); }
+    .project-name { font-size: 13.5px; font-weight: 700; color: #1a237e; margin-bottom: 3px; }
+    .project-client { font-size: 11.5px; color: #3949ab; font-weight: 600; margin-bottom: 2px; }
+    .project-period { font-size: 11px; color: #90a4ae; margin-bottom: 8px; }
+    .project-desc { font-size: 12px; color: #546e7a; line-height: 1.6; margin-bottom: 8px; }
+    .project-bullets { list-style: none; padding: 0; margin-bottom: 8px; }
+    .project-bullets li { font-size: 12px; color: #455a64; padding-left: 14px; position: relative; margin-bottom: 3px; line-height: 1.5; }
+    .project-bullets li::before { content: '▸'; position: absolute; left: 0; color: #3949ab; font-size: 10px; top: 2px; }
+    .project-skills { display: flex; flex-wrap: wrap; gap: 4px; }
+    .project-skill {
+      background: #e8eaf6;
+      color: #3949ab;
+      border-radius: 4px;
+      padding: 1px 7px;
+      font-size: 10.5px;
+      font-weight: 600;
+    }
+
+    /* achievements */
+    .achievement-item {
+      background: #f5f7ff;
+      border: 1px solid #e8eaf6;
+      border-left: 4px solid #1565c0;
+      border-radius: 0 8px 8px 0;
+      padding: 12px 16px;
+      margin-bottom: 10px;
+    }
+    .achievement-item:last-child { margin-bottom: 0; }
+    .achievement-title { font-size: 14px; font-weight: 700; color: #1a237e; margin-bottom: 4px; }
+    .achievement-bullets { list-style: none; padding: 0; }
+    .achievement-bullets li { font-size: 12.5px; color: #455a64; padding-left: 14px; position: relative; margin-bottom: 3px; }
+    .achievement-bullets li::before { content: '▸'; position: absolute; left: 0; color: #1565c0; }
+
+    /* print button */
+    .print-bar {
+      text-align: center;
+      padding: 16px;
+      background: #1a237e;
+      color: #fff;
+      font-size: 13px;
+    }
+    .print-bar button {
+      background: #fff;
+      color: #1a237e;
+      border: none;
+      padding: 8px 24px;
+      border-radius: 20px;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 13px;
+      margin-left: 12px;
+    }
+    .print-bar button:hover { background: #e8eaf6; }
+  </style>
+</head>
+<body>
+
+<!-- Print Bar -->
+<div class="print-bar no-print">
+  Nitin Kumar — Senior Angular Engineer &nbsp;|&nbsp; 10+ Years Experience
+  <button onclick="window.print()">🖨️ Print / Save PDF</button>
+</div>
+
+<div class="page">
+
+  <!-- ════════════════ SIDEBAR ════════════════ -->
+  <aside class="sidebar">
+
+    <div>
+      <div class="avatar">NK</div>
+      <div class="sidebar-name">
+        <h1>Nitin Kumar</h1>
+        <p>Senior Software Engineer<br/>Angular Specialist · NgRx Expert</p>
+      </div>
+    </div>
+
+    <!-- Contact -->
+    <div>
+      <div class="s-section-title">Contact</div>
+      <ul class="contact-list">
+        <li><span class="icon">📍</span>Gurugram, Haryana, India</li>
+        <li><span class="icon">📱</span>+91 8802699100</li>
+        <li><span class="icon">✉️</span><a href="mailto:nitinkumr92@gmail.com">nitinkumr92@gmail.com</a></li>
+        <li><span class="icon">💼</span><a href="https://www.linkedin.com/in/nitin-kumar-1b212b178" target="_blank">linkedin.com/in/nitin-kumar-1b212b178</a></li>
+      </ul>
+    </div>
+
+    <!-- Skills -->
+    <div>
+      <div class="s-section-title">Technical Skills</div>
+
+      <div class="skill-group">
+        <div class="skill-group-label">Frontend Frameworks</div>
+        <div class="skill-tags">
+          <span class="skill-tag highlight">Angular v8–17</span>
+          <span class="skill-tag highlight">RxJS</span>
+          <span class="skill-tag highlight">NgRx</span>
+          <span class="skill-tag">React.js</span>
+          <span class="skill-tag">Redux</span>
+          <span class="skill-tag">Micro Frontend</span>
+          <span class="skill-tag">Module Federation</span>
+          <span class="skill-tag">Single SPA</span>
+        </div>
+      </div>
+
+      <div class="skill-group">
+        <div class="skill-group-label">Languages</div>
+        <div class="skill-tags">
+          <span class="skill-tag highlight">TypeScript</span>
+          <span class="skill-tag highlight">JavaScript (ES6+)</span>
+          <span class="skill-tag">HTML5</span>
+          <span class="skill-tag">CSS3 / SCSS</span>
+          <span class="skill-tag">Java</span>
+        </div>
+      </div>
+
+      <div class="skill-group">
+        <div class="skill-group-label">UI / Styling</div>
+        <div class="skill-tags">
+          <span class="skill-tag">Angular Material</span>
+          <span class="skill-tag">Bootstrap</span>
+          <span class="skill-tag">Material UI</span>
+          <span class="skill-tag">D3.js</span>
+          <span class="skill-tag">Chart.js</span>
+          <span class="skill-tag">Responsive Design</span>
+        </div>
+      </div>
+
+      <div class="skill-group">
+        <div class="skill-group-label">Testing</div>
+        <div class="skill-tags">
+          <span class="skill-tag">Jasmine</span>
+          <span class="skill-tag">Karma</span>
+          <span class="skill-tag">Jest</span>
+          <span class="skill-tag">Unit Testing</span>
+          <span class="skill-tag">E2E Testing</span>
+        </div>
+      </div>
+
+      <div class="skill-group">
+        <div class="skill-group-label">Tools & DevOps</div>
+        <div class="skill-tags">
+          <span class="skill-tag">Git</span>
+          <span class="skill-tag">Webpack</span>
+          <span class="skill-tag">Jenkins</span>
+          <span class="skill-tag">Docker</span>
+          <span class="skill-tag">AWS</span>
+          <span class="skill-tag">CI/CD</span>
+          <span class="skill-tag">npm</span>
+        </div>
+      </div>
+
+      <div class="skill-group">
+        <div class="skill-group-label">Backend & APIs</div>
+        <div class="skill-tags">
+          <span class="skill-tag">REST APIs</span>
+          <span class="skill-tag">Node.js</span>
+          <span class="skill-tag">WebSockets</span>
+        </div>
+      </div>
+
+      <div class="skill-group">
+        <div class="skill-group-label">Methodologies</div>
+        <div class="skill-tags">
+          <span class="skill-tag">Agile / Scrum</span>
+          <span class="skill-tag">TDD</span>
+          <span class="skill-tag">Code Reviews</span>
+          <span class="skill-tag">Design Patterns</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Education -->
+    <div>
+      <div class="s-section-title">Education</div>
+      <div class="edu-item">
+        <div class="edu-degree">Master of Computer Applications (MCA)</div>
+        <div class="edu-school">Manav Rachna College of Engineering, Faridabad</div>
+        <div class="edu-year">2011 – 2014</div>
+      </div>
+      <div class="edu-item">
+        <div class="edu-degree">Bachelor of Computer Applications (BCA)</div>
+        <div class="edu-school">Dronacharya Government College</div>
+        <div class="edu-year">2008 – 2011</div>
+      </div>
+    </div>
+
+    <!-- Certifications -->
+    <div>
+      <div class="s-section-title">Certifications</div>
+      <div class="cert-item">🏅 AWS Partner: Generative AI Essentials</div>
+      <div class="cert-item">🏅 React Certification</div>
+      <div class="cert-item">🏅 Introduction to Programming Using Java</div>
+      <div class="cert-item">🏅 Hadoop Certification</div>
+    </div>
+
+  </aside>
+
+  <!-- ════════════════ MAIN ════════════════ -->
+  <main class="main">
+
+    <!-- Summary -->
+    <section>
+      <div class="section-title">Professional Summary</div>
+      <p class="summary-text">
+        Results-driven <strong>Senior Software Engineer with 10+ years of expertise</strong> in building high-performance, scalable web applications using Angular and modern JavaScript frameworks. Proven track record of delivering enterprise-grade solutions at scale — implementing micro-frontend architectures, building real-time data platforms, and optimizing application performance across domains including <strong>Retail Analytics, Energy Management, Logistics, and Telecommunications</strong>. Skilled in state management (NgRx, Redux), test-driven development (Jasmine, Karma), and cross-functional team leadership. Experienced in mentoring teams and driving best practices to deliver user-centric, compliance-ready products.
+      </p>
+    </section>
+
+    <!-- Experience -->
+    <section>
+      <div class="section-title">Professional Experience</div>
+
+      <!-- Capgemini -->
+      <div class="exp-item">
+        <div class="exp-header">
+          <div>
+            <div class="exp-title">Senior Software Engineer — Angular Specialist</div>
+            <div class="exp-company">Capgemini Engineering, Gurugram</div>
+          </div>
+          <div class="exp-meta">
+            <div class="exp-date">March 2022 – Present</div>
+            <div class="exp-location">Gurugram, India</div>
+          </div>
+        </div>
+        <div style="margin-bottom:6px;">
+          <span class="exp-project-badge">Retail Analytics (NIQ) · Dec 2024–Jun 2026</span>&nbsp;
+          <span class="exp-project-badge">ChampionX (Determine) · Dec 2023–Nov 2024</span>&nbsp;
+          <span class="exp-project-badge">Rockwell (Factory Talk) · Feb–Oct 2023</span>&nbsp;
+          <span class="exp-project-badge">Verizon (DNM) · Mar 2022–Jan 2023</span>
+        </div>
+        <ul class="exp-bullets">
+          <li>Led end-to-end development of complex Angular modules across 4 enterprise client projects, serving <strong>100K+ users</strong> with 99.9% uptime</li>
+          <li>Architected and implemented <strong>micro-frontend solutions using Module Federation</strong> to enable independent team deployments, reducing release cycles by 40%</li>
+          <li>Delivered <strong>NIQ Retail Analytics</strong> — an end-to-end data ordering solution for scoping retail data across Market, Product, and Periods, enabling Most Common Price and Customer Price Elasticity analysis using Angular 16</li>
+          <li>Built <strong>ChampionX (Determine)</strong> — global oil &amp; gas platform covering chemical solutions, artificial lift systems, and emissions monitoring with real-time dashboards in Angular</li>
+          <li>Developed <strong>Factory Talk Energy Manager (Rockwell)</strong> — IT/OT convergence energy monitoring platform providing plant-level production and energy consumption insights with Angular Material</li>
+          <li>Delivered <strong>Dynamic Network Manager (Verizon)</strong> — single SPA portal for ordering, managing, and monitoring voice/data services, network performance, and ticketing using Angular Material</li>
+          <li>Optimized application performance through lazy loading, code splitting, and bundle size reduction, achieving <strong>60% faster load times</strong></li>
+          <li>Established comprehensive testing strategies using Jasmine and Karma, achieving <strong>85%+ code coverage</strong> across modules</li>
+          <li>Mentored junior developers on Angular best practices, NgRx state management, and TypeScript design patterns</li>
+        </ul>
+      </div>
+
+      <!-- Fretron -->
+      <div class="exp-item">
+        <div class="exp-header">
+          <div>
+            <div class="exp-title">Senior Software Developer</div>
+            <div class="exp-company">Fretron, Gurugram</div>
+          </div>
+          <div class="exp-meta">
+            <div class="exp-date">August 2021 – April 2022</div>
+            <div class="exp-location">Gurugram, India</div>
+          </div>
+        </div>
+        <div style="margin-bottom:6px;">
+          <span class="exp-project-badge">Fretron Logistics Platform · Aug 2021–Mar 2022</span>
+        </div>
+        <ul class="exp-bullets">
+          <li>Developed scalable Angular components for a real-time <strong>logistics automation platform processing 1K+ shipments daily</strong></li>
+          <li>Built interactive control tower dashboards with real-time data visualization using Angular, RxJS, and WebSockets</li>
+          <li>Implemented digitized billing system with automated invoice generation, <strong>reducing processing time by 70%</strong></li>
+          <li>Created analytics dashboards with advanced filtering, sorting, and data export capabilities for business intelligence</li>
+          <li>Designed reusable component library following atomic design principles, <strong>improving development velocity by 35%</strong></li>
+          <li>Integrated RESTful APIs and optimized data flow using NgRx for predictable state management</li>
+          <li>Enhanced UX through responsive design, loading optimizations, and intuitive navigation patterns</li>
+        </ul>
+      </div>
+
+      <!-- Eco-Mail -->
+      <div class="exp-item">
+        <div class="exp-header">
+          <div>
+            <div class="exp-title">Software Engineer — Angular Developer &amp; UI Lead</div>
+            <div class="exp-company">Eco-Mail, Saket</div>
+          </div>
+          <div class="exp-meta">
+            <div class="exp-date">September 2020 – August 2021</div>
+            <div class="exp-location">New Delhi, India</div>
+          </div>
+        </div>
+        <div style="margin-bottom:6px;">
+          <span class="exp-project-badge">Eco-Mail Admin Platform · Sep 2020–Aug 2021</span>
+        </div>
+        <ul class="exp-bullets">
+          <li>Led frontend architecture for enterprise digital mail distribution platform <strong>handling 1M+ emails monthly</strong></li>
+          <li>Designed and developed modular Angular components with focus on <strong>security, configurability, and compliance (GDPR, SOC 2)</strong></li>
+          <li>Built scalable Angular UI components and led frontend consistency, usability, and cross-functional team coordination</li>
+          <li>Collaborated with product managers and backend teams to translate business requirements into technical solutions</li>
+        </ul>
+      </div>
+
+      <!-- Primus -->
+      <div class="exp-item">
+        <div class="exp-header">
+          <div>
+            <div class="exp-title">Software Developer</div>
+            <div class="exp-company">Primus Software Corporation, Noida</div>
+          </div>
+          <div class="exp-meta">
+            <div class="exp-date">May 2018 – September 2020</div>
+            <div class="exp-location">Noida, India</div>
+          </div>
+        </div>
+        <div style="margin-bottom:6px;">
+          <span class="exp-project-badge">MenuPro (Curtze) · May 2018–Sep 2020</span>
+        </div>
+        <ul class="exp-bullets">
+          <li>Developed <strong>MenuPro</strong> — a comprehensive menu and recipe creation application used by <strong>500+ sales teams</strong> at Curtze, a full-line food service distributor</li>
+          <li>Built complex calculation engine for <strong>real-time cost analysis, profit margins, and serving size optimization</strong></li>
+          <li>Created interactive recipe builder with drag-and-drop functionality and ingredient management system using Angular 6</li>
+          <li>Implemented advanced filtering, search, and reporting features for menu analytics and cost tracking</li>
+          <li><strong>Reduced application load time by 55%</strong> through code optimization and efficient data caching strategies</li>
+          <li>Ensured cross-browser compatibility and responsive design for seamless mobile and desktop experience</li>
+        </ul>
+      </div>
+
+    </section>
+
+    <!-- Key Projects -->
+    <section>
+      <div class="section-title">Key Projects</div>
+      <div class="projects-grid">
+
+        <div class="project-card">
+          <div class="project-name">NIQ Retail Analytics</div>
+          <div class="project-client">Capgemini Engineering — NielsenIQ</div>
+          <div class="project-period">Dec 2024 – Jun 2026</div>
+          <div class="project-desc">End-to-end Data Ordering solution enabling COE/Analysts to scope retail data across Market, Product, and Periods, with model weights configuration for identifying Most Common Price, Customer Price Response/Elasticities, and Key Value Items.</div>
+          <div class="project-skills">
+            <span class="project-skill">Angular 16</span>
+            <span class="project-skill">RxJS</span>
+            <span class="project-skill">NgRx</span>
+            <span class="project-skill">HTML5</span>
+            <span class="project-skill">TypeScript</span>
+          </div>
+        </div>
+
+        <div class="project-card">
+          <div class="project-name">Determine — ChampionX</div>
+          <div class="project-client">Capgemini Engineering — ChampionX</div>
+          <div class="project-period">Dec 2023 – Nov 2024</div>
+          <div class="project-desc">Global platform for oil and gas industry covering chemical solutions, artificial lift systems, emissions monitoring, and drilling technologies — aimed at improving production, transportation, and environmental sustainability.</div>
+          <div class="project-skills">
+            <span class="project-skill">Angular</span>
+            <span class="project-skill">TypeScript</span>
+            <span class="project-skill">HTML5</span>
+            <span class="project-skill">REST APIs</span>
+            <span class="project-skill">RxJS</span>
+          </div>
+        </div>
+
+        <div class="project-card">
+          <div class="project-name">Factory Talk Energy Manager</div>
+          <div class="project-client">Capgemini Engineering — Rockwell Automation</div>
+          <div class="project-period">Feb 2023 – Oct 2023</div>
+          <div class="project-desc">IT/OT convergence platform-based energy monitoring application providing energy and production information based on an energy plant model — down to plant, process area, line, and machine level for energy savings analysis.</div>
+          <div class="project-skills">
+            <span class="project-skill">Angular Material</span>
+            <span class="project-skill">Angular CLI</span>
+            <span class="project-skill">TypeScript</span>
+            <span class="project-skill">REST APIs</span>
+          </div>
+        </div>
+
+        <div class="project-card">
+          <div class="project-name">Dynamic Network Manager</div>
+          <div class="project-client">Capgemini Engineering — Verizon</div>
+          <div class="project-period">Mar 2022 – Jan 2023</div>
+          <div class="project-desc">Single-portal solution for Verizon customers to order, manage, and pay for voice and data services. Monitor and configure inbound/outbound network, report on network performance, and manage tickets and product orders.</div>
+          <div class="project-skills">
+            <span class="project-skill">Single SPA</span>
+            <span class="project-skill">Angular Material</span>
+            <span class="project-skill">RxJS</span>
+            <span class="project-skill">NgRx</span>
+            <span class="project-skill">WebSockets</span>
+          </div>
+        </div>
+
+        <div class="project-card">
+          <div class="project-name">Fretron — Logistics Platform</div>
+          <div class="project-client">Fretron</div>
+          <div class="project-period">Aug 2021 – Mar 2022</div>
+          <div class="project-desc">End-to-end logistics automation platform for real-time control tower operations, logistics orchestration, digitised billing &amp; settlements, and automated reports &amp; analytics — 10X logistics efficiency.</div>
+          <div class="project-skills">
+            <span class="project-skill">Angular</span>
+            <span class="project-skill">RxJS</span>
+            <span class="project-skill">Bootstrap</span>
+            <span class="project-skill">WebSockets</span>
+            <span class="project-skill">NgRx</span>
+          </div>
+        </div>
+
+        <div class="project-card">
+          <div class="project-name">MenuPro — Curtze</div>
+          <div class="project-client">Primus Software Corporation</div>
+          <div class="project-period">May 2018 – Sep 2020</div>
+          <div class="project-desc">High-performance menu and recipe creation application for Curtze food service distributor — used by 500+ sales teams to manage menus, calculate profit per serving, and track cost analysis in real time.</div>
+          <div class="project-skills">
+            <span class="project-skill">Angular 6</span>
+            <span class="project-skill">HTML5</span>
+            <span class="project-skill">JavaScript</span>
+            <span class="project-skill">REST APIs</span>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Key Achievements -->
+    <section>
+      <div class="section-title">Key Achievements</div>
+
+      <div class="achievement-item">
+        <div class="achievement-title">🏗️ Micro-Frontend Migration Initiative</div>
+        <ul class="achievement-bullets">
+          <li>Led migration of monolithic Angular application to micro-frontend architecture using Module Federation</li>
+          <li>Enabled autonomous team deployments, reducing cross-team dependencies by 60%</li>
+          <li>Improved build times by 45% and enabled parallel development across multiple teams</li>
+        </ul>
+      </div>
+
+      <div class="achievement-item">
+        <div class="achievement-title">📊 Real-Time Analytics Dashboard</div>
+        <ul class="achievement-bullets">
+          <li>Built real-time logistics tracking dashboard processing 50K+ data points per minute</li>
+          <li>Implemented WebSocket integration with optimized rendering for live updates without performance degradation</li>
+          <li>Designed interactive charts and visualizations using D3.js and Chart.js for actionable business insights</li>
+        </ul>
+      </div>
+
+      <div class="achievement-item">
+        <div class="achievement-title">⚡ Performance Optimization Initiative</div>
+        <ul class="achievement-bullets">
+          <li>Achieved 60% faster load times through lazy loading, code splitting, and bundle size reduction across projects</li>
+          <li>Reduced application load time by 55% at Primus through code optimization and efficient data caching strategies</li>
+          <li>Reduced billing processing time by 70% at Fretron through automated invoice generation systems</li>
+        </ul>
+      </div>
+
+    </section>
+
+  </main>
+</div>
+
+</body>
+</html>
