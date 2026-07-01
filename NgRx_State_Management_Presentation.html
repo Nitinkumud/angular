@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NgRx State Management – Interview Deep Dive</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; overflow: hidden; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0d1117; color: #e6edf3; }
+    #deck { width: 100vw; height: 100vh; position: relative; }
+    .slide {
+      display: none; flex-direction: column; justify-content: flex-start;
+      padding: 40px 56px 76px; width: 100%; height: 100%;
+      overflow-y: auto; gap: 14px; animation: fadeIn .35s ease;
+    }
+    .slide.active { display: flex; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+    .slide-header {
+      display: flex; align-items: center; gap: 12px;
+      border-bottom: 2px solid #21262d; padding-bottom: 11px; flex-shrink: 0;
+    }
+    .topic-badge {
+      background: #b45309; color: #fff; font-size: 11px; font-weight: 700;
+      letter-spacing: 1px; text-transform: uppercase; padding: 4px 10px;
+      border-radius: 20px; white-space: nowrap;
+    }
+    h1 { font-size: 26px; font-weight: 700; color: #ff6b6b; }
+    h2 { font-size: 18px; font-weight: 600; color: #ffa657; margin-bottom: 4px; }
+    h3 { font-size: 13.5px; font-weight: 600; color: #ffa657; margin-bottom: 3px; }
+
+    /* title */
+    .title-slide {
+      justify-content: center; align-items: center; text-align: center;
+      background: radial-gradient(ellipse at 50% 0%, #1a0f00 0%, #0d1117 70%);
+    }
+    .title-slide h1 { font-size: 42px; margin-bottom: 10px; color: #f97316; }
+    .title-slide .subtitle { font-size: 16px; color: #8b949e; max-width: 700px; line-height: 1.65; }
+    .logo { font-size: 60px; margin-bottom: 12px; }
+    .topic-chips { display: flex; flex-wrap: wrap; gap: 7px; justify-content: center; margin-top: 18px; }
+    .chip { background: #161b22; border: 1px solid #30363d; border-radius: 20px; padding: 5px 13px; font-size: 12px; color: #8b949e; }
+
+    .content { flex: 1; display: flex; flex-direction: column; gap: 13px; }
+    .two-col   { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+
+    .card { background: #161b22; border: 1px solid #30363d; border-radius: 9px; padding: 13px 15px; }
+    .card.accent-red    { border-left: 4px solid #f85149; }
+    .card.accent-blue   { border-left: 4px solid #1f6feb; }
+    .card.accent-green  { border-left: 4px solid #3fb950; }
+    .card.accent-orange { border-left: 4px solid #f97316; }
+    .card.accent-purple { border-left: 4px solid #d2a8ff; }
+    .card.accent-yellow { border-left: 4px solid #e3b341; }
+    .card.accent-cyan   { border-left: 4px solid #39d0d8; }
+    .card.accent-pink   { border-left: 4px solid #ff6eb4; }
+
+    p  { font-size: 13px; line-height: 1.75; color: #c9d1d9; }
+    li { font-size: 12.5px; line-height: 1.85; color: #c9d1d9; margin-left: 16px; }
+    ul { padding-left: 4px; }
+    strong { color: #f0f6fc; }
+    code { font-family: 'Consolas', monospace; font-size: 11.5px; background: #1c2128; color: #79c0ff; padding: 2px 6px; border-radius: 4px; }
+
+    .code-block {
+      background: #1c2128; border: 1px solid #30363d;
+      border-radius: 8px; padding: 13px 15px; overflow-x: auto; flex-shrink: 0;
+    }
+    .code-block pre { font-family: 'Consolas', monospace; font-size: 12px; line-height: 1.7; color: #e6edf3; white-space: pre; margin: 0; }
+    .kw  { color: #ff7b72; }
+    .fn  { color: #d2a8ff; }
+    .str { color: #a5d6ff; }
+    .num { color: #79c0ff; }
+    .cmt { color: #8b949e; font-style: italic; }
+    .var { color: #ffa657; }
+    .dec { color: #ff6b6b; }
+    .cls { color: #f0c674; }
+    .int { color: #39d0d8; }
+    .op  { color: #7ee787; }
+    .typ { color: #56d364; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    th { background: #161b22; color: #d2a8ff; text-align: left; padding: 7px 11px; border-bottom: 2px solid #30363d; font-weight: 600; }
+    td { padding: 6px 11px; border-bottom: 1px solid #21262d; color: #c9d1d9; vertical-align: top; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #161b22; }
+
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 11px; font-size: 10.5px; font-weight: 700; white-space: nowrap; }
+    .badge-red    { background: #3a1818; color: #f85149; }
+    .badge-green  { background: #1a3c1a; color: #3fb950; }
+    .badge-blue   { background: #0d2340; color: #58a6ff; }
+    .badge-orange { background: #3a1800; color: #f97316; }
+    .badge-purple { background: #2a1a3e; color: #d2a8ff; }
+    .badge-yellow { background: #2e2200; color: #e3b341; }
+    .badge-cyan   { background: #0a2e2e; color: #39d0d8; }
+
+    /* data flow */
+    .flow { display: flex; align-items: center; gap: 0; overflow-x: auto; padding: 8px 0; justify-content: center; flex-wrap: wrap; row-gap: 8px; }
+    .fb {
+      display: flex; flex-direction: column; align-items: center;
+      background: #161b22; border: 1px solid #30363d; border-radius: 8px;
+      padding: 8px 14px; font-size: 11px; white-space: nowrap; flex-shrink: 0; gap: 2px;
+    }
+    .fb .fb-icon { font-size: 20px; }
+    .fb .fb-name { font-weight: 700; font-size: 12px; }
+    .fb .fb-sub  { font-size: 10px; color: #8b949e; }
+    .fb.c1 { border-color: #1f6feb; color: #79c0ff; }
+    .fb.c2 { border-color: #f97316; color: #ffa657; }
+    .fb.c3 { border-color: #3fb950; color: #56d364; }
+    .fb.c4 { border-color: #d2a8ff; color: #d2a8ff; }
+    .fb.c5 { border-color: #39d0d8; color: #39d0d8; }
+    .fb.c6 { border-color: #e3b341; color: #e3b341; }
+    .fa { color: #484f58; font-size: 20px; padding: 0 6px; flex-shrink: 0; }
+    .fa-small { color: #484f58; font-size: 13px; padding: 0 3px; }
+
+    .tip-box { background: #1c2a1c; border: 1px solid #3fb950; border-left: 4px solid #3fb950; border-radius: 8px; padding: 9px 13px; }
+    .tip-box .tip-hdr { font-size: 10.5px; font-weight: 700; color: #3fb950; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }
+    .tip-box p, .tip-box li { font-size: 12px; color: #c9d1d9; }
+
+    .warn-box { background: #2a1a00; border: 1px solid #e3b341; border-left: 4px solid #e3b341; border-radius: 8px; padding: 9px 13px; }
+    .warn-box .warn-hdr { font-size: 10.5px; font-weight: 700; color: #e3b341; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }
+    .warn-box p, .warn-box li { font-size: 12px; color: #c9d1d9; }
+
+    .mem-box { background: #1e1a2e; border: 1px solid #d2a8ff; border-left: 4px solid #d2a8ff; border-radius: 8px; padding: 9px 13px; }
+    .mem-box .mem-hdr { font-size: 10.5px; font-weight: 700; color: #d2a8ff; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }
+    .mem-box p, .mem-box li { font-size: 12px; color: #c9d1d9; }
+
+    .iq-item { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 11px 14px; margin-bottom: 5px; }
+    .iq-q { font-size: 13px; font-weight: 600; color: #f0f6fc; margin-bottom: 4px; }
+    .iq-a { font-size: 12px; color: #c9d1d9; line-height: 1.7; }
+
+    #nav {
+      position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+      display: flex; align-items: center; gap: 16px;
+      background: #161b22cc; backdrop-filter: blur(8px);
+      border: 1px solid #30363d; border-radius: 40px; padding: 9px 22px; z-index: 1000;
+    }
+    #nav button { background: none; border: none; color: #8b949e; cursor: pointer; font-size: 20px; padding: 4px 8px; border-radius: 6px; transition: color .2s, background .2s; }
+    #nav button:hover:not(:disabled) { color: #e6edf3; background: #21262d; }
+    #nav button:disabled { opacity: 0.3; cursor: default; }
+    #counter { font-size: 13px; color: #8b949e; min-width: 64px; text-align: center; }
+    #progress-bar { position: fixed; top: 0; left: 0; height: 3px; background: #f97316; transition: width .3s ease; z-index: 999; }
+    #hint { position: fixed; bottom: 20px; right: 24px; font-size: 11px; color: #484f58; }
+    .slide::-webkit-scrollbar { width: 6px; }
+    .slide::-webkit-scrollbar-track { background: transparent; }
+    .slide::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
+  </style>
+</head>
+<body>
+<div id="progress-bar"></div>
+<div id="deck">
+
+  <!-- ══ SLIDE 0 — TITLE ══ -->
+  <div class="slide title-slide active" id="s0">
+    <div class="logo">🏪</div>
+    <h1>NgRx State Management</h1>
+    <p class="subtitle">Complete Angular interview guide — Store, Actions, Reducers, Effects, Selectors, Entity, DevTools, and Senior-Level Q&amp;A with real Product examples.</p>
+    <div class="topic-chips">
+      <span class="chip">Why NgRx?</span>
+      <span class="chip">Data Flow</span>
+      <span class="chip">Store & State</span>
+      <span class="chip">Actions</span>
+      <span class="chip">Reducers</span>
+      <span class="chip">Effects</span>
+      <span class="chip">Selectors</span>
+      <span class="chip">Component Integration</span>
+      <span class="chip">NgRx Entity</span>
+      <span class="chip">Feature State</span>
+      <span class="chip">DevTools</span>
+      <span class="chip">Memory Tips</span>
+      <span class="chip">Interview Q&amp;A</span>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 1 — WHY NGRX ══ -->
+  <div class="slide" id="s1">
+    <div class="slide-header"><span class="topic-badge">01</span><h1>Why NgRx? The Problem It Solves</h1></div>
+    <div class="content">
+      <div class="two-col">
+        <div class="card accent-red">
+          <h3>❌ Problem — Without NgRx</h3>
+          <ul>
+            <li>Each component fetches its own data — <strong>duplicate HTTP calls</strong></li>
+            <li>Parent-child prop drilling — hard to maintain</li>
+            <li>State scattered across services, components</li>
+            <li>Race conditions — async state hard to debug</li>
+            <li>No history / time-travel debugging</li>
+            <li>Side effects mixed with component logic</li>
+          </ul>
+        </div>
+        <div class="card accent-green">
+          <h3>✅ Solution — With NgRx</h3>
+          <ul>
+            <li><strong>Single source of truth</strong> — one Store for all state</li>
+            <li>Predictable state changes — only via Actions + Reducers</li>
+            <li>Immutable state — no accidental mutations</li>
+            <li>Side effects isolated in Effects</li>
+            <li>Redux DevTools — time-travel debugging</li>
+            <li>Scales well for large enterprise apps</li>
+          </ul>
+        </div>
+      </div>
+      <div class="card accent-orange">
+        <h3>NgRx is based on the Redux Pattern</h3>
+        <div style="display:flex; gap:16px; flex-wrap:wrap; margin-top:8px;">
+          <div style="flex:1; min-width:200px;">
+            <p><strong>3 Principles of Redux:</strong></p>
+            <ul style="margin-top:4px;">
+              <li><strong>Single source of truth</strong> — one global Store</li>
+              <li><strong>State is read-only</strong> — change only via Actions</li>
+              <li><strong>Pure functions</strong> — Reducers must be pure (no side effects)</li>
+            </ul>
+          </div>
+          <div style="flex:1; min-width:200px;">
+            <p><strong>When to use NgRx?</strong></p>
+            <ul style="margin-top:4px;">
+              <li>State shared across many components</li>
+              <li>Complex async data flows</li>
+              <li>Need for undo/redo or time-travel debug</li>
+              <li>Team of 3+ developers on same app</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="two-col">
+        <div class="tip-box">
+          <div class="tip-hdr">📦 NgRx packages</div>
+          <p><code>@ngrx/store</code> · <code>@ngrx/effects</code> · <code>@ngrx/entity</code> · <code>@ngrx/router-store</code> · <code>@ngrx/store-devtools</code> · <code>@ngrx/component-store</code></p>
+        </div>
+        <div class="warn-box">
+          <div class="warn-hdr">⚠️ Don't over-engineer</div>
+          <p>NgRx adds boilerplate. For simple apps, use <strong>Services + BehaviorSubject</strong>. Use NgRx when state is <em>complex, shared, or async at scale</em>.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 2 — DATA FLOW ══ -->
+  <div class="slide" id="s2">
+    <div class="slide-header"><span class="topic-badge">02</span><h1>NgRx Data Flow — The Full Cycle</h1></div>
+    <div class="content">
+      <div class="card" style="padding: 20px;">
+        <div class="flow">
+          <div class="fb c1"><span class="fb-icon">🖥️</span><span class="fb-name">Component</span><span class="fb-sub">dispatch(action)</span></div>
+          <span class="fa">→</span>
+          <div class="fb c2"><span class="fb-icon">⚡</span><span class="fb-name">Action</span><span class="fb-sub">{ type, payload }</span></div>
+          <span class="fa">→</span>
+          <div class="fb c3"><span class="fb-icon">⚙️</span><span class="fb-name">Reducer</span><span class="fb-sub">pure function</span></div>
+          <span class="fa">→</span>
+          <div class="fb c4"><span class="fb-icon">🏪</span><span class="fb-name">Store</span><span class="fb-sub">new state</span></div>
+          <span class="fa">→</span>
+          <div class="fb c5"><span class="fb-icon">🔍</span><span class="fb-name">Selector</span><span class="fb-sub">computed slice</span></div>
+          <span class="fa">→</span>
+          <div class="fb c1"><span class="fb-icon">🖥️</span><span class="fb-name">Component</span><span class="fb-sub">renders UI</span></div>
+        </div>
+        <div style="text-align:center; margin: 10px 0 4px; font-size: 12px; color: #8b949e;">For async operations (HTTP calls):</div>
+        <div class="flow">
+          <div class="fb c2"><span class="fb-icon">⚡</span><span class="fb-name">Action</span><span class="fb-sub">loadProducts</span></div>
+          <span class="fa">→</span>
+          <div class="fb c6"><span class="fb-icon">🌐</span><span class="fb-name">Effect</span><span class="fb-sub">listens to action</span></div>
+          <span class="fa">→</span>
+          <div class="fb" style="border-color:#8b949e; color:#8b949e;"><span class="fb-icon">📡</span><span class="fb-name">API Call</span><span class="fb-sub">HTTP / WebSocket</span></div>
+          <span class="fa">→</span>
+          <div class="fb c2"><span class="fb-icon">⚡</span><span class="fb-name">New Action</span><span class="fb-sub">Success / Failure</span></div>
+          <span class="fa">→</span>
+          <div class="fb c3"><span class="fb-icon">⚙️</span><span class="fb-name">Reducer</span><span class="fb-sub">updates state</span></div>
+        </div>
+      </div>
+      <div class="three-col">
+        <div class="card accent-orange">
+          <h3>Step 1 — Component dispatches</h3>
+          <p>Component calls <code>store.dispatch(loadProducts())</code>. It does NOT call the service directly.</p>
+        </div>
+        <div class="card accent-yellow">
+          <h3>Step 2–3 — Reducer OR Effect</h3>
+          <p>Sync changes go to <strong>Reducer</strong>. Async (HTTP) go to <strong>Effect</strong> → API → dispatch success/failure action.</p>
+        </div>
+        <div class="card accent-cyan">
+          <h3>Step 4–5 — Selector reads state</h3>
+          <p>Component reads state via <code>store.select(selector)</code>. Selectors are <strong>memoized</strong> — recalculate only when input changes.</p>
+        </div>
+      </div>
+      <div class="card accent-purple">
+        <h3>Your Diagram — 6 Steps (from your NGRX.drawio.svg)</h3>
+        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:6px;">
+          <span class="badge badge-blue">Step 1: Component</span>
+          <span class="fa-small">→</span>
+          <span class="badge badge-orange">Step 2: Actions</span>
+          <span class="fa-small">→</span>
+          <span class="badge badge-green">Step 3: Reducer</span>
+          <span class="fa-small">→</span>
+          <span class="badge badge-yellow">Step 4: Effects (Async)</span>
+          <span class="fa-small">→</span>
+          <span class="badge badge-cyan">Step 5: Selectors</span>
+          <span class="fa-small">→</span>
+          <span class="badge badge-blue">Step 6: Component (UI update)</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 3 — STORE & STATE ══ -->
+  <div class="slide" id="s3">
+    <div class="slide-header"><span class="topic-badge">03</span><h1>Store &amp; State — The Single Source of Truth</h1></div>
+    <div class="content">
+      <div class="two-col">
+        <div class="card accent-orange">
+          <h3>What is the Store?</h3>
+          <p>A single <strong>immutable JavaScript object</strong> that holds the entire application state. Think of it as a client-side database.</p>
+          <br/>
+          <ul>
+            <li>State is <strong>read-only</strong> — never mutate directly</li>
+            <li>Only Reducers can produce a new state</li>
+            <li>Observable — components subscribe to slices</li>
+            <li>Registered at app level via <code>provideStore()</code></li>
+          </ul>
+        </div>
+        <div class="card accent-purple">
+          <h3>AppState Shape</h3>
+          <p>The global state is a tree of feature states:</p>
+          <div class="code-block" style="margin-top:8px;">
+            <pre><span class="cmt">// app.state.ts</span>
+<span class="kw">export interface</span> <span class="cls">AppState</span> {
+  <span class="var">products</span>: <span class="cls">ProductState</span>;
+  <span class="var">cart</span>:     <span class="cls">CartState</span>;
+  <span class="var">auth</span>:     <span class="cls">AuthState</span>;
+  <span class="var">router</span>:   <span class="cls">RouterReducerState</span>;
+}</pre>
+          </div>
+        </div>
+      </div>
+      <div class="code-block">
+        <pre><span class="cmt">// product.reducer.ts — State interface (from your diagram)</span>
+<span class="kw">import</span> { <span class="cls">Product</span> } <span class="kw">from</span> <span class="str">'./product.model'</span>;
+
+<span class="kw">export interface</span> <span class="cls">ProductState</span> {
+  <span class="var">products</span>: <span class="cls">Product</span>[];   <span class="cmt">// list of products</span>
+  <span class="var">loading</span>:  <span class="typ">boolean</span>;     <span class="cmt">// true while API is loading</span>
+  <span class="var">error</span>:    <span class="typ">string</span> | <span class="kw">null</span>; <span class="cmt">// error message if API fails</span>
+}
+
+<span class="kw">export const</span> <span class="var">initialState</span>: <span class="cls">ProductState</span> = {
+  <span class="var">products</span>: [],
+  <span class="var">loading</span>:  <span class="kw">false</span>,
+  <span class="var">error</span>:    <span class="kw">null</span>
+};
+
+<span class="cmt">// app.config.ts — register store (standalone Angular 17+)</span>
+<span class="kw">import</span> { <span class="fn">provideStore</span> } <span class="kw">from</span> <span class="str">'@ngrx/store'</span>;
+<span class="kw">import</span> { <span class="fn">provideEffects</span> } <span class="kw">from</span> <span class="str">'@ngrx/effects'</span>;
+<span class="kw">import</span> { <span class="fn">provideStoreDevtools</span> } <span class="kw">from</span> <span class="str">'@ngrx/store-devtools'</span>;
+
+<span class="kw">export const</span> <span class="var">appConfig</span>: <span class="cls">ApplicationConfig</span> = {
+  <span class="var">providers</span>: [
+    <span class="fn">provideStore</span>({ <span class="var">products</span>: <span class="var">productReducer</span> }),  <span class="cmt">// register reducers</span>
+    <span class="fn">provideEffects</span>([<span class="cls">ProductEffects</span>]),             <span class="cmt">// register effects</span>
+    <span class="fn">provideStoreDevtools</span>({ <span class="var">maxAge</span>: <span class="num">25</span> })          <span class="cmt">// Redux DevTools</span>
+  ]
+};</pre>
+      </div>
+      <div class="tip-box">
+        <div class="tip-hdr">✅ Feature State (Lazy Loading)</div>
+        <p>Use <code>provideState('products', productReducer)</code> inside lazy-loaded routes to register feature state only when needed. Keeps the initial bundle small.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 4 — ACTIONS ══ -->
+  <div class="slide" id="s4">
+    <div class="slide-header"><span class="topic-badge">04</span><h1>Actions — Describe What Happened</h1></div>
+    <div class="content">
+      <div class="two-col">
+        <div class="card accent-yellow">
+          <h3>What is an Action?</h3>
+          <ul>
+            <li>A <strong>plain object</strong> with a <code>type</code> string and optional payload</li>
+            <li>The <strong>only way</strong> to communicate with the NgRx Store</li>
+            <li>Describes an event: <em>"what happened"</em>, not how</li>
+            <li>Naming convention: <code>[Source] Event</code></li>
+          </ul>
+        </div>
+        <div class="card accent-orange">
+          <h3>Action Naming Convention</h3>
+          <p style="margin-bottom:6px;">Format: <code>[Feature] EventName</code></p>
+          <ul>
+            <li><code>[Product] Load Products</code> → trigger load</li>
+            <li><code>[Product] Load Products Success</code> → API succeeded</li>
+            <li><code>[Product] Load Products Failure</code> → API failed</li>
+            <li><code>[Product Page] Add To Cart</code> → UI event</li>
+            <li><code>[Cart API] Checkout Success</code> → API event</li>
+          </ul>
+        </div>
+      </div>
+      <div class="code-block">
+        <pre><span class="cmt">// product.actions.ts — exactly as in your diagram</span>
+<span class="kw">import</span> { <span class="fn">createAction</span>, <span class="fn">props</span> } <span class="kw">from</span> <span class="str">'@ngrx/store'</span>;
+<span class="kw">import</span> { <span class="cls">Product</span> } <span class="kw">from</span> <span class="str">'./product.model'</span>;
+
+<span class="cmt">// Trigger action — no payload needed</span>
+<span class="kw">export const</span> <span class="var">loadProducts</span> = <span class="fn">createAction</span>(<span class="str">'[Product] Load Products'</span>);
+
+<span class="cmt">// Success — carries the products array as payload</span>
+<span class="kw">export const</span> <span class="var">loadProductsSuccess</span> = <span class="fn">createAction</span>(
+  <span class="str">'[Product] Load Products Success'</span>,
+  <span class="fn">props</span>&lt;{ <span class="var">products</span>: <span class="cls">Product</span>[] }&gt;()
+);
+
+<span class="cmt">// Failure — carries the error message</span>
+<span class="kw">export const</span> <span class="var">loadProductsFailure</span> = <span class="fn">createAction</span>(
+  <span class="str">'[Product] Load Products Failure'</span>,
+  <span class="fn">props</span>&lt;{ <span class="var">error</span>: <span class="typ">string</span> }&gt;()
+);
+
+<span class="cmt">// CRUD actions with props</span>
+<span class="kw">export const</span> <span class="var">addProduct</span>    = <span class="fn">createAction</span>(<span class="str">'[Product] Add Product'</span>,    <span class="fn">props</span>&lt;{ <span class="var">product</span>: <span class="cls">Product</span> }&gt;());
+<span class="kw">export const</span> <span class="var">deleteProduct</span> = <span class="fn">createAction</span>(<span class="str">'[Product] Delete Product'</span>, <span class="fn">props</span>&lt;{ <span class="var">id</span>: <span class="typ">number</span> }&gt;());
+<span class="kw">export const</span> <span class="var">updateProduct</span> = <span class="fn">createAction</span>(<span class="str">'[Product] Update Product'</span>, <span class="fn">props</span>&lt;{ <span class="var">product</span>: <span class="cls">Product</span> }&gt;());</pre>
+      </div>
+      <div class="two-col">
+        <div class="tip-box">
+          <div class="tip-hdr">✅ Best Practice — Action Groups (NgRx 15+)</div>
+          <p>Use <code>createActionGroup</code> to group related actions. Reduces boilerplate and avoids repeating the source string.</p>
+          <div class="code-block" style="margin-top:6px;">
+            <pre><span class="kw">export const</span> <span class="var">ProductActions</span> = <span class="fn">createActionGroup</span>({
+  <span class="var">source</span>: <span class="str">'Product'</span>,
+  <span class="var">events</span>: {
+    <span class="str">'Load Products'</span>:         <span class="fn">emptyProps</span>(),
+    <span class="str">'Load Products Success'</span>: <span class="fn">props</span>&lt;{ <span class="var">products</span>: <span class="cls">Product</span>[] }&gt;(),
+    <span class="str">'Load Products Failure'</span>: <span class="fn">props</span>&lt;{ <span class="var">error</span>: <span class="typ">string</span> }&gt;(),
+  }
+});</pre>
+          </div>
+        </div>
+        <div class="warn-box">
+          <div class="warn-hdr">⚠️ Actions should be events, not commands</div>
+          <ul>
+            <li>✅ <code>[Cart] Item Added</code> — event (what happened)</li>
+            <li>❌ <code>[Cart] AddItem</code> — command (what to do)</li>
+            <li>Actions describe <em>facts</em>, not instructions</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 5 — REDUCERS ══ -->
+  <div class="slide" id="s5">
+    <div class="slide-header"><span class="topic-badge">05</span><h1>Reducers — Decide How State Changes</h1></div>
+    <div class="content">
+      <div class="card accent-green">
+        <h3>What is a Reducer?</h3>
+        <p>A <strong>pure function</strong> that takes the current state + an action, and returns a <strong>new state object</strong>. It never mutates the existing state — it creates a new reference. <code>(state, action) => newState</code></p>
+      </div>
+      <div class="code-block">
+        <pre><span class="cmt">// product.reducer.ts — from your diagram, enhanced</span>
+<span class="kw">import</span> { <span class="fn">createReducer</span>, <span class="fn">on</span> } <span class="kw">from</span> <span class="str">'@ngrx/store'</span>;
+<span class="kw">import</span> * <span class="kw">as</span> <span class="var">ProductActions</span> <span class="kw">from</span> <span class="str">'./product.actions'</span>;
+<span class="kw">import</span> { <span class="cls">ProductState</span>, <span class="var">initialState</span> } <span class="kw">from</span> <span class="str">'./product.state'</span>;
+
+<span class="kw">export const</span> <span class="var">productReducer</span> = <span class="fn">createReducer</span>(
+  <span class="var">initialState</span>,
+
+  <span class="cmt">// When loadProducts fires → set loading: true</span>
+  <span class="fn">on</span>(<span class="var">ProductActions</span>.<span class="var">loadProducts</span>, (<span class="var">state</span>) => ({
+    ...<span class="var">state</span>,
+    <span class="var">loading</span>: <span class="kw">true</span>,
+    <span class="var">error</span>: <span class="kw">null</span>
+  })),
+
+  <span class="cmt">// When API success → store products, stop loading</span>
+  <span class="fn">on</span>(<span class="var">ProductActions</span>.<span class="var">loadProductsSuccess</span>, (<span class="var">state</span>, { <span class="var">products</span> }) => ({
+    ...<span class="var">state</span>,
+    <span class="var">loading</span>: <span class="kw">false</span>,
+    <span class="var">products</span>          <span class="cmt">// shorthand: products: products</span>
+  })),
+
+  <span class="cmt">// When API fails → store error, stop loading</span>
+  <span class="fn">on</span>(<span class="var">ProductActions</span>.<span class="var">loadProductsFailure</span>, (<span class="var">state</span>, { <span class="var">error</span> }) => ({
+    ...<span class="var">state</span>,
+    <span class="var">loading</span>: <span class="kw">false</span>,
+    <span class="var">error</span>
+  })),
+
+  <span class="cmt">// Add product — immutably append</span>
+  <span class="fn">on</span>(<span class="var">ProductActions</span>.<span class="var">addProduct</span>, (<span class="var">state</span>, { <span class="var">product</span> }) => ({
+    ...<span class="var">state</span>,
+    <span class="var">products</span>: [...<span class="var">state</span>.<span class="var">products</span>, <span class="var">product</span>]
+  })),
+
+  <span class="cmt">// Delete product — filter out by id</span>
+  <span class="fn">on</span>(<span class="var">ProductActions</span>.<span class="var">deleteProduct</span>, (<span class="var">state</span>, { <span class="var">id</span> }) => ({
+    ...<span class="var">state</span>,
+    <span class="var">products</span>: <span class="var">state</span>.<span class="var">products</span>.<span class="fn">filter</span>(<span class="var">p</span> => <span class="var">p</span>.<span class="var">id</span> !== <span class="var">id</span>)
+  }))
+);</pre>
+      </div>
+      <div class="two-col">
+        <div class="tip-box">
+          <div class="tip-hdr">✅ Pure Function Rules</div>
+          <ul>
+            <li>No HTTP calls, no side effects</li>
+            <li>Same input always produces same output</li>
+            <li>Always spread state: <code>{ ...state, changes }</code></li>
+            <li>Never mutate: ❌ <code>state.products.push()</code></li>
+          </ul>
+        </div>
+        <div class="card accent-yellow">
+          <h3>Loading / Error Pattern</h3>
+          <table style="margin-top:6px;">
+            <thead><tr><th>Action</th><th>loading</th><th>error</th><th>products</th></tr></thead>
+            <tbody>
+              <tr><td><code>loadProducts</code></td><td>true</td><td>null</td><td>unchanged</td></tr>
+              <tr><td><code>loadProductsSuccess</code></td><td>false</td><td>null</td><td>new data ✅</td></tr>
+              <tr><td><code>loadProductsFailure</code></td><td>false</td><td>error msg</td><td>unchanged</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 6 — EFFECTS ══ -->
+  <div class="slide" id="s6">
+    <div class="slide-header"><span class="topic-badge">06</span><h1>Effects — Handle Async Side Effects</h1></div>
+    <div class="content">
+      <div class="card accent-yellow">
+        <h3>What is an Effect?</h3>
+        <p>An Effect listens for specific Actions, performs <strong>async work</strong> (HTTP, localStorage, WebSocket), then dispatches a new Action with the result. Keeps Reducers pure and components clean.</p>
+      </div>
+      <div class="code-block">
+        <pre><span class="cmt">// product.effects.ts — from your diagram, enhanced</span>
+<span class="kw">import</span> { <span class="cls">Injectable</span> } <span class="kw">from</span> <span class="str">'@angular/core'</span>;
+<span class="kw">import</span> { <span class="cls">Actions</span>, <span class="fn">createEffect</span>, <span class="fn">ofType</span> } <span class="kw">from</span> <span class="str">'@ngrx/effects'</span>;
+<span class="kw">import</span> { <span class="fn">catchError</span>, <span class="fn">map</span>, <span class="fn">switchMap</span>, <span class="fn">of</span> } <span class="kw">from</span> <span class="str">'rxjs'</span>;
+<span class="kw">import</span> { <span class="cls">ProductService</span> } <span class="kw">from</span> <span class="str">'./product.service'</span>;
+<span class="kw">import</span> * <span class="kw">as</span> <span class="var">ProductActions</span> <span class="kw">from</span> <span class="str">'./product.actions'</span>;
+
+<span class="dec">@Injectable</span>()
+<span class="kw">export class</span> <span class="cls">ProductEffects</span> {
+
+  <span class="cmt">// Load products when 'loadProducts' action dispatched</span>
+  <span class="var">loadProducts$</span> = <span class="fn">createEffect</span>(() =>
+    <span class="kw">this</span>.<span class="var">actions$</span>.<span class="fn">pipe</span>(
+      <span class="fn">ofType</span>(<span class="var">ProductActions</span>.<span class="var">loadProducts</span>),    <span class="cmt">// listen for this action</span>
+      <span class="fn">switchMap</span>(() =>                            <span class="cmt">// cancel prev, start new</span>
+        <span class="kw">this</span>.<span class="var">productService</span>.<span class="fn">getAll</span>().<span class="fn">pipe</span>(
+          <span class="fn">map</span>(<span class="var">products</span> =>
+            <span class="var">ProductActions</span>.<span class="fn">loadProductsSuccess</span>({ <span class="var">products</span> })  <span class="cmt">// ✅ success</span>
+          ),
+          <span class="fn">catchError</span>(<span class="var">err</span> =>
+            <span class="fn">of</span>(<span class="var">ProductActions</span>.<span class="fn">loadProductsFailure</span>({ <span class="var">error</span>: <span class="var">err</span>.<span class="var">message</span> })) <span class="cmt">// ❌ failure</span>
+          )
+        )
+      )
+    )
+  );
+
+  <span class="cmt">// Add product to API</span>
+  <span class="var">addProduct$</span> = <span class="fn">createEffect</span>(() =>
+    <span class="kw">this</span>.<span class="var">actions$</span>.<span class="fn">pipe</span>(
+      <span class="fn">ofType</span>(<span class="var">ProductActions</span>.<span class="var">addProduct</span>),
+      <span class="fn">switchMap</span>(({ <span class="var">product</span> }) =>
+        <span class="kw">this</span>.<span class="var">productService</span>.<span class="fn">create</span>(<span class="var">product</span>).<span class="fn">pipe</span>(
+          <span class="fn">map</span>(<span class="var">saved</span> => <span class="var">ProductActions</span>.<span class="fn">loadProducts</span>()),  <span class="cmt">// reload list</span>
+          <span class="fn">catchError</span>(<span class="var">err</span> => <span class="fn">of</span>(<span class="var">ProductActions</span>.<span class="fn">loadProductsFailure</span>({ <span class="var">error</span>: <span class="var">err</span>.<span class="var">message</span> })))
+        )
+      )
+    )
+  );
+
+  <span class="fn">constructor</span>(
+    <span class="kw">private</span> <span class="var">actions$</span>: <span class="cls">Actions</span>,
+    <span class="kw">private</span> <span class="var">productService</span>: <span class="cls">ProductService</span>
+  ) {}
+}</pre>
+      </div>
+      <div class="two-col">
+        <div class="card accent-cyan">
+          <h3>Which RxJS operator to use in Effects?</h3>
+          <table style="margin-top:6px;">
+            <thead><tr><th>Operator</th><th>Use case</th></tr></thead>
+            <tbody>
+              <tr><td><code>switchMap</code></td><td>Cancels previous — search, load (most common)</td></tr>
+              <tr><td><code>mergeMap</code></td><td>All run in parallel — delete, analytics</td></tr>
+              <tr><td><code>concatMap</code></td><td>Queue in order — save form, cart checkout</td></tr>
+              <tr><td><code>exhaustMap</code></td><td>Ignore new while busy — login button</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="tip-box">
+          <div class="tip-hdr">✅ Non-dispatching Effects</div>
+          <p>Set <code>&#123; dispatch: false &#125;</code> for effects that don't dispatch new actions (e.g., navigate, localStorage, logging):</p>
+          <div class="code-block" style="margin-top:6px;">
+            <pre><span class="var">navigate$</span> = <span class="fn">createEffect</span>(() =>
+  <span class="kw">this</span>.<span class="var">actions$</span>.<span class="fn">pipe</span>(
+    <span class="fn">ofType</span>(<span class="var">ProductActions</span>.<span class="var">loadProductsSuccess</span>),
+    <span class="fn">tap</span>(() => <span class="kw">this</span>.<span class="var">router</span>.<span class="fn">navigate</span>([<span class="str">'/products'</span>]))
+  ), { <span class="var">dispatch</span>: <span class="kw">false</span> }
+);</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 7 — SELECTORS ══ -->
+  <div class="slide" id="s7">
+    <div class="slide-header"><span class="topic-badge">07</span><h1>Selectors — Read State Efficiently</h1></div>
+    <div class="content">
+      <div class="two-col">
+        <div class="card accent-cyan">
+          <h3>What is a Selector?</h3>
+          <ul>
+            <li>A pure function to <strong>read / compute data from the Store</strong></li>
+            <li><strong>Memoized</strong> — recalculates only when input state changes</li>
+            <li>Composable — build complex selectors from simple ones</li>
+            <li>Prevents unnecessary re-renders</li>
+          </ul>
+        </div>
+        <div class="card accent-purple">
+          <h3>3 Types</h3>
+          <ul>
+            <li><strong>Feature selector</strong> — gets the feature slice</li>
+            <li><strong>Simple selector</strong> — reads one property</li>
+            <li><strong>Composed selector</strong> — combines multiple, computes derived data</li>
+          </ul>
+        </div>
+      </div>
+      <div class="code-block">
+        <pre><span class="cmt">// product.selectors.ts</span>
+<span class="kw">import</span> { <span class="fn">createFeatureSelector</span>, <span class="fn">createSelector</span> } <span class="kw">from</span> <span class="str">'@ngrx/store'</span>;
+<span class="kw">import</span> { <span class="cls">ProductState</span> } <span class="kw">from</span> <span class="str">'./product.state'</span>;
+
+<span class="cmt">// Step 1 — Feature selector (entry point to product state)</span>
+<span class="kw">export const</span> <span class="var">selectProductState</span> = <span class="fn">createFeatureSelector</span>&lt;<span class="cls">ProductState</span>&gt;(<span class="str">'products'</span>);
+
+<span class="cmt">// Step 2 — Simple selectors (read individual properties)</span>
+<span class="kw">export const</span> <span class="var">selectAllProducts</span> = <span class="fn">createSelector</span>(<span class="var">selectProductState</span>, <span class="var">state</span> => <span class="var">state</span>.<span class="var">products</span>);
+<span class="kw">export const</span> <span class="var">selectLoading</span>     = <span class="fn">createSelector</span>(<span class="var">selectProductState</span>, <span class="var">state</span> => <span class="var">state</span>.<span class="var">loading</span>);
+<span class="kw">export const</span> <span class="var">selectError</span>       = <span class="fn">createSelector</span>(<span class="var">selectProductState</span>, <span class="var">state</span> => <span class="var">state</span>.<span class="var">error</span>);
+
+<span class="cmt">// Step 3 — Composed selectors (computed / derived data)</span>
+<span class="kw">export const</span> <span class="var">selectProductCount</span> = <span class="fn">createSelector</span>(
+  <span class="var">selectAllProducts</span>,
+  <span class="var">products</span> => <span class="var">products</span>.<span class="var">length</span>
+);
+
+<span class="cmt">// Selector with props — find a product by id</span>
+<span class="kw">export const</span> <span class="var">selectProductById</span> = (<span class="var">id</span>: <span class="typ">number</span>) =>
+  <span class="fn">createSelector</span>(<span class="var">selectAllProducts</span>, <span class="var">products</span> => <span class="var">products</span>.<span class="fn">find</span>(<span class="var">p</span> => <span class="var">p</span>.<span class="var">id</span> === <span class="var">id</span>));
+
+<span class="cmt">// Combine multiple feature states</span>
+<span class="kw">export const</span> <span class="var">selectProductsInCart</span> = <span class="fn">createSelector</span>(
+  <span class="var">selectAllProducts</span>,
+  <span class="var">selectCartItems</span>,  <span class="cmt">// from cart selector</span>
+  (<span class="var">products</span>, <span class="var">cartItems</span>) => <span class="var">products</span>.<span class="fn">filter</span>(<span class="var">p</span> => <span class="var">cartItems</span>.<span class="fn">includes</span>(<span class="var">p</span>.<span class="var">id</span>))
+);</pre>
+      </div>
+      <div class="tip-box">
+        <div class="tip-hdr">🎯 Memoization — Why it matters</div>
+        <p>If the <code>products</code> array hasn't changed, <code>selectProductCount</code> returns the cached result without recalculating. This prevents expensive re-computation on every Store update — critical for performance.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 8 — COMPONENT ══ -->
+  <div class="slide" id="s8">
+    <div class="slide-header"><span class="topic-badge">08</span><h1>Component — Dispatch &amp; Select</h1></div>
+    <div class="content">
+      <div class="card accent-blue">
+        <h3>Component's role — it should be thin (Smart/Dumb pattern)</h3>
+        <p>Component only <strong>dispatches actions</strong> and <strong>reads state via selectors</strong>. No direct API calls, no business logic.</p>
+      </div>
+      <div class="code-block">
+        <pre><span class="cmt">// product-list.component.ts</span>
+<span class="kw">import</span> { <span class="cls">Component</span>, <span class="cls">OnInit</span> } <span class="kw">from</span> <span class="str">'@angular/core'</span>;
+<span class="kw">import</span> { <span class="cls">Store</span> } <span class="kw">from</span> <span class="str">'@ngrx/store'</span>;
+<span class="kw">import</span> * <span class="kw">as</span> <span class="var">ProductActions</span> <span class="kw">from</span> <span class="str">'./product.actions'</span>;
+<span class="kw">import</span> { <span class="var">selectAllProducts</span>, <span class="var">selectLoading</span>, <span class="var">selectError</span> } <span class="kw">from</span> <span class="str">'./product.selectors'</span>;
+
+<span class="dec">@Component</span>({
+  <span class="var">selector</span>: <span class="str">'app-product-list'</span>,
+  <span class="var">template</span>: <span class="str">`
+    &lt;div *ngIf="loading$ | async"&gt;Loading...&lt;/div&gt;
+    &lt;div *ngIf="error$ | async as err" class="error"&gt;{{ err }}&lt;/div&gt;
+    &lt;div *ngFor="let p of products$ | async"&gt;
+      {{ p.name }} — {{ p.price }}
+      &lt;button (click)="delete(p.id)"&gt;Delete&lt;/button&gt;
+    &lt;/div&gt;
+    &lt;button (click)="load()"&gt;Reload&lt;/button&gt;
+  `</span>
+})
+<span class="kw">export class</span> <span class="cls">ProductListComponent</span> <span class="kw">implements</span> <span class="cls">OnInit</span> {
+
+  <span class="cmt">// Select data from store using selectors (Observables)</span>
+  <span class="var">products$</span> = <span class="kw">this</span>.<span class="var">store</span>.<span class="fn">select</span>(<span class="var">selectAllProducts</span>);
+  <span class="var">loading$</span>  = <span class="kw">this</span>.<span class="var">store</span>.<span class="fn">select</span>(<span class="var">selectLoading</span>);
+  <span class="var">error$</span>    = <span class="kw">this</span>.<span class="var">store</span>.<span class="fn">select</span>(<span class="var">selectError</span>);
+
+  <span class="fn">constructor</span>(<span class="kw">private</span> <span class="var">store</span>: <span class="cls">Store</span>) {}
+
+  <span class="fn">ngOnInit</span>() {
+    <span class="cmt">// Dispatch action — component does NOT call service</span>
+    <span class="kw">this</span>.<span class="var">store</span>.<span class="fn">dispatch</span>(<span class="var">ProductActions</span>.<span class="fn">loadProducts</span>());
+  }
+
+  <span class="fn">delete</span>(<span class="var">id</span>: <span class="typ">number</span>) {
+    <span class="kw">this</span>.<span class="var">store</span>.<span class="fn">dispatch</span>(<span class="var">ProductActions</span>.<span class="fn">deleteProduct</span>({ <span class="var">id</span> }));
+  }
+
+  <span class="fn">load</span>() {
+    <span class="kw">this</span>.<span class="var">store</span>.<span class="fn">dispatch</span>(<span class="var">ProductActions</span>.<span class="fn">loadProducts</span>());
+  }
+}</pre>
+      </div>
+      <div class="tip-box">
+        <div class="tip-hdr">✅ Always use async pipe — no manual subscribe/unsubscribe needed</div>
+        <p><code>products$ | async</code> automatically subscribes and unsubscribes. Never <code>.subscribe()</code> manually in a component unless absolutely necessary.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 9 — NGRX ENTITY ══ -->
+  <div class="slide" id="s9">
+    <div class="slide-header"><span class="topic-badge">09</span><h1>NgRx Entity — Manage Collections Efficiently</h1></div>
+    <div class="content">
+      <div class="two-col">
+        <div class="card accent-pink">
+          <h3>What is NgRx Entity?</h3>
+          <p><code>@ngrx/entity</code> provides an adapter for managing <strong>normalized collections</strong> (arrays of objects with IDs). Removes boilerplate for CRUD operations.</p>
+          <ul style="margin-top:6px;">
+            <li>Stores items as <code>&#123; ids: [], entities: &#123;&#125; &#125;</code></li>
+            <li>Fast lookup by ID — O(1) vs O(n) filter</li>
+            <li>Built-in CRUD adapter methods</li>
+          </ul>
+        </div>
+        <div class="card accent-orange">
+          <h3>EntityState Structure</h3>
+          <div class="code-block" style="margin-top:6px;">
+            <pre><span class="cmt">// Instead of: Product[]</span>
+<span class="cmt">// NgRx Entity stores:</span>
+{
+  <span class="var">ids</span>: [<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>],
+  <span class="var">entities</span>: {
+    <span class="num">1</span>: { <span class="var">id</span>:<span class="num">1</span>, <span class="var">name</span>:<span class="str">'Phone'</span>   },
+    <span class="num">2</span>: { <span class="var">id</span>:<span class="num">2</span>, <span class="var">name</span>:<span class="str">'Laptop'</span>  },
+    <span class="num">3</span>: { <span class="var">id</span>:<span class="num">3</span>, <span class="var">name</span>:<span class="str">'Tablet'</span>  }
+  },
+  <span class="var">loading</span>: <span class="kw">false</span>,  <span class="cmt">// your custom props</span>
+  <span class="var">error</span>: <span class="kw">null</span>
+}</pre>
+          </div>
+        </div>
+      </div>
+      <div class="code-block">
+        <pre><span class="cmt">// product.reducer.ts — with NgRx Entity</span>
+<span class="kw">import</span> { <span class="fn">createEntityAdapter</span>, <span class="cls">EntityAdapter</span>, <span class="cls">EntityState</span> } <span class="kw">from</span> <span class="str">'@ngrx/entity'</span>;
+
+<span class="kw">export interface</span> <span class="cls">ProductState</span> <span class="kw">extends</span> <span class="cls">EntityState</span>&lt;<span class="cls">Product</span>&gt; {
+  <span class="var">loading</span>: <span class="typ">boolean</span>;
+  <span class="var">error</span>: <span class="typ">string</span> | <span class="kw">null</span>;
+}
+
+<span class="kw">export const</span> <span class="var">adapter</span>: <span class="cls">EntityAdapter</span>&lt;<span class="cls">Product</span>&gt; = <span class="fn">createEntityAdapter</span>&lt;<span class="cls">Product</span>&gt;();
+<span class="kw">export const</span> <span class="var">initialState</span>: <span class="cls">ProductState</span> = <span class="var">adapter</span>.<span class="fn">getInitialState</span>({ <span class="var">loading</span>: <span class="kw">false</span>, <span class="var">error</span>: <span class="kw">null</span> });
+
+<span class="kw">export const</span> <span class="var">productReducer</span> = <span class="fn">createReducer</span>(
+  <span class="var">initialState</span>,
+  <span class="fn">on</span>(<span class="var">ProductActions</span>.<span class="var">loadProductsSuccess</span>, (<span class="var">state</span>, { <span class="var">products</span> }) =>
+    <span class="var">adapter</span>.<span class="fn">setAll</span>(<span class="var">products</span>, { ...<span class="var">state</span>, <span class="var">loading</span>: <span class="kw">false</span> })  <span class="cmt">// replaces all</span>
+  ),
+  <span class="fn">on</span>(<span class="var">ProductActions</span>.<span class="var">addProduct</span>, (<span class="var">state</span>, { <span class="var">product</span> }) =>
+    <span class="var">adapter</span>.<span class="fn">addOne</span>(<span class="var">product</span>, <span class="var">state</span>)       <span class="cmt">// adds one</span>
+  ),
+  <span class="fn">on</span>(<span class="var">ProductActions</span>.<span class="var">deleteProduct</span>, (<span class="var">state</span>, { <span class="var">id</span> }) =>
+    <span class="var">adapter</span>.<span class="fn">removeOne</span>(<span class="var">id</span>, <span class="var">state</span>)         <span class="cmt">// removes by id</span>
+  ),
+  <span class="fn">on</span>(<span class="var">ProductActions</span>.<span class="var">updateProduct</span>, (<span class="var">state</span>, { <span class="var">product</span> }) =>
+    <span class="var">adapter</span>.<span class="fn">upsertOne</span>(<span class="var">product</span>, <span class="var">state</span>)    <span class="cmt">// add or update</span>
+  )
+);
+
+<span class="cmt">// Built-in selectors from adapter</span>
+<span class="kw">export const</span> { <span class="fn">selectAll</span>, <span class="fn">selectEntities</span>, <span class="fn">selectIds</span>, <span class="fn">selectTotal</span> } =
+  <span class="var">adapter</span>.<span class="fn">getSelectors</span>(<span class="var">selectProductState</span>);</pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 10 — FEATURE STATE + DEVTOOLS ══ -->
+  <div class="slide" id="s10">
+    <div class="slide-header"><span class="topic-badge">10</span><h1>Feature State, Router Store &amp; DevTools</h1></div>
+    <div class="content">
+      <div class="two-col">
+        <div class="card accent-green">
+          <h3>Feature State — Lazy Loading</h3>
+          <p>Register state only when the feature module/route loads. Keeps the initial bundle small.</p>
+          <div class="code-block" style="margin-top:8px;">
+            <pre><span class="cmt">// products.routes.ts</span>
+<span class="kw">export const</span> <span class="var">productRoutes</span>: <span class="cls">Routes</span> = [{
+  <span class="var">path</span>: <span class="str">'products'</span>,
+  <span class="var">providers</span>: [
+    <span class="fn">provideState</span>(<span class="str">'products'</span>, <span class="var">productReducer</span>),
+    <span class="fn">provideEffects</span>([<span class="cls">ProductEffects</span>])
+  ],
+  <span class="var">loadComponent</span>: () => <span class="fn">import</span>(<span class="str">'./product-list.component'</span>)
+}];</pre>
+          </div>
+        </div>
+        <div class="card accent-purple">
+          <h3>Router Store</h3>
+          <p>Syncs Angular Router state into the NgRx Store — URL, params, query params become part of state.</p>
+          <div class="code-block" style="margin-top:8px;">
+            <pre><span class="cmt">// app.config.ts</span>
+<span class="fn">provideRouterStore</span>()  <span class="cmt">// in providers</span>
+
+<span class="cmt">// Use in selectors</span>
+<span class="kw">import</span> { <span class="var">selectRouteParam</span> } <span class="kw">from</span> <span class="str">'@ngrx/router-store'</span>;
+
+<span class="var">productId$</span> = <span class="kw">this</span>.<span class="var">store</span>.<span class="fn">select</span>(
+  <span class="fn">selectRouteParam</span>(<span class="str">'id'</span>)  <span class="cmt">// reads :id from URL</span>
+);</pre>
+          </div>
+        </div>
+      </div>
+      <div class="card accent-yellow">
+        <h3>🔧 Redux DevTools — Time-Travel Debugging</h3>
+        <div class="code-block" style="margin-top:6px;">
+          <pre><span class="cmt">// app.config.ts</span>
+<span class="fn">provideStoreDevtools</span>({
+  <span class="var">maxAge</span>: <span class="num">25</span>,                              <span class="cmt">// keep last 25 actions</span>
+  <span class="var">logOnly</span>: <span class="var">environment</span>.<span class="var">production</span>,       <span class="cmt">// disable in production</span>
+  <span class="var">autoPause</span>: <span class="kw">true</span>,                         <span class="cmt">// pause when tab not active</span>
+  <span class="var">trace</span>: <span class="kw">false</span>,                            <span class="cmt">// include stack traces</span>
+})</pre>
+        </div>
+        <p style="margin-top:8px; font-size:12px; color:#8b949e;">Install Chrome extension <strong>"Redux DevTools"</strong> → see every action dispatched, current state, diff, and replay history.</p>
+      </div>
+      <div class="two-col">
+        <div class="tip-box">
+          <div class="tip-hdr">✅ Folder Structure Convention</div>
+          <p>Keep NgRx files together per feature:<br/><code>products/store/product.actions.ts</code><br/><code>products/store/product.reducer.ts</code><br/><code>products/store/product.effects.ts</code><br/><code>products/store/product.selectors.ts</code></p>
+        </div>
+        <div class="card accent-red">
+          <h3>NgRx vs Services + BehaviorSubject</h3>
+          <table style="margin-top:6px; font-size:11px;">
+            <thead><tr><th></th><th>NgRx</th><th>Service + BS</th></tr></thead>
+            <tbody>
+              <tr><td>Complexity</td><td>High</td><td>Low</td></tr>
+              <tr><td>Scalability</td><td>✅ Great</td><td>Medium</td></tr>
+              <tr><td>DevTools</td><td>✅ Yes</td><td>❌ No</td></tr>
+              <tr><td>Side effects</td><td>✅ Effects</td><td>Mixed in service</td></tr>
+              <tr><td>Best for</td><td>Large apps</td><td>Small/medium</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 11 — MEMORY TIPS ══ -->
+  <div class="slide" id="s11">
+    <div class="slide-header"><span class="topic-badge">11</span><h1>🧠 Memory Tips &amp; Mnemonics</h1></div>
+    <div class="content">
+      <div class="two-col">
+        <div class="mem-box">
+          <div class="mem-hdr">🏦 Bank Analogy</div>
+          <ul>
+            <li><strong>Store</strong> = Bank vault — all money (state) in one safe place</li>
+            <li><strong>Action</strong> = Withdrawal/deposit slip — describes what you want</li>
+            <li><strong>Reducer</strong> = Bank teller — processes the slip, updates balance</li>
+            <li><strong>Effect</strong> = Bank's back office — verifies with external system (API)</li>
+            <li><strong>Selector</strong> = ATM balance screen — shows you only what you need</li>
+          </ul>
+        </div>
+        <div class="mem-box">
+          <div class="mem-hdr">🔑 One-Line Rules</div>
+          <ul>
+            <li><strong>Action</strong> → "What happened?" (event, not command)</li>
+            <li><strong>Reducer</strong> → "How does state change?" (pure, sync only)</li>
+            <li><strong>Effect</strong> → "What side effects run?" (async, HTTP)</li>
+            <li><strong>Selector</strong> → "What data does UI need?" (memoized)</li>
+            <li><strong>Store</strong> → "Where is all state?" (single source of truth)</li>
+          </ul>
+        </div>
+      </div>
+      <div class="three-col">
+        <div class="tip-box">
+          <div class="tip-hdr">📝 A.R.E.S.S</div>
+          <p><strong>A</strong>ction — describes events<br/><strong>R</strong>educer — pure state fn<br/><strong>E</strong>ffect — async work<br/><strong>S</strong>elector — read state<br/><strong>S</strong>tore — holds all state</p>
+        </div>
+        <div class="tip-box">
+          <div class="tip-hdr">🎯 Action triplet pattern</div>
+          <p>Every async operation has 3 actions:<br/><strong>trigger</strong> → load<br/><strong>success</strong> → loadSuccess<br/><strong>failure</strong> → loadFailure</p>
+        </div>
+        <div class="tip-box">
+          <div class="tip-hdr">⚡ Effect operator choice</div>
+          <p><strong>switchMap</strong> → load/search (cancel prev)<br/><strong>concatMap</strong> → save/order (queue)<br/><strong>mergeMap</strong> → parallel ops<br/><strong>exhaustMap</strong> → login (ignore new)</p>
+        </div>
+      </div>
+      <div class="card accent-yellow">
+        <h3>Quick Recall: Who does what?</h3>
+        <table style="margin-top:6px;">
+          <thead><tr><th>Building Block</th><th>Package</th><th>Pure?</th><th>Async?</th><th>Has State?</th></tr></thead>
+          <tbody>
+            <tr><td>Action</td><td><code>@ngrx/store</code></td><td>✅</td><td>❌</td><td>❌ (event object)</td></tr>
+            <tr><td>Reducer</td><td><code>@ngrx/store</code></td><td>✅ must be</td><td>❌</td><td>✅ produces new state</td></tr>
+            <tr><td>Effect</td><td><code>@ngrx/effects</code></td><td>❌</td><td>✅</td><td>❌ (dispatches actions)</td></tr>
+            <tr><td>Selector</td><td><code>@ngrx/store</code></td><td>✅</td><td>❌</td><td>❌ (reads state)</td></tr>
+            <tr><td>Store</td><td><code>@ngrx/store</code></td><td>—</td><td>—</td><td>✅ holds state</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 12 — INTERVIEW Q&A ══ -->
+  <div class="slide" id="s12">
+    <div class="slide-header"><span class="topic-badge">12</span><h1>Senior-Level Interview Q&amp;A</h1></div>
+    <div class="content">
+      <div class="iq-item">
+        <div class="iq-q">Q1. What is NgRx and why would you use it over a Service + BehaviorSubject?</div>
+        <div class="iq-a">NgRx is a reactive state management library based on the Redux pattern. I use it over Service+BehaviorSubject when the app has <strong>complex shared state, async side effects at scale, and needs Redux DevTools</strong> for debugging. For simpler apps, Service+BehaviorSubject is less boilerplate. NgRx enforces one-way data flow, immutable state, and separates side effects into Effects.</div>
+      </div>
+      <div class="iq-item">
+        <div class="iq-q">Q2. What is the difference between a Reducer and an Effect?</div>
+        <div class="iq-a">A <strong>Reducer is a pure synchronous function</strong> — takes state + action, returns new state. No async, no side effects. An <strong>Effect is impure and async</strong> — it listens for actions, performs API calls or other side effects, and dispatches new actions with the results. Effects keep Reducers pure.</div>
+      </div>
+      <div class="iq-item">
+        <div class="iq-q">Q3. Why are Selectors memoized and why does it matter?</div>
+        <div class="iq-a">Selectors cache their last result. If the input state slice hasn't changed, they return the same reference without recalculating. This prevents <strong>unnecessary Angular change detection cycles</strong> and expensive derived data recomputation on every Store update — critical for performance in large apps.</div>
+      </div>
+      <div class="iq-item">
+        <div class="iq-q">Q4. When would you use switchMap vs concatMap in Effects?</div>
+        <div class="iq-a">Use <strong>switchMap</strong> for search/load operations where you want to cancel previous requests when a new one starts. Use <strong>concatMap</strong> when order matters and all requests should complete in sequence (e.g., save form, cart checkout). Use <strong>exhaustMap</strong> for login — ignore new requests while one is in progress.</div>
+      </div>
+      <div class="iq-item">
+        <div class="iq-q">Q5. What is NgRx Entity and when would you use it?</div>
+        <div class="iq-a">NgRx Entity provides an adapter to manage <strong>normalized collections</strong> as <code>{ ids: [], entities: {} }</code> instead of plain arrays. Use it when you have a collection of objects with unique IDs and need fast CRUD operations. The adapter provides <code>addOne</code>, <code>removeOne</code>, <code>upsertOne</code>, <code>setAll</code> — no boilerplate needed. Lookup by ID is O(1) vs O(n) with array filter.</div>
+      </div>
+      <div class="iq-item">
+        <div class="iq-q">Q6. What is Feature State and why is it important?</div>
+        <div class="iq-a">Feature State registers a slice of the Store only when a lazy-loaded route/module is activated — using <code>provideState()</code>. This keeps the initial bundle small and loads state only when needed. The feature state is merged into the global store at runtime and removed when the feature is unloaded (unless configured otherwise).</div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /deck -->
+
+<nav id="nav">
+  <button id="btn-prev" disabled>&#8592;</button>
+  <span id="counter">1 / 13</span>
+  <button id="btn-next">&#8594;</button>
+</nav>
+<div id="hint">← → arrow keys to navigate</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const total  = slides.length;
+  let cur = 0;
+  const bar     = document.getElementById('progress-bar');
+  const counter = document.getElementById('counter');
+  const btnPrev = document.getElementById('btn-prev');
+  const btnNext = document.getElementById('btn-next');
+
+  function goTo(n) {
+    slides[cur].classList.remove('active');
+    cur = Math.max(0, Math.min(n, total - 1));
+    slides[cur].classList.add('active');
+    counter.textContent = `${cur + 1} / ${total}`;
+    bar.style.width = `${((cur + 1) / total) * 100}%`;
+    btnPrev.disabled = cur === 0;
+    btnNext.disabled = cur === total - 1;
+    slides[cur].scrollTop = 0;
+  }
+
+  btnPrev.addEventListener('click', () => goTo(cur - 1));
+  btnNext.addEventListener('click', () => goTo(cur + 1));
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') goTo(cur + 1);
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   goTo(cur - 1);
+  });
+  goTo(0);
+</script>
+</body>
+</html>
