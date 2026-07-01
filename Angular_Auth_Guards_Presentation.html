@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Angular Auth Guards – Interview Deep Dive</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; overflow: hidden; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0d1117; color: #e6edf3; }
+
+    #deck { width: 100vw; height: 100vh; position: relative; }
+
+    .slide {
+      display: none; flex-direction: column; justify-content: flex-start;
+      padding: 44px 58px 76px; width: 100%; height: 100%;
+      overflow-y: auto; gap: 16px; animation: fadeIn .35s ease;
+    }
+    .slide.active { display: flex; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+
+    .slide-header {
+      display: flex; align-items: center; gap: 14px;
+      border-bottom: 2px solid #21262d; padding-bottom: 12px; flex-shrink: 0;
+    }
+    .topic-badge {
+      background: #0f7c4a; color: #fff; font-size: 11px; font-weight: 700;
+      letter-spacing: 1px; text-transform: uppercase; padding: 4px 10px;
+      border-radius: 20px; white-space: nowrap;
+    }
+
+    h1 { font-size: 27px; font-weight: 700; color: #ff6b6b; }
+    h2 { font-size: 19px; font-weight: 600; color: #ffa657; margin-bottom: 5px; }
+    h3 { font-size: 14px; font-weight: 600; color: #ffa657; margin-bottom: 4px; }
+
+    /* title slide */
+    .title-slide {
+      justify-content: center; align-items: center; text-align: center;
+      background: radial-gradient(ellipse at 50% 0%, #0a1f12 0%, #0d1117 70%);
+    }
+    .title-slide h1 { font-size: 44px; margin-bottom: 10px; color: #56d364; }
+    .title-slide .subtitle { font-size: 16px; color: #8b949e; max-width: 700px; line-height: 1.65; }
+    .logo { font-size: 62px; margin-bottom: 14px; }
+    .topic-chips { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 20px; }
+    .chip { background: #161b22; border: 1px solid #30363d; border-radius: 20px; padding: 5px 14px; font-size: 12.5px; color: #8b949e; }
+
+    .content { flex: 1; display: flex; flex-direction: column; gap: 14px; }
+    .two-col   { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+
+    .card {
+      background: #161b22; border: 1px solid #30363d;
+      border-radius: 10px; padding: 14px 16px;
+    }
+    .card.accent-red    { border-left: 4px solid #f85149; }
+    .card.accent-blue   { border-left: 4px solid #1f6feb; }
+    .card.accent-green  { border-left: 4px solid #3fb950; }
+    .card.accent-orange { border-left: 4px solid #f78166; }
+    .card.accent-purple { border-left: 4px solid #d2a8ff; }
+    .card.accent-yellow { border-left: 4px solid #e3b341; }
+    .card.accent-cyan   { border-left: 4px solid #39d0d8; }
+    .card.accent-pink   { border-left: 4px solid #ff6eb4; }
+
+    p  { font-size: 13.5px; line-height: 1.75; color: #c9d1d9; }
+    li { font-size: 13px; line-height: 1.85; color: #c9d1d9; margin-left: 18px; }
+    ul { padding-left: 4px; }
+    strong { color: #f0f6fc; }
+    code {
+      font-family: 'Consolas', monospace; font-size: 12px;
+      background: #1c2128; color: #79c0ff; padding: 2px 6px; border-radius: 4px;
+    }
+
+    .code-block {
+      background: #1c2128; border: 1px solid #30363d;
+      border-radius: 8px; padding: 14px 16px; overflow-x: auto; flex-shrink: 0;
+    }
+    .code-block pre {
+      font-family: 'Consolas', monospace; font-size: 12.5px;
+      line-height: 1.7; color: #e6edf3; white-space: pre; margin: 0;
+    }
+    .kw  { color: #ff7b72; }
+    .fn  { color: #d2a8ff; }
+    .str { color: #a5d6ff; }
+    .num { color: #79c0ff; }
+    .cmt { color: #8b949e; font-style: italic; }
+    .var { color: #ffa657; }
+    .dec { color: #ff6b6b; }
+    .cls { color: #f0c674; }
+    .int { color: #39d0d8; }
+    .op  { color: #7ee787; }
+    .typ { color: #56d364; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+    th { background: #161b22; color: #d2a8ff; text-align: left; padding: 8px 12px; border-bottom: 2px solid #30363d; font-weight: 600; }
+    td { padding: 7px 12px; border-bottom: 1px solid #21262d; color: #c9d1d9; vertical-align: top; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #161b22; }
+
+    .badge { display: inline-block; padding: 2px 9px; border-radius: 12px; font-size: 11px; font-weight: 700; white-space: nowrap; }
+    .badge-red    { background: #3a1818; color: #f85149; }
+    .badge-green  { background: #1a3c1a; color: #3fb950; }
+    .badge-blue   { background: #0d2340; color: #58a6ff; }
+    .badge-orange { background: #3a2000; color: #ffa657; }
+    .badge-purple { background: #2a1a3e; color: #d2a8ff; }
+    .badge-yellow { background: #2e2200; color: #e3b341; }
+    .badge-cyan   { background: #0a2e2e; color: #39d0d8; }
+
+    .tip-box {
+      background: #1c2a1c; border: 1px solid #3fb950;
+      border-left: 4px solid #3fb950; border-radius: 8px; padding: 10px 14px;
+    }
+    .tip-box .tip-hdr { font-size: 11px; font-weight: 700; color: #3fb950; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 5px; }
+    .tip-box p, .tip-box li { font-size: 12.5px; color: #c9d1d9; }
+
+    .warn-box {
+      background: #2a1a00; border: 1px solid #e3b341;
+      border-left: 4px solid #e3b341; border-radius: 8px; padding: 10px 14px;
+    }
+    .warn-box .warn-hdr { font-size: 11px; font-weight: 700; color: #e3b341; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 5px; }
+    .warn-box p, .warn-box li { font-size: 12.5px; color: #c9d1d9; }
+
+    .mem-box {
+      background: #1e1a2e; border: 1px solid #d2a8ff;
+      border-left: 4px solid #d2a8ff; border-radius: 8px; padding: 10px 14px;
+    }
+    .mem-box .mem-hdr { font-size: 11px; font-weight: 700; color: #d2a8ff; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 5px; }
+    .mem-box p, .mem-box li { font-size: 12.5px; color: #c9d1d9; }
+
+    .iq-item { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 12px 15px; margin-bottom: 5px; }
+    .iq-q { font-size: 13.5px; font-weight: 600; color: #f0f6fc; margin-bottom: 5px; }
+    .iq-a { font-size: 12.5px; color: #c9d1d9; line-height: 1.7; }
+
+    /* flow diagram */
+    .flow { display: flex; align-items: center; gap: 0; flex-wrap: nowrap; overflow-x: auto; padding: 6px 0; }
+    .flow-box {
+      background: #1c2128; border: 1px solid #30363d; border-radius: 6px;
+      padding: 7px 12px; font-size: 12px; color: #e6edf3; white-space: nowrap; flex-shrink: 0;
+    }
+    .flow-box.green { border-color: #3fb950; color: #56d364; }
+    .flow-box.red   { border-color: #f85149; color: #ff7b72; }
+    .flow-box.blue  { border-color: #1f6feb; color: #79c0ff; }
+    .flow-box.purple{ border-color: #d2a8ff; color: #d2a8ff; }
+    .flow-arrow { color: #484f58; font-size: 18px; padding: 0 4px; flex-shrink: 0; }
+
+    /* nav */
+    #nav {
+      position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+      display: flex; align-items: center; gap: 16px;
+      background: #161b22cc; backdrop-filter: blur(8px);
+      border: 1px solid #30363d; border-radius: 40px; padding: 10px 24px; z-index: 1000;
+    }
+    #nav button {
+      background: none; border: none; color: #8b949e; cursor: pointer;
+      font-size: 20px; padding: 4px 8px; border-radius: 6px; transition: color .2s, background .2s;
+    }
+    #nav button:hover:not(:disabled) { color: #e6edf3; background: #21262d; }
+    #nav button:disabled { opacity: 0.3; cursor: default; }
+    #counter { font-size: 13px; color: #8b949e; min-width: 64px; text-align: center; }
+
+    #progress-bar { position: fixed; top: 0; left: 0; height: 3px; background: #0f7c4a; transition: width .3s ease; z-index: 999; }
+    #hint { position: fixed; bottom: 20px; right: 24px; font-size: 11px; color: #484f58; }
+    .slide::-webkit-scrollbar { width: 6px; }
+    .slide::-webkit-scrollbar-track { background: transparent; }
+    .slide::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
+  </style>
+</head>
+<body>
+<div id="progress-bar"></div>
+<div id="deck">
+
+  <!-- ══ SLIDE 0 — TITLE ══ -->
+  <div class="slide title-slide active" id="s0">
+    <div class="logo">🛡️</div>
+    <h1>Angular Auth Guards</h1>
+    <p class="subtitle">Complete interview guide — CanActivate, CanMatch, CanDeactivate, Functional Guards, Role-Based Access, Real-World Patterns, Senior-Level Q&amp;A.</p>
+    <div class="topic-chips">
+      <span class="chip">What are Guards?</span>
+      <span class="chip">canActivate</span>
+      <span class="chip">canActivateChild</span>
+      <span class="chip">canDeactivate</span>
+      <span class="chip">canMatch</span>
+      <span class="chip">canLoad</span>
+      <span class="chip">Functional Guards</span>
+      <span class="chip">Role-Based Access</span>
+      <span class="chip">JWT + Guards</span>
+      <span class="chip">Guard + Resolver</span>
+      <span class="chip">Memory Tips</span>
+      <span class="chip">Interview Q&amp;A</span>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 1 — WHAT ARE GUARDS ══ -->
+  <div class="slide" id="s1">
+    <div class="slide-header"><span class="topic-badge">01</span><h1>What are Route Guards?</h1></div>
+    <div class="content">
+      <div class="two-col">
+        <div class="card accent-green">
+          <h3>Definition</h3>
+          <p>Route Guards are <strong>interfaces / functions</strong> that tell Angular's Router whether to <strong>allow or deny navigation</strong> to a route. They run before the component is loaded.</p>
+          <br/>
+          <ul>
+            <li>Can return <code>boolean</code>, <code>UrlTree</code>, or <code>Observable&lt;boolean&gt;</code></li>
+            <li><code>true</code> → allow navigation</li>
+            <li><code>false</code> → block navigation</li>
+            <li><code>UrlTree</code> → redirect to another route</li>
+          </ul>
+        </div>
+        <div class="card accent-blue">
+          <h3>5 Types of Guards</h3>
+          <table style="margin-top:6px;">
+            <thead><tr><th>Guard</th><th>Purpose</th></tr></thead>
+            <tbody>
+              <tr><td><code>canActivate</code></td><td>Block access to a route</td></tr>
+              <tr><td><code>canActivateChild</code></td><td>Block access to child routes</td></tr>
+              <tr><td><code>canDeactivate</code></td><td>Prevent leaving a route (unsaved changes)</td></tr>
+              <tr><td><code>canMatch</code></td><td>Block route from matching at all (Angular 14+)</td></tr>
+              <tr><td><code>canLoad</code></td><td>Prevent lazy module from loading (deprecated)</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card accent-yellow">
+        <h3>🔄 Guard Execution Flow</h3>
+        <div class="flow" style="margin-top:8px;">
+          <div class="flow-box blue">User Navigates</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-box purple">canMatch</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-box purple">canActivate</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-box purple">canActivateChild</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-box blue">Resolve Data</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-box green">Load Component ✅</div>
+        </div>
+        <p style="margin-top:8px; font-size:12px; color:#8b949e;">Guards run in order. If any returns <code>false</code> or <code>UrlTree</code>, navigation stops immediately.</p>
+      </div>
+      <div class="two-col">
+        <div class="tip-box">
+          <div class="tip-hdr">✅ Angular 14+ — Functional Guards</div>
+          <p>New recommended approach — plain functions instead of classes. No need to inject services into a class; just use <code>inject()</code> inside the function.</p>
+        </div>
+        <div class="warn-box">
+          <div class="warn-hdr">⚠️ Deprecated in Angular 15+</div>
+          <p><code>CanActivate</code>, <code>CanLoad</code>, <code>CanDeactivate</code> <strong>class interfaces</strong> are deprecated. Use <strong>functional guards</strong> with <code>canActivateFn</code>, <code>canMatchFn</code> instead.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 2 — canActivate ══ -->
+  <div class="slide" id="s2">
+    <div class="slide-header"><span class="topic-badge">02</span><h1>canActivate — Protect a Route</h1></div>
+    <div class="content">
+      <div class="two-col">
+        <div class="card accent-green">
+          <h3>Old Way — Class-based (Angular &lt; 14)</h3>
+          <p>Implement <code>CanActivate</code> interface. Still works but deprecated.</p>
+        </div>
+        <div class="card accent-cyan">
+          <h3>New Way — Functional Guard (Angular 14+) ✅</h3>
+          <p>A plain function using <code>inject()</code>. Cleaner, tree-shakeable, testable.</p>
+        </div>
+      </div>
+      <div class="code-block">
+        <pre><span class="cmt">// ── NEW WAY (Angular 14+) — Recommended ─────────────────────────────</span>
+<span class="kw">import</span> { <span class="fn">inject</span> } <span class="kw">from</span> <span class="str">'@angular/core'</span>;
+<span class="kw">import</span> { <span class="cls">CanActivateFn</span>, <span class="cls">Router</span> } <span class="kw">from</span> <span class="str">'@angular/router'</span>;
+<span class="kw">import</span> { <span class="cls">AuthService</span> } <span class="kw">from</span> <span class="str">'./auth.service'</span>;
+
+<span class="kw">export const</span> <span class="var">authGuard</span>: <span class="cls">CanActivateFn</span> = (<span class="var">route</span>, <span class="var">state</span>) => {
+  <span class="kw">const</span> <span class="var">auth</span>   = <span class="fn">inject</span>(<span class="cls">AuthService</span>);
+  <span class="kw">const</span> <span class="var">router</span> = <span class="fn">inject</span>(<span class="cls">Router</span>);
+
+  <span class="kw">if</span> (<span class="var">auth</span>.<span class="fn">isLoggedIn</span>()) {
+    <span class="kw">return true</span>;                          <span class="cmt">// ✅ allow navigation</span>
+  }
+  <span class="kw">return</span> <span class="var">router</span>.<span class="fn">createUrlTree</span>([<span class="str">'/login'</span>]); <span class="cmt">// 🔀 redirect to login</span>
+};
+
+<span class="cmt">// ── Usage in Routes ──────────────────────────────────────────────────</span>
+<span class="kw">const</span> <span class="var">routes</span>: <span class="cls">Routes</span> = [
+  {
+    <span class="var">path</span>: <span class="str">'dashboard'</span>,
+    <span class="var">component</span>: <span class="cls">DashboardComponent</span>,
+    <span class="var">canActivate</span>: [<span class="var">authGuard</span>]  <span class="cmt">// attach guard</span>
+  },
+  { <span class="var">path</span>: <span class="str">'login'</span>, <span class="var">component</span>: <span class="cls">LoginComponent</span> }
+];
+
+<span class="cmt">// ── OLD WAY (Class-based — deprecated) ──────────────────────────────</span>
+<span class="dec">@Injectable</span>({ <span class="var">providedIn</span>: <span class="str">'root'</span> })
+<span class="kw">export class</span> <span class="cls">AuthGuard</span> <span class="kw">implements</span> <span class="cls">CanActivate</span> {
+  <span class="fn">constructor</span>(<span class="kw">private</span> <span class="var">auth</span>: <span class="cls">AuthService</span>, <span class="kw">private</span> <span class="var">router</span>: <span class="cls">Router</span>) {}
+
+  <span class="fn">canActivate</span>(): <span class="typ">boolean</span> | <span class="cls">UrlTree</span> {
+    <span class="kw">return</span> <span class="kw">this</span>.<span class="var">auth</span>.<span class="fn">isLoggedIn</span>() || <span class="kw">this</span>.<span class="var">router</span>.<span class="fn">createUrlTree</span>([<span class="str">'/login'</span>]);
+  }
+}</pre>
+      </div>
+      <div class="tip-box">
+        <div class="tip-hdr">💡 Return types canActivate can return</div>
+        <p><code>boolean</code> · <code>Observable&lt;boolean&gt;</code> · <code>Promise&lt;boolean&gt;</code> · <code>UrlTree</code> · <code>Observable&lt;UrlTree&gt;</code></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 3 — canActivateChild ══ -->
+  <div class="slide" id="s3">
+    <div class="slide-header"><span class="topic-badge">03</span><h1>canActivateChild — Protect Child Routes</h1></div>
+    <div class="content">
+      <div class="two-col">
+        <div class="card accent-purple">
+          <h3>When to use?</h3>
+          <p>When you have a <strong>parent route with multiple child routes</strong> and want to protect all children without repeating the guard on each child route. The guard runs each time a child is navigated to.</p>
+        </div>
+        <div class="card accent-orange">
+          <h3>vs canActivate on parent</h3>
+          <p><code>canActivate</code> on parent runs <strong>only once</strong> when the parent is activated. <code>canActivateChild</code> runs <strong>every time</strong> a child route is activated — even if parent is already loaded.</p>
+        </div>
+      </div>
+      <div class="code-block">
+        <pre><span class="cmt">// auth-child.guard.ts</span>
+<span class="kw">import</span> { <span class="cls">CanActivateChildFn</span>, <span class="cls">Router</span> } <span class="kw">from</span> <span class="str">'@angular/router'</span>;
+<span class="kw">import</span> { <span class="fn">inject</span> } <span class="kw">from</span> <span class="str">'@angular/core'</span>;
+
+<span class="kw">export const</span> <span class="var">authChildGuard</span>: <span class="cls">CanActivateChildFn</span> = (<span class="var">childRoute</span>, <span class="var">state</span>) => {
+  <span class="kw">const</span> <span class="var">auth</span> = <span class="fn">inject</span>(<span class="cls">AuthService</span>);
+  <span class="kw">if</span> (<span class="var">auth</span>.<span class="fn">isLoggedIn</span>()) <span class="kw">return true</span>;
+  <span class="kw">return</span> <span class="fn">inject</span>(<span class="cls">Router</span>).<span class="fn">createUrlTree</span>([<span class="str">'/login'</span>]);
+};
+
+<span class="cmt">// app.routes.ts — protect ALL children in one place</span>
+<span class="kw">const</span> <span class="var">routes</span>: <span class="cls">Routes</span> = [
+  {
+    <span class="var">path</span>: <span class="str">'admin'</span>,
+    <span class="var">component</span>: <span class="cls">AdminLayoutComponent</span>,
+    <span class="var">canActivateChild</span>: [<span class="var">authChildGuard</span>],  <span class="cmt">// guard runs for every child</span>
+    <span class="var">children</span>: [
+      { <span class="var">path</span>: <span class="str">'users'</span>,    <span class="var">component</span>: <span class="cls">UsersComponent</span> },   <span class="cmt">// protected ✅</span>
+      { <span class="var">path</span>: <span class="str">'settings'</span>, <span class="var">component</span>: <span class="cls">SettingsComponent</span> }, <span class="cmt">// protected ✅</span>
+      { <span class="var">path</span>: <span class="str">'reports'</span>,  <span class="var">component</span>: <span class="cls">ReportsComponent</span> },  <span class="cmt">// protected ✅</span>
+    ]
+  }
+];</pre>
+      </div>
+      <div class="card accent-yellow">
+        <h3>Key Interview Point</h3>
+        <p><strong>canActivate</strong> guards the route <em>entry</em> once. <strong>canActivateChild</strong> guards each child navigation separately — useful when the parent shell stays loaded but each sub-page needs fresh permission checks (e.g., roles changing mid-session).</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 4 — canDeactivate ══ -->
+  <div class="slide" id="s4">
+    <div class="slide-header"><span class="topic-badge">04</span><h1>canDeactivate — Prevent Leaving (Unsaved Changes)</h1></div>
+    <div class="content">
+      <div class="card accent-red">
+        <h3>When to use?</h3>
+        <p>Prevent users from accidentally navigating away from a form with <strong>unsaved changes</strong>. Common in edit pages, long forms, or checkout flows.</p>
+      </div>
+      <div class="code-block">
+        <pre><span class="cmt">// can-deactivate.guard.ts — Generic, reusable guard</span>
+<span class="kw">import</span> { <span class="cls">CanDeactivateFn</span> } <span class="kw">from</span> <span class="str">'@angular/router'</span>;
+
+<span class="cmt">// Define interface that components must implement</span>
+<span class="kw">export interface</span> <span class="cls">CanComponentDeactivate</span> {
+  <span class="fn">canDeactivate</span>(): <span class="typ">boolean</span> | <span class="cls">Observable</span>&lt;<span class="typ">boolean</span>&gt;;
+}
+
+<span class="kw">export const</span> <span class="var">canDeactivateGuard</span>: <span class="cls">CanDeactivateFn</span>&lt;<span class="cls">CanComponentDeactivate</span>&gt; =
+  (<span class="var">component</span>) => {
+    <span class="kw">return</span> <span class="var">component</span>.<span class="fn">canDeactivate</span>
+      ? <span class="var">component</span>.<span class="fn">canDeactivate</span>()
+      : <span class="kw">true</span>;
+  };
+
+<span class="cmt">// edit-user.component.ts — implement the interface</span>
+<span class="kw">export class</span> <span class="cls">EditUserComponent</span> <span class="kw">implements</span> <span class="cls">CanComponentDeactivate</span> {
+  <span class="var">isDirty</span> = <span class="kw">false</span>;   <span class="cmt">// set to true when form changes</span>
+
+  <span class="fn">canDeactivate</span>(): <span class="typ">boolean</span> {
+    <span class="kw">if</span> (<span class="kw">this</span>.<span class="var">isDirty</span>) {
+      <span class="kw">return</span> <span class="var">window</span>.<span class="fn">confirm</span>(<span class="str">'You have unsaved changes. Leave anyway?'</span>);
+    }
+    <span class="kw">return true</span>;
+  }
+}
+
+<span class="cmt">// app.routes.ts</span>
+{ <span class="var">path</span>: <span class="str">'edit/:id'</span>, <span class="var">component</span>: <span class="cls">EditUserComponent</span>, <span class="var">canDeactivate</span>: [<span class="var">canDeactivateGuard</span>] }</pre>
+      </div>
+      <div class="two-col">
+        <div class="tip-box">
+          <div class="tip-hdr">✅ Best Practice</div>
+          <p>Make the guard <strong>generic</strong> using an interface (<code>CanComponentDeactivate</code>). This way one guard works for ALL components — each component decides its own logic.</p>
+        </div>
+        <div class="warn-box">
+          <div class="warn-hdr">⚠️ Senior Tip</div>
+          <p>Instead of <code>window.confirm()</code> use a <strong>Dialog service</strong> (Angular Material Dialog) returning an <code>Observable&lt;boolean&gt;</code> for better UX and testability.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 5 — canMatch ══ -->
+  <div class="slide" id="s5">
+    <div class="slide-header"><span class="topic-badge">05</span><h1>canMatch — Block Route Matching (Angular 14+)</h1></div>
+    <div class="content">
+      <div class="two-col">
+        <div class="card accent-cyan">
+          <h3>What is canMatch?</h3>
+          <p>Controls whether a route definition should even be <strong>considered for matching</strong>. If it returns <code>false</code>, the router skips this route and tries the <strong>next matching route</strong>.</p>
+          <br/>
+          <p>This is different from <code>canActivate</code> which blocks navigation — <code>canMatch</code> skips the route entirely as if it doesn't exist.</p>
+        </div>
+        <div class="card accent-purple">
+          <h3>canMatch vs canActivate vs canLoad</h3>
+          <table style="margin-top:6px;">
+            <thead><tr><th>Guard</th><th>Behaviour when false</th></tr></thead>
+            <tbody>
+              <tr><td><code>canActivate</code></td><td>Blocks navigation, shows error or redirects</td></tr>
+              <tr><td><code>canLoad</code></td><td>Prevents lazy bundle download (deprecated)</td></tr>
+              <tr><td><code>canMatch</code></td><td>Skips route — tries next route in config ✅</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="code-block">
+        <pre><span class="cmt">// Role-based routing with canMatch — show different component per role</span>
+<span class="kw">export const</span> <span class="var">adminMatchGuard</span>: <span class="cls">CanMatchFn</span> = () => {
+  <span class="kw">const</span> <span class="var">auth</span> = <span class="fn">inject</span>(<span class="cls">AuthService</span>);
+  <span class="kw">return</span> <span class="var">auth</span>.<span class="fn">hasRole</span>(<span class="str">'admin'</span>);   <span class="cmt">// true → match this route; false → try next</span>
+};
+
+<span class="kw">export const</span> <span class="var">userMatchGuard</span>: <span class="cls">CanMatchFn</span> = () => {
+  <span class="kw">const</span> <span class="var">auth</span> = <span class="fn">inject</span>(<span class="cls">AuthService</span>);
+  <span class="kw">return</span> <span class="var">auth</span>.<span class="fn">hasRole</span>(<span class="str">'user'</span>);
+};
+
+<span class="cmt">// Same path '/dashboard' → loads DIFFERENT component based on role!</span>
+<span class="kw">const</span> <span class="var">routes</span>: <span class="cls">Routes</span> = [
+  {
+    <span class="var">path</span>: <span class="str">'dashboard'</span>,
+    <span class="var">canMatch</span>: [<span class="var">adminMatchGuard</span>],
+    <span class="var">loadComponent</span>: () => <span class="fn">import</span>(<span class="str">'./admin-dashboard.component'</span>)
+  },
+  {
+    <span class="var">path</span>: <span class="str">'dashboard'</span>,               <span class="cmt">// same path — fallback for regular users</span>
+    <span class="var">canMatch</span>: [<span class="var">userMatchGuard</span>],
+    <span class="var">loadComponent</span>: () => <span class="fn">import</span>(<span class="str">'./user-dashboard.component'</span>)
+  }
+];</pre>
+      </div>
+      <div class="tip-box">
+        <div class="tip-hdr">🎯 Key Interview Point — canMatch replaces canLoad</div>
+        <p><code>canLoad</code> is deprecated in Angular 15+. Use <code>canMatch</code> instead — it also prevents lazy bundle loading AND allows fallback routing. It is more powerful and flexible.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 6 — ROLE-BASED GUARD ══ -->
+  <div class="slide" id="s6">
+    <div class="slide-header"><span class="topic-badge">06</span><h1>Role-Based Access Control (RBAC) with Guards</h1></div>
+    <div class="content">
+      <div class="card accent-orange">
+        <h3>Real-World Scenario — Admin / Manager / User roles</h3>
+        <p>Pass the required role as <strong>route data</strong> and read it inside a single reusable guard. One guard handles all roles.</p>
+      </div>
+      <div class="code-block">
+        <pre><span class="cmt">// role.guard.ts — single guard, handles any role</span>
+<span class="kw">export const</span> <span class="var">roleGuard</span>: <span class="cls">CanActivateFn</span> = (<span class="var">route</span>, <span class="var">state</span>) => {
+  <span class="kw">const</span> <span class="var">auth</span>   = <span class="fn">inject</span>(<span class="cls">AuthService</span>);
+  <span class="kw">const</span> <span class="var">router</span> = <span class="fn">inject</span>(<span class="cls">Router</span>);
+
+  <span class="cmt">// Read required roles from route data</span>
+  <span class="kw">const</span> <span class="var">requiredRoles</span>: <span class="typ">string</span>[] = <span class="var">route</span>.<span class="var">data</span>[<span class="str">'roles'</span>] ?? [];
+  <span class="kw">const</span> <span class="var">userRoles</span>: <span class="typ">string</span>[]     = <span class="var">auth</span>.<span class="fn">getUserRoles</span>();
+
+  <span class="cmt">// Check if user has at least one required role</span>
+  <span class="kw">const</span> <span class="var">hasAccess</span> = <span class="var">requiredRoles</span>.<span class="fn">some</span>(<span class="var">role</span> => <span class="var">userRoles</span>.<span class="fn">includes</span>(<span class="var">role</span>));
+
+  <span class="kw">if</span> (<span class="var">hasAccess</span>) <span class="kw">return true</span>;
+
+  <span class="kw">return</span> <span class="var">router</span>.<span class="fn">createUrlTree</span>([<span class="str">'/unauthorized'</span>]); <span class="cmt">// redirect</span>
+};
+
+<span class="cmt">// app.routes.ts</span>
+<span class="kw">const</span> <span class="var">routes</span>: <span class="cls">Routes</span> = [
+  {
+    <span class="var">path</span>: <span class="str">'admin'</span>,
+    <span class="var">component</span>: <span class="cls">AdminComponent</span>,
+    <span class="var">canActivate</span>: [<span class="var">roleGuard</span>],
+    <span class="var">data</span>: { <span class="var">roles</span>: [<span class="str">'admin'</span>] }          <span class="cmt">// only admin</span>
+  },
+  {
+    <span class="var">path</span>: <span class="str">'reports'</span>,
+    <span class="var">component</span>: <span class="cls">ReportsComponent</span>,
+    <span class="var">canActivate</span>: [<span class="var">roleGuard</span>],
+    <span class="var">data</span>: { <span class="var">roles</span>: [<span class="str">'admin'</span>, <span class="str">'manager'</span>] } <span class="cmt">// admin OR manager</span>
+  }
+];
+
+<span class="cmt">// auth.service.ts</span>
+<span class="fn">getUserRoles</span>(): <span class="typ">string</span>[] {
+  <span class="kw">const</span> <span class="var">token</span> = <span class="var">localStorage</span>.<span class="fn">getItem</span>(<span class="str">'token'</span>);
+  <span class="kw">return</span> <span class="kw">this</span>.<span class="fn">decodeJwt</span>(<span class="var">token</span>)?.<span class="var">roles</span> ?? [];  <span class="cmt">// decode JWT for roles</span>
+}</pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 7 — JWT + ASYNC GUARD ══ -->
+  <div class="slide" id="s7">
+    <div class="slide-header"><span class="topic-badge">07</span><h1>JWT Auth Guard + Async (Real-World Pattern)</h1></div>
+    <div class="content">
+      <div class="card accent-blue">
+        <h3>Real scenario — Check JWT expiry + refresh token silently</h3>
+        <p>Guards can return <code>Observable&lt;boolean&gt;</code> — perfect for async checks like verifying token validity with the server, refreshing expired tokens, or loading user profile before granting access.</p>
+      </div>
+      <div class="code-block">
+        <pre><span class="cmt">// jwt-auth.guard.ts — async guard with token refresh</span>
+<span class="kw">import</span> { <span class="fn">inject</span> } <span class="kw">from</span> <span class="str">'@angular/core'</span>;
+<span class="kw">import</span> { <span class="cls">CanActivateFn</span>, <span class="cls">Router</span> } <span class="kw">from</span> <span class="str">'@angular/router'</span>;
+<span class="kw">import</span> { <span class="fn">catchError</span>, <span class="fn">map</span>, <span class="fn">of</span> } <span class="kw">from</span> <span class="str">'rxjs'</span>;
+
+<span class="kw">export const</span> <span class="var">jwtAuthGuard</span>: <span class="cls">CanActivateFn</span> = () => {
+  <span class="kw">const</span> <span class="var">auth</span>   = <span class="fn">inject</span>(<span class="cls">AuthService</span>);
+  <span class="kw">const</span> <span class="var">router</span> = <span class="fn">inject</span>(<span class="cls">Router</span>);
+
+  <span class="cmt">// Token valid? Allow immediately</span>
+  <span class="kw">if</span> (<span class="var">auth</span>.<span class="fn">isTokenValid</span>()) <span class="kw">return true</span>;
+
+  <span class="cmt">// Token expired? Try to refresh silently</span>
+  <span class="kw">return</span> <span class="var">auth</span>.<span class="fn">refreshToken</span>().<span class="fn">pipe</span>(
+    <span class="fn">map</span>(<span class="var">newToken</span> => {
+      <span class="var">auth</span>.<span class="fn">setToken</span>(<span class="var">newToken</span>);
+      <span class="kw">return true</span>;                          <span class="cmt">// ✅ refreshed successfully</span>
+    }),
+    <span class="fn">catchError</span>(() => {
+      <span class="var">auth</span>.<span class="fn">logout</span>();
+      <span class="kw">return</span> <span class="fn">of</span>(<span class="var">router</span>.<span class="fn">createUrlTree</span>([<span class="str">'/login'</span>])); <span class="cmt">// ❌ refresh failed → login</span>
+    })
+  );
+};
+
+<span class="cmt">// auth.service.ts helpers</span>
+<span class="fn">isTokenValid</span>(): <span class="typ">boolean</span> {
+  <span class="kw">const</span> <span class="var">token</span> = <span class="var">localStorage</span>.<span class="fn">getItem</span>(<span class="str">'access_token'</span>);
+  <span class="kw">if</span> (!<span class="var">token</span>) <span class="kw">return false</span>;
+  <span class="kw">const</span> { <span class="var">exp</span> } = <span class="kw">this</span>.<span class="fn">decodeJwt</span>(<span class="var">token</span>);
+  <span class="kw">return</span> <span class="cls">Date</span>.<span class="fn">now</span>() &lt; <span class="var">exp</span> * <span class="num">1000</span>;             <span class="cmt">// check expiry</span>
+}</pre>
+      </div>
+      <div class="tip-box">
+        <div class="tip-hdr">✅ Senior Pattern — HTTP Interceptor + Guard</div>
+        <p>In production, handle token refresh in an <strong>HTTP Interceptor</strong> (catches 401 errors globally) and keep the guard simple — just check <code>isLoggedIn()</code>. Don't duplicate refresh logic in every guard.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 8 — MULTIPLE GUARDS + LAZY LOADING ══ -->
+  <div class="slide" id="s8">
+    <div class="slide-header"><span class="topic-badge">08</span><h1>Multiple Guards + Lazy Loading</h1></div>
+    <div class="content">
+      <div class="card accent-green">
+        <h3>You can apply multiple guards to a single route — they run in order</h3>
+        <p>All guards must return <code>true</code> for navigation to proceed. First <code>false</code> stops everything.</p>
+      </div>
+      <div class="code-block">
+        <pre><span class="cmt">// Multiple guards on lazy-loaded routes</span>
+<span class="kw">const</span> <span class="var">routes</span>: <span class="cls">Routes</span> = [
+  {
+    <span class="var">path</span>: <span class="str">'admin'</span>,
+    <span class="var">canActivate</span>:      [<span class="var">authGuard</span>],         <span class="cmt">// 1st: is logged in?</span>
+    <span class="var">canActivateChild</span>: [<span class="var">roleGuard</span>],         <span class="cmt">// 2nd: has role for child?</span>
+    <span class="var">canMatch</span>:         [<span class="var">featureFlagGuard</span>],  <span class="cmt">// 3rd: feature enabled?</span>
+    <span class="var">loadChildren</span>: () => <span class="fn">import</span>(<span class="str">'./admin/admin.routes'</span>)
+      .<span class="fn">then</span>(<span class="var">m</span> => <span class="var">m</span>.<span class="var">adminRoutes</span>)
+  },
+  {
+    <span class="var">path</span>: <span class="str">'profile'</span>,
+    <span class="var">canActivate</span>: [<span class="var">authGuard</span>],
+    <span class="var">canDeactivate</span>: [<span class="var">canDeactivateGuard</span>],  <span class="cmt">// unsaved changes check on leave</span>
+    <span class="var">loadComponent</span>: () => <span class="fn">import</span>(<span class="str">'./profile.component'</span>)
+  }
+];
+
+<span class="cmt">// Standalone component routing (Angular 17+ with no NgModule)</span>
+<span class="kw">export const</span> <span class="var">adminRoutes</span>: <span class="cls">Routes</span> = [
+  { <span class="var">path</span>: <span class="str">''</span>,        <span class="var">component</span>: <span class="cls">AdminLayoutComponent</span> },
+  { <span class="var">path</span>: <span class="str">'users'</span>,   <span class="var">component</span>: <span class="cls">UsersComponent</span>,   <span class="var">data</span>: { <span class="var">roles</span>: [<span class="str">'admin'</span>] } },
+  { <span class="var">path</span>: <span class="str">'reports'</span>, <span class="var">component</span>: <span class="cls">ReportsComponent</span>, <span class="var">data</span>: { <span class="var">roles</span>: [<span class="str">'admin'</span>, <span class="str">'manager'</span>] } },
+];</pre>
+      </div>
+      <div class="two-col">
+        <div class="card accent-yellow">
+          <h3>Guard Execution Order</h3>
+          <ul>
+            <li><code>canMatch</code> runs first — if false, route is skipped entirely</li>
+            <li><code>canActivate</code> — then checks access</li>
+            <li><code>canActivateChild</code> — then checks child access</li>
+            <li><code>resolve</code> — data fetching</li>
+            <li>Component renders last</li>
+          </ul>
+        </div>
+        <div class="card accent-cyan">
+          <h3>Functional Guard Composition</h3>
+          <p style="margin-bottom:6px;">Combine guards elegantly with <code>mapToCanActivate()</code> or just pass an array:</p>
+          <code style="display:block; padding:8px; font-size:11px; background:#1c2128; border-radius:4px;">canActivate: [authGuard, roleGuard, featureGuard]</code>
+          <p style="margin-top:6px; font-size:12px; color:#8b949e;">All must pass. Short-circuits on first failure.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 9 — MEMORY TIPS ══ -->
+  <div class="slide" id="s9">
+    <div class="slide-header"><span class="topic-badge">09</span><h1>🧠 Memory Tips &amp; Mnemonics</h1></div>
+    <div class="content">
+      <div class="two-col">
+        <div class="mem-box">
+          <div class="mem-hdr">🏠 House Analogy</div>
+          <ul>
+            <li><strong>canActivate</strong> = Front door lock — can you enter the house?</li>
+            <li><strong>canActivateChild</strong> = Rooms inside — can you enter each room?</li>
+            <li><strong>canDeactivate</strong> = Leaving alarm — are you sure you want to leave?</li>
+            <li><strong>canMatch</strong> = House doesn't exist for you — you can't even find it</li>
+          </ul>
+        </div>
+        <div class="mem-box">
+          <div class="mem-hdr">🎯 One-Line Definitions</div>
+          <ul>
+            <li><strong>canActivate</strong> → "Can I enter this route?"</li>
+            <li><strong>canActivateChild</strong> → "Can I enter this child route?"</li>
+            <li><strong>canDeactivate</strong> → "Can I leave this route?"</li>
+            <li><strong>canMatch</strong> → "Does this route apply to me?"</li>
+            <li><strong>canLoad</strong> → "Should this module download?" (deprecated)</li>
+          </ul>
+        </div>
+      </div>
+      <div class="three-col">
+        <div class="tip-box">
+          <div class="tip-hdr">📦 Return Values</div>
+          <p><code>true</code> → Allow<br/><code>false</code> → Block<br/><code>UrlTree</code> → Redirect<br/><code>Observable</code> → Async check</p>
+        </div>
+        <div class="tip-box">
+          <div class="tip-hdr">🆕 Angular 14+ Pattern</div>
+          <p>Use <strong>functional guards</strong> — plain functions with <code>inject()</code>. No more injectable classes. Cleaner, testable, tree-shakeable.</p>
+        </div>
+        <div class="tip-box">
+          <div class="tip-hdr">🔑 RBAC Pattern</div>
+          <p>One guard + <code>route.data.roles</code>. Don't create a separate guard per role — pass roles as data and check in a single reusable guard.</p>
+        </div>
+      </div>
+      <div class="card accent-yellow">
+        <h3>Quick-Fire Recall Table</h3>
+        <table style="margin-top:8px;">
+          <thead><tr><th>Guard</th><th>Runs when?</th><th>Returns false?</th><th>Angular 14+ type</th></tr></thead>
+          <tbody>
+            <tr><td><code>canActivate</code></td><td>Entering a route</td><td>Blocks + redirects</td><td><code>CanActivateFn</code></td></tr>
+            <tr><td><code>canActivateChild</code></td><td>Each child navigation</td><td>Blocks child</td><td><code>CanActivateChildFn</code></td></tr>
+            <tr><td><code>canDeactivate</code></td><td>Leaving a route</td><td>Stays on page</td><td><code>CanDeactivateFn</code></td></tr>
+            <tr><td><code>canMatch</code></td><td>Route matching phase</td><td>Skips to next route</td><td><code>CanMatchFn</code></td></tr>
+            <tr><td><code>canLoad</code></td><td>Before lazy load</td><td>Blocks bundle download</td><td>Deprecated ⚠️</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 10 — INTERVIEW Q&A ══ -->
+  <div class="slide" id="s10">
+    <div class="slide-header"><span class="topic-badge">10</span><h1>Senior-Level Interview Q&amp;A</h1></div>
+    <div class="content">
+      <div class="iq-item">
+        <div class="iq-q">Q1. What is the difference between canActivate and canMatch?</div>
+        <div class="iq-a"><code>canActivate</code> blocks navigation to a matched route — the route was found but access is denied. <code>canMatch</code> prevents the route from being matched at all — if it returns <code>false</code>, the router tries the next route in the config. Use <code>canMatch</code> for role-based routing where the same URL loads different components per role.</div>
+      </div>
+      <div class="iq-item">
+        <div class="iq-q">Q2. Why are class-based guards deprecated? What replaced them?</div>
+        <div class="iq-a">Angular 15+ deprecated class-based guards (<code>CanActivate</code>, <code>CanLoad</code> interfaces) because they required <code>@Injectable()</code> and DI boilerplate. <strong>Functional guards</strong> (plain functions using <code>inject()</code>) are the replacement — they are simpler, tree-shakeable, and easier to test. The function types are <code>CanActivateFn</code>, <code>CanActivateChildFn</code>, <code>CanDeactivateFn</code>, <code>CanMatchFn</code>.</div>
+      </div>
+      <div class="iq-item">
+        <div class="iq-q">Q3. How do you implement Role-Based Access Control with a single guard?</div>
+        <div class="iq-a">Define the required roles in <code>route.data = &#123; roles: ['admin'] &#125;</code>. In the guard, read <code>route.data['roles']</code> and compare against the user's roles from the JWT (via AuthService). Return <code>true</code> if any role matches, or redirect to <code>/unauthorized</code> via <code>router.createUrlTree()</code>. One guard handles all roles.</div>
+      </div>
+      <div class="iq-item">
+        <div class="iq-q">Q4. Can a guard return an Observable? When would you use it?</div>
+        <div class="iq-a">Yes — <code>canActivate</code> can return <code>Observable&lt;boolean | UrlTree&gt;</code>. Use it for async checks: verifying a JWT with the server, silently refreshing an expired token, or loading user permissions from an API before allowing access.</div>
+      </div>
+      <div class="iq-item">
+        <div class="iq-q">Q5. What is the best way to implement canDeactivate for a form?</div>
+        <div class="iq-a">Create a generic interface <code>CanComponentDeactivate</code> with a <code>canDeactivate()</code> method. Make the guard call <code>component.canDeactivate()</code>. Each form component implements the interface with its own logic (dirty check). For production, return an <code>Observable&lt;boolean&gt;</code> from a Material Dialog instead of <code>window.confirm()</code>.</div>
+      </div>
+      <div class="iq-item">
+        <div class="iq-q">Q6. What is the execution order when multiple guards are applied?</div>
+        <div class="iq-a"><code>canMatch</code> → <code>canActivate</code> → <code>canActivateChild</code> → <code>resolve</code> → component loads. When multiple guards are in an array, they run in order and short-circuit on the first <code>false</code>. <code>canDeactivate</code> runs when leaving.</div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /deck -->
+
+<nav id="nav">
+  <button id="btn-prev" disabled>&#8592;</button>
+  <span id="counter">1 / 11</span>
+  <button id="btn-next">&#8594;</button>
+</nav>
+<div id="hint">← → arrow keys to navigate</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const total  = slides.length;
+  let cur = 0;
+  const bar     = document.getElementById('progress-bar');
+  const counter = document.getElementById('counter');
+  const btnPrev = document.getElementById('btn-prev');
+  const btnNext = document.getElementById('btn-next');
+
+  function goTo(n) {
+    slides[cur].classList.remove('active');
+    cur = Math.max(0, Math.min(n, total - 1));
+    slides[cur].classList.add('active');
+    counter.textContent = `${cur + 1} / ${total}`;
+    bar.style.width = `${((cur + 1) / total) * 100}%`;
+    btnPrev.disabled = cur === 0;
+    btnNext.disabled = cur === total - 1;
+    slides[cur].scrollTop = 0;
+  }
+
+  btnPrev.addEventListener('click', () => goTo(cur - 1));
+  btnNext.addEventListener('click', () => goTo(cur + 1));
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') goTo(cur + 1);
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   goTo(cur - 1);
+  });
+  goTo(0);
+</script>
+</body>
+</html>
