@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Angular Change Detection – Deep Dive Interview</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; overflow: hidden; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0d1117; color: #e6edf3; }
+    #deck { width: 100vw; height: 100vh; position: relative; }
+    .slide {
+      display: none; flex-direction: column; justify-content: flex-start;
+      padding: 40px 56px 76px; width: 100%; height: 100%;
+      overflow-y: auto; gap: 14px; animation: fadeIn .35s ease;
+    }
+    .slide.active { display: flex; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+    .slide-header {
+      display: flex; align-items: center; gap: 12px;
+      border-bottom: 2px solid #21262d; padding-bottom: 11px; flex-shrink: 0;
+    }
+    .topic-badge {
+      background: #1565c0; color: #fff; font-size: 11px; font-weight: 700;
+      letter-spacing: 1px; text-transform: uppercase; padding: 4px 10px;
+      border-radius: 20px; white-space: nowrap;
+    }
+    h1 { font-size: 25px; font-weight: 700; color: #ff6b6b; }
+    h2 { font-size: 18px; font-weight: 600; color: #ffa657; margin-bottom: 4px; }
+    h3 { font-size: 13.5px; font-weight: 600; color: #ffa657; margin-bottom: 3px; }
+
+    .title-slide {
+      justify-content: center; align-items: center; text-align: center;
+      background: radial-gradient(ellipse at 50% 0%, #001524 0%, #0d1117 70%);
+    }
+    .title-slide h1 { font-size: 42px; margin-bottom: 10px; color: #58a6ff; }
+    .title-slide .subtitle { font-size: 16px; color: #8b949e; max-width: 720px; line-height: 1.65; }
+    .logo { font-size: 58px; margin-bottom: 12px; }
+    .topic-chips { display: flex; flex-wrap: wrap; gap: 7px; justify-content: center; margin-top: 18px; }
+    .chip { background: #161b22; border: 1px solid #30363d; border-radius: 20px; padding: 5px 13px; font-size: 12px; color: #8b949e; }
+
+    .content { flex: 1; display: flex; flex-direction: column; gap: 13px; }
+    .two-col   { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+
+    .card { background: #161b22; border: 1px solid #30363d; border-radius: 9px; padding: 13px 15px; }
+    .card.accent-red    { border-left: 4px solid #f85149; }
+    .card.accent-blue   { border-left: 4px solid #1f6feb; }
+    .card.accent-green  { border-left: 4px solid #3fb950; }
+    .card.accent-orange { border-left: 4px solid #f97316; }
+    .card.accent-purple { border-left: 4px solid #d2a8ff; }
+    .card.accent-yellow { border-left: 4px solid #e3b341; }
+    .card.accent-cyan   { border-left: 4px solid #39d0d8; }
+    .card.accent-pink   { border-left: 4px solid #ff6eb4; }
+
+    p  { font-size: 13px; line-height: 1.75; color: #c9d1d9; }
+    li { font-size: 12.5px; line-height: 1.85; color: #c9d1d9; margin-left: 16px; }
+    ul { padding-left: 4px; }
+    strong { color: #f0f6fc; }
+    code { font-family: 'Consolas', monospace; font-size: 11.5px; background: #1c2128; color: #79c0ff; padding: 2px 6px; border-radius: 4px; }
+
+    .code-block { background: #1c2128; border: 1px solid #30363d; border-radius: 8px; padding: 13px 15px; overflow-x: auto; flex-shrink: 0; }
+    .code-block pre { font-family: 'Consolas', monospace; font-size: 12px; line-height: 1.7; color: #e6edf3; white-space: pre; margin: 0; }
+    .kw  { color: #ff7b72; }
+    .fn  { color: #d2a8ff; }
+    .str { color: #a5d6ff; }
+    .num { color: #79c0ff; }
+    .cmt { color: #8b949e; font-style: italic; }
+    .var { color: #ffa657; }
+    .dec { color: #ff6b6b; }
+    .cls { color: #f0c674; }
+    .typ { color: #56d364; }
+    .op  { color: #7ee787; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    th { background: #161b22; color: #d2a8ff; text-align: left; padding: 7px 11px; border-bottom: 2px solid #30363d; font-weight: 600; }
+    td { padding: 6px 11px; border-bottom: 1px solid #21262d; color: #c9d1d9; vertical-align: top; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #161b22; }
+
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 11px; font-size: 10.5px; font-weight: 700; white-space: nowrap; }
+    .badge-red    { background: #3a1818; color: #f85149; }
+    .badge-green  { background: #1a3c1a; color: #3fb950; }
+    .badge-blue   { background: #0d2340; color: #58a6ff; }
+    .badge-orange { background: #3a1800; color: #f97316; }
+    .badge-purple { background: #2a1a3e; color: #d2a8ff; }
+    .badge-yellow { background: #2e2200; color: #e3b341; }
+    .badge-cyan   { background: #0a2e2e; color: #39d0d8; }
+    .badge-pink   { background: #2e0a1e; color: #ff6eb4; }
+
+    .flow { display: flex; align-items: center; gap: 0; overflow-x: auto; padding: 8px 0; flex-wrap: wrap; row-gap: 8px; }
+    .fb { display: flex; flex-direction: column; align-items: center; background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 7px 13px; font-size: 11px; white-space: nowrap; flex-shrink: 0; gap: 2px; }
+    .fb .fn2 { font-weight: 700; font-size: 12px; }
+    .fb .fs  { font-size: 10px; color: #8b949e; }
+    .fb.c1 { border-color: #1f6feb; color: #79c0ff; }
+    .fb.c2 { border-color: #f97316; color: #ffa657; }
+    .fb.c3 { border-color: #3fb950; color: #56d364; }
+    .fb.c4 { border-color: #d2a8ff; color: #d2a8ff; }
+    .fb.c5 { border-color: #39d0d8; color: #39d0d8; }
+    .fb.c6 { border-color: #e3b341; color: #e3b341; }
+    .fa { color: #484f58; font-size: 20px; padding: 0 6px; flex-shrink: 0; }
+
+    .tip-box { background: #1c2a1c; border: 1px solid #3fb950; border-left: 4px solid #3fb950; border-radius: 8px; padding: 9px 13px; }
+    .tip-box .tip-hdr { font-size: 10.5px; font-weight: 700; color: #3fb950; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }
+    .tip-box p, .tip-box li { font-size: 12px; color: #c9d1d9; }
+
+    .warn-box { background: #2a1a00; border: 1px solid #e3b341; border-left: 4px solid #e3b341; border-radius: 8px; padding: 9px 13px; }
+    .warn-box .warn-hdr { font-size: 10.5px; font-weight: 700; color: #e3b341; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }
+    .warn-box p, .warn-box li { font-size: 12px; color: #c9d1d9; }
+
+    .new-box { background: #0d2340; border: 1px solid #58a6ff; border-left: 4px solid #58a6ff; border-radius: 8px; padding: 9px 13px; }
+    .new-box .new-hdr { font-size: 10.5px; font-weight: 700; color: #58a6ff; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }
+    .new-box p, .new-box li { font-size: 12px; color: #c9d1d9; }
+
+    .mem-box { background: #1e1a2e; border: 1px solid #d2a8ff; border-left: 4px solid #d2a8ff; border-radius: 8px; padding: 9px 13px; }
+    .mem-box .mem-hdr { font-size: 10.5px; font-weight: 700; color: #d2a8ff; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }
+    .mem-box p, .mem-box li { font-size: 12px; color: #c9d1d9; }
+
+    .iq-item { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 11px 14px; margin-bottom: 5px; }
+    .iq-q { font-size: 13px; font-weight: 600; color: #f0f6fc; margin-bottom: 4px; }
+    .iq-a { font-size: 12px; color: #c9d1d9; line-height: 1.7; }
+
+    /* component tree viz */
+    .tree { font-family: 'Consolas', monospace; font-size: 12.5px; line-height: 1.9; color: #c9d1d9; }
+    .tree .checked   { color: #3fb950; }
+    .tree .skipped   { color: #f85149; }
+    .tree .highlight { color: #ffa657; font-weight: 700; }
+
+    #nav {
+      position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+      display: flex; align-items: center; gap: 16px;
+      background: #161b22cc; backdrop-filter: blur(8px);
+      border: 1px solid #30363d; border-radius: 40px; padding: 9px 22px; z-index: 1000;
+    }
+    #nav button { background: none; border: none; color: #8b949e; cursor: pointer; font-size: 20px; padding: 4px 8px; border-radius: 6px; transition: color .2s, background .2s; }
+    #nav button:hover:not(:disabled) { color: #e6edf3; background: #21262d; }
+    #nav button:disabled { opacity: 0.3; cursor: default; }
+    #counter { font-size: 13px; color: #8b949e; min-width: 64px; text-align: center; }
+    #progress-bar { position: fixed; top: 0; left: 0; height: 3px; background: #1f6feb; transition: width .3s ease; z-index: 999; }
+    #hint { position: fixed; bottom: 20px; right: 24px; font-size: 11px; color: #484f58; }
+    .slide::-webkit-scrollbar { width: 6px; }
+    .slide::-webkit-scrollbar-track { background: transparent; }
+    .slide::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
+  </style>
+</head>
+<body>
+<div id="progress-bar"></div>
+<div id="deck">
+
+  <!-- ══ SLIDE 0 — TITLE ══ -->
+  <div class="slide title-slide active" id="s0">
+    <div class="logo">🔄</div>
+    <h1>Angular Change Detection</h1>
+    <p class="subtitle">Deep dive — Zone.js, Default vs OnPush, ComponentRef.markForCheck, Signals (Angular 16–17+), Zoneless, Performance patterns, and Senior-Level Interview Q&amp;A.</p>
+    <div class="topic-chips">
+      <span class="chip">What is CD?</span>
+      <span class="chip">Zone.js</span>
+      <span class="chip">Component Tree</span>
+      <span class="chip">Default Strategy</span>
+      <span class="chip">OnPush Strategy</span>
+      <span class="chip">markForCheck</span>
+      <span class="chip">detectChanges</span>
+      <span class="chip">detach / reattach</span>
+      <span class="chip">async pipe</span>
+      <span class="chip">Signals (Angular 16+)</span>
+      <span class="chip">Zoneless (Angular 18+)</span>
+      <span class="chip">Performance Tips</span>
+      <span class="chip">Interview Q&amp;A</span>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 1 — WHAT IS CHANGE DETECTION ══ -->
+  <div class="slide" id="s1">
+    <div class="slide-header"><span class="topic-badge">01</span><h1>What is Change Detection?</h1></div>
+    <div class="content">
+      <div class="two-col">
+        <div class="card accent-blue">
+          <h3>Definition</h3>
+          <p>Change Detection is Angular's mechanism to <strong>synchronise the component data model (TypeScript) with the DOM (View)</strong>. Whenever data changes, Angular checks what needs to update and re-renders only affected parts.</p>
+          <br/>
+          <ul>
+            <li>Triggered by async events (click, HTTP, timers)</li>
+            <li>Walks the <strong>component tree top-down</strong></li>
+            <li>Compares old vs new values (dirty check)</li>
+            <li>Updates the DOM if a difference is found</li>
+          </ul>
+        </div>
+        <div class="card accent-orange">
+          <h3>What triggers Change Detection?</h3>
+          <ul>
+            <li>📌 <strong>DOM events</strong> — click, keyup, input, scroll</li>
+            <li>📌 <strong>HTTP requests</strong> — XHR, fetch responses</li>
+            <li>📌 <strong>Timers</strong> — setTimeout, setInterval</li>
+            <li>📌 <strong>Promises</strong> — resolve / reject</li>
+            <li>📌 <strong>WebSockets</strong> — messages received</li>
+            <li>📌 <strong>Manual trigger</strong> — markForCheck, detectChanges</li>
+          </ul>
+          <p style="margin-top:8px; font-size:11.5px; color:#8b949e;">All of these are intercepted by <strong>Zone.js</strong> (NgZone), which tells Angular to run CD after each async task.</p>
+        </div>
+      </div>
+      <div class="card accent-green">
+        <h3>🔄 The CD Cycle</h3>
+        <div class="flow" style="margin-top:8px; justify-content:flex-start;">
+          <div class="fb c2"><span class="fn2">Async Event</span><span class="fs">click / HTTP / timer</span></div>
+          <span class="fa">→</span>
+          <div class="fb c1"><span class="fn2">Zone.js patches it</span><span class="fs">NgZone.run()</span></div>
+          <span class="fa">→</span>
+          <div class="fb c6"><span class="fn2">CD triggered</span><span class="fs">ApplicationRef.tick()</span></div>
+          <span class="fa">→</span>
+          <div class="fb c4"><span class="fn2">Walk tree top-down</span><span class="fs">check each component</span></div>
+          <span class="fa">→</span>
+          <div class="fb c3"><span class="fn2">Update DOM</span><span class="fs">only changed bindings</span></div>
+        </div>
+      </div>
+      <div class="two-col">
+        <div class="tip-box">
+          <div class="tip-hdr">✅ Angular checks the ENTIRE tree by default</div>
+          <p>With <strong>Default</strong> strategy, every component from root to leaf is checked on every CD cycle — even if only one component changed data.</p>
+        </div>
+        <div class="warn-box">
+          <div class="warn-hdr">⚠️ Performance Problem</div>
+          <p>A large app with hundreds of components runs CD on ALL of them for every mouse click. That's why <strong>OnPush</strong> strategy and <strong>Signals</strong> exist — to skip unnecessary checks.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 2 — ZONE.JS ══ -->
+  <div class="slide" id="s2">
+    <div class="slide-header"><span class="topic-badge">02</span><h1>Zone.js — The Trigger of Change Detection</h1></div>
+    <div class="content">
+      <div class="two-col">
+        <div class="card accent-cyan">
+          <h3>What is Zone.js?</h3>
+          <p>Zone.js is a library that <strong>monkey-patches async browser APIs</strong> (setTimeout, Promise, XHR, addEventListener). It creates an execution context called a "zone" that intercepts async operations and notifies Angular when each completes.</p>
+          <br/>
+          <p>When any async operation inside Angular's zone completes → <code>NgZone</code> calls <code>ApplicationRef.tick()</code> → triggers CD for the whole app.</p>
+        </div>
+        <div class="card accent-purple">
+          <h3>Patched APIs</h3>
+          <ul>
+            <li><code>setTimeout</code> / <code>setInterval</code></li>
+            <li><code>Promise.then</code> / <code>.catch</code></li>
+            <li><code>XMLHttpRequest</code> (fetch API)</li>
+            <li><code>addEventListener</code> / <code>removeEventListener</code></li>
+            <li><code>requestAnimationFrame</code></li>
+            <li>MutationObserver, IntersectionObserver</li>
+          </ul>
+        </div>
+      </div>
+      <div class="code-block">
+        <pre><span class="cmt">// NgZone — run code INSIDE or OUTSIDE Angular's zone</span>
+<span class="kw">import</span> { <span class="cls">NgZone</span> } <span class="kw">from</span> <span class="str">'@angular/core'</span>;
+
+<span class="dec">@Component</span>({ <span class="var">selector</span>: <span class="str">'app-root'</span>, <span class="var">template</span>: <span class="str">''</span> })
+<span class="kw">export class</span> <span class="cls">AppComponent</span> {
+  <span class="fn">constructor</span>(<span class="kw">private</span> <span class="var">ngZone</span>: <span class="cls">NgZone</span>) {}
+
+  <span class="cmt">// ✅ Run OUTSIDE Angular zone — no CD triggered</span>
+  <span class="cmt">// Good for: heavy computations, polling, third-party libs (Google Maps, Chart.js)</span>
+  <span class="fn">startPolling</span>() {
+    <span class="kw">this</span>.<span class="var">ngZone</span>.<span class="fn">runOutsideAngular</span>(() => {
+      <span class="fn">setInterval</span>(() => {
+        <span class="kw">this</span>.<span class="fn">fetchData</span>();  <span class="cmt">// does NOT trigger CD</span>
+      }, <span class="num">1000</span>);
+    });
+  }
+
+  <span class="fn">fetchData</span>() {
+    <span class="cmt">// When you NEED to update UI, re-enter the zone</span>
+    <span class="kw">this</span>.<span class="var">ngZone</span>.<span class="fn">run</span>(() => {
+      <span class="kw">this</span>.<span class="var">data</span> = <span class="str">'updated'</span>;  <span class="cmt">// ✅ CD triggered for this update only</span>
+    });
+  }
+}
+
+<span class="cmt">// Real-world: third-party library initialisation outside Angular zone</span>
+<span class="fn">ngAfterViewInit</span>() {
+  <span class="kw">this</span>.<span class="var">ngZone</span>.<span class="fn">runOutsideAngular</span>(() => {
+    <span class="kw">const</span> <span class="var">map</span> = <span class="kw">new</span> <span class="cls">google</span>.<span class="cls">maps</span>.<span class="cls">Map</span>(<span class="kw">this</span>.<span class="var">mapEl</span>.<span class="var">nativeElement</span>, <span class="var">opts</span>);
+    <span class="var">map</span>.<span class="fn">addListener</span>(<span class="str">'click'</span>, () => {
+      <span class="kw">this</span>.<span class="var">ngZone</span>.<span class="fn">run</span>(() => <span class="kw">this</span>.<span class="fn">onMapClick</span>());  <span class="cmt">// re-enter only on map click</span>
+    });
+  });
+}</pre>
+      </div>
+      <div class="two-col">
+        <div class="tip-box">
+          <div class="tip-hdr">✅ runOutsideAngular Use Cases</div>
+          <ul>
+            <li>Google Maps / Mapbox initialisation</li>
+            <li>Chart.js / D3.js animations</li>
+            <li>WebSocket heartbeat polling</li>
+            <li>Heavy canvas rendering loops</li>
+          </ul>
+        </div>
+        <div class="new-box">
+          <div class="new-hdr">🆕 Angular 18+ — Zoneless</div>
+          <p>Angular is moving towards <strong>Zone-less change detection</strong> using Signals. Zone.js becomes optional. Components update only when signals they read change. No more global CD sweeps.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 3 — DEFAULT VS ONPUSH ══ -->
+  <div class="slide" id="s3">
+    <div class="slide-header"><span class="topic-badge">03</span><h1>Default vs OnPush Strategy</h1></div>
+    <div class="content">
+      <div class="two-col">
+        <div class="card accent-red">
+          <h3>Default Strategy — CheckAlways</h3>
+          <p>Angular checks this component <strong>on every CD cycle</strong> regardless of whether inputs changed. It's the default for all components.</p>
+          <br/>
+          <ul>
+            <li>Checks on every event, HTTP, timer</li>
+            <li>Simple to use — just works</li>
+            <li>❌ Expensive for large trees</li>
+            <li>Cannot skip checks based on input</li>
+          </ul>
+          <div class="code-block" style="margin-top:8px;">
+            <pre><span class="dec">@Component</span>({
+  <span class="cmt">// Default — no changeDetection property needed</span>
+  <span class="var">changeDetection</span>: <span class="cls">ChangeDetectionStrategy</span>.<span class="var">Default</span>
+})</pre>
+          </div>
+        </div>
+        <div class="card accent-green">
+          <h3>OnPush Strategy — CheckOnce ✅</h3>
+          <p>Angular <strong>skips checking</strong> this component unless one of these conditions is met:</p>
+          <br/>
+          <ul>
+            <li>An <strong>@Input() reference changes</strong> (not mutation)</li>
+            <li>An <strong>event originates from this component</strong> or its children</li>
+            <li><code>markForCheck()</code> is called manually</li>
+            <li>An <strong>async pipe emits</strong> a new value</li>
+            <li>A <strong>Signal read in the template changes</strong> (Angular 16+)</li>
+          </ul>
+          <div class="code-block" style="margin-top:8px;">
+            <pre><span class="dec">@Component</span>({
+  <span class="var">changeDetection</span>: <span class="cls">ChangeDetectionStrategy</span>.<span class="var">OnPush</span>
+})</pre>
+          </div>
+        </div>
+      </div>
+      <div class="card" style="padding:16px;">
+        <h3>Component Tree — Which gets checked?</h3>
+        <div class="two-col" style="margin-top:10px;">
+          <div>
+            <p style="margin-bottom:6px; font-size:12px; color:#8b949e;"><strong>Default</strong> — all components checked ✅</p>
+            <div class="tree">
+              <span class="checked">✅ AppComponent</span><br/>
+              <span>&nbsp;&nbsp;├─ </span><span class="checked">✅ NavComponent</span><br/>
+              <span>&nbsp;&nbsp;├─ </span><span class="checked">✅ ProductListComponent</span><br/>
+              <span>&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;├─ </span><span class="checked">✅ ProductCardComponent</span><br/>
+              <span>&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;└─ </span><span class="checked">✅ ProductCardComponent</span><br/>
+              <span>&nbsp;&nbsp;└─ </span><span class="checked">✅ FooterComponent</span>
+            </div>
+          </div>
+          <div>
+            <p style="margin-bottom:6px; font-size:12px; color:#8b949e;"><strong>OnPush</strong> — only dirty path checked ✅</p>
+            <div class="tree">
+              <span class="checked">✅ AppComponent</span><br/>
+              <span>&nbsp;&nbsp;├─ </span><span class="skipped">⛔ NavComponent (skipped)</span><br/>
+              <span>&nbsp;&nbsp;├─ </span><span class="checked">✅ ProductListComponent</span><br/>
+              <span>&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;├─ </span><span class="checked">✅ ProductCard (input changed)</span><br/>
+              <span>&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;└─ </span><span class="skipped">⛔ ProductCard (skipped)</span><br/>
+              <span>&nbsp;&nbsp;└─ </span><span class="skipped">⛔ FooterComponent (skipped)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="warn-box">
+        <div class="warn-hdr">⚠️ OnPush + Mutating Objects — Common Bug</div>
+        <p><code>this.products.push(item)</code> → same array reference → OnPush won't detect change! Always create a <strong>new reference</strong>: <code>this.products = [...this.products, item]</code></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 4 — ONPUSH DEEP DIVE ══ -->
+  <div class="slide" id="s4">
+    <div class="slide-header"><span class="topic-badge">04</span><h1>OnPush Deep Dive — When it triggers &amp; When it doesn't</h1></div>
+    <div class="content">
+      <div class="code-block">
+        <pre><span class="dec">@Component</span>({
+  <span class="var">selector</span>: <span class="str">'app-product-card'</span>,
+  <span class="var">changeDetection</span>: <span class="cls">ChangeDetectionStrategy</span>.<span class="var">OnPush</span>,
+  <span class="var">template</span>: <span class="str">`&lt;div&gt;{{ product.name }} — {{ product.price }}&lt;/div&gt;`</span>
+})
+<span class="kw">export class</span> <span class="cls">ProductCardComponent</span> {
+  <span class="dec">@Input</span>() <span class="var">product</span>!: <span class="cls">Product</span>;
+}
+
+<span class="cmt">// ── In Parent ──────────────────────────────────────────────────────────</span>
+
+<span class="cmt">// ❌ WRONG — mutating same object — OnPush WON'T detect change</span>
+<span class="fn">badUpdate</span>() {
+  <span class="kw">this</span>.<span class="var">product</span>.<span class="var">name</span> = <span class="str">'New Name'</span>;  <span class="cmt">// same reference! OnPush skips check</span>
+}
+
+<span class="cmt">// ✅ CORRECT — new object reference — OnPush WILL detect change</span>
+<span class="fn">goodUpdate</span>() {
+  <span class="kw">this</span>.<span class="var">product</span> = { ...<span class="kw">this</span>.<span class="var">product</span>, <span class="var">name</span>: <span class="str">'New Name'</span> };  <span class="cmt">// new reference ✅</span>
+}
+
+<span class="cmt">// ❌ WRONG — push mutates existing array reference</span>
+<span class="fn">badAddToList</span>() {
+  <span class="kw">this</span>.<span class="var">products</span>.<span class="fn">push</span>(<span class="var">newProduct</span>);  <span class="cmt">// same array reference — OnPush skips</span>
+}
+
+<span class="cmt">// ✅ CORRECT — spread creates new array reference</span>
+<span class="fn">goodAddToList</span>() {
+  <span class="kw">this</span>.<span class="var">products</span> = [...<span class="kw">this</span>.<span class="var">products</span>, <span class="var">newProduct</span>];  <span class="cmt">// new reference ✅</span>
+}</pre>
+      </div>
+      <div class="two-col">
+        <div class="card accent-yellow">
+          <h3>When OnPush DOES trigger CD</h3>
+          <ul>
+            <li>✅ <code>@Input()</code> receives a <strong>new reference</strong></li>
+            <li>✅ Event fires <strong>inside this component</strong> (click, input)</li>
+            <li>✅ <code>markForCheck()</code> called manually</li>
+            <li>✅ <code>async</code> pipe emits new value</li>
+            <li>✅ Signal read in template changes (Angular 16+)</li>
+          </ul>
+        </div>
+        <div class="card accent-red">
+          <h3>When OnPush SKIPS CD</h3>
+          <ul>
+            <li>❌ Parent's unrelated state changes</li>
+            <li>❌ <code>@Input()</code> value mutated (same reference)</li>
+            <li>❌ Service emits but no <code>async</code> pipe or <code>markForCheck</code></li>
+            <li>❌ setTimeout inside child with mutable update</li>
+          </ul>
+        </div>
+      </div>
+      <div class="tip-box">
+        <div class="tip-hdr">✅ Best Practice — Use OnPush everywhere for performance</div>
+        <p>Apply <code>ChangeDetectionStrategy.OnPush</code> to <strong>all components</strong> — especially presentational (dumb) components that only receive <code>@Input</code>. Combine with <strong>immutable data patterns</strong> or NgRx which always creates new references.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 5 — ChangeDetectorRef ══ -->
+  <div class="slide" id="s5">
+    <div class="slide-header"><span class="topic-badge">05</span><h1>ChangeDetectorRef — Manual Control</h1></div>
+    <div class="content">
+      <div class="card accent-purple">
+        <h3>4 Manual CD methods via ChangeDetectorRef</h3>
+        <table style="margin-top:8px;">
+          <thead><tr><th>Method</th><th>What it does</th><th>Use case</th></tr></thead>
+          <tbody>
+            <tr><td><code>markForCheck()</code></td><td>Marks component + ancestors as dirty — checked on next CD cycle</td><td>OnPush + async service data</td></tr>
+            <tr><td><code>detectChanges()</code></td><td>Runs CD <strong>immediately</strong> for this subtree — synchronous</td><td>After manual DOM updates</td></tr>
+            <tr><td><code>detach()</code></td><td>Removes component from CD tree — never checked automatically</td><td>Real-time dashboards, virtual scroll</td></tr>
+            <tr><td><code>reattach()</code></td><td>Re-adds component to CD tree</td><td>After detach when update needed</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="code-block">
+        <pre><span class="kw">import</span> { <span class="cls">ChangeDetectorRef</span>, <span class="cls">Component</span>, <span class="cls">OnInit</span> } <span class="kw">from</span> <span class="str">'@angular/core'</span>;
+
+<span class="dec">@Component</span>({ <span class="var">changeDetection</span>: <span class="cls">ChangeDetectionStrategy</span>.<span class="var">OnPush</span>, <span class="var">template</span>: <span class="str">`{{ data }}`</span> })
+<span class="kw">export class</span> <span class="cls">DashboardComponent</span> <span class="kw">implements</span> <span class="cls">OnInit</span> {
+  <span class="var">data</span> = <span class="str">''</span>;
+
+  <span class="fn">constructor</span>(<span class="kw">private</span> <span class="var">cdr</span>: <span class="cls">ChangeDetectorRef</span>, <span class="kw">private</span> <span class="var">ws</span>: <span class="cls">WebSocketService</span>) {}
+
+  <span class="fn">ngOnInit</span>() {
+    <span class="cmt">// markForCheck — OnPush component + WebSocket (no async pipe)</span>
+    <span class="kw">this</span>.<span class="var">ws</span>.<span class="var">messages$</span>.<span class="fn">subscribe</span>(<span class="var">msg</span> => {
+      <span class="kw">this</span>.<span class="var">data</span> = <span class="var">msg</span>;
+      <span class="kw">this</span>.<span class="var">cdr</span>.<span class="fn">markForCheck</span>();  <span class="cmt">// ✅ queue for next CD cycle</span>
+    });
+
+    <span class="cmt">// detectChanges — immediate sync update</span>
+    <span class="fn">setTimeout</span>(() => {
+      <span class="kw">this</span>.<span class="var">data</span> = <span class="str">'updated'</span>;
+      <span class="kw">this</span>.<span class="var">cdr</span>.<span class="fn">detectChanges</span>();   <span class="cmt">// ✅ runs CD immediately on this subtree</span>
+    }, <span class="num">2000</span>);
+  }
+}
+
+<span class="cmt">// detach / reattach — ultra-performance for high-frequency updates</span>
+<span class="dec">@Component</span>({ <span class="var">changeDetection</span>: <span class="cls">ChangeDetectionStrategy</span>.<span class="var">OnPush</span>, <span class="var">template</span>: <span class="str">`{{ price }}`</span> })
+<span class="kw">export class</span> <span class="cls">StockTickerComponent</span> <span class="kw">implements</span> <span class="cls">OnInit</span>, <span class="cls">OnDestroy</span> {
+  <span class="var">price</span> = <span class="num">0</span>;
+
+  <span class="fn">constructor</span>(<span class="kw">private</span> <span class="var">cdr</span>: <span class="cls">ChangeDetectorRef</span>) {
+    <span class="kw">this</span>.<span class="var">cdr</span>.<span class="fn">detach</span>();  <span class="cmt">// ⚡ detach from CD tree — no automatic checks</span>
+  }
+
+  <span class="fn">ngOnInit</span>() {
+    <span class="cmt">// Update every 2 seconds instead of every millisecond tick</span>
+    <span class="fn">setInterval</span>(() => {
+      <span class="kw">this</span>.<span class="var">price</span> = <span class="kw">this</span>.<span class="fn">getLatestPrice</span>();
+      <span class="kw">this</span>.<span class="var">cdr</span>.<span class="fn">detectChanges</span>();   <span class="cmt">// ✅ manually refresh at our cadence</span>
+    }, <span class="num">2000</span>);
+  }
+}</pre>
+      </div>
+      <div class="two-col">
+        <div class="tip-box">
+          <div class="tip-hdr">✅ markForCheck vs detectChanges</div>
+          <ul>
+            <li><strong>markForCheck</strong> — schedules for the NEXT cycle (async, preferred)</li>
+            <li><strong>detectChanges</strong> — runs IMMEDIATELY and synchronously (use sparingly)</li>
+          </ul>
+        </div>
+        <div class="warn-box">
+          <div class="warn-hdr">⚠️ Avoid detectChanges in loops</div>
+          <p>Calling <code>detectChanges()</code> inside a loop or high-frequency subscription is a performance anti-pattern. Use <code>markForCheck()</code> or the <code>async</code> pipe instead.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 6 — ASYNC PIPE ══ -->
+  <div class="slide" id="s6">
+    <div class="slide-header"><span class="topic-badge">06</span><h1>async Pipe — The CD-Aware Subscription</h1></div>
+    <div class="content">
+      <div class="card accent-cyan">
+        <h3>Why async pipe is the best way to handle Observables in templates</h3>
+        <ul>
+          <li>Automatically <strong>subscribes</strong> to Observable/Promise</li>
+          <li>Automatically <strong>unsubscribes</strong> on component destroy — no memory leaks</li>
+          <li><strong>Calls <code>markForCheck()</code></strong> internally when value arrives — works perfectly with <strong>OnPush</strong></li>
+          <li>Re-renders only when new emission comes</li>
+        </ul>
+      </div>
+      <div class="code-block">
+        <pre><span class="cmt">// ❌ BAD — manual subscribe in component</span>
+<span class="kw">export class</span> <span class="cls">ProductsComponent</span> <span class="kw">implements</span> <span class="cls">OnInit</span>, <span class="cls">OnDestroy</span> {
+  <span class="var">products</span>: <span class="cls">Product</span>[] = [];
+  <span class="kw">private</span> <span class="var">sub</span>: <span class="cls">Subscription</span>;
+
+  <span class="fn">ngOnInit</span>() {
+    <span class="kw">this</span>.<span class="var">sub</span> = <span class="kw">this</span>.<span class="var">productService</span>.<span class="var">products$</span>.<span class="fn">subscribe</span>(<span class="var">p</span> => {
+      <span class="kw">this</span>.<span class="var">products</span> = <span class="var">p</span>;
+      <span class="kw">this</span>.<span class="var">cdr</span>.<span class="fn">markForCheck</span>();  <span class="cmt">// manually trigger CD — easy to forget!</span>
+    });
+  }
+  <span class="fn">ngOnDestroy</span>() { <span class="kw">this</span>.<span class="var">sub</span>.<span class="fn">unsubscribe</span>(); }  <span class="cmt">// easy to forget!</span>
+}
+
+<span class="cmt">// ✅ BEST — async pipe handles everything automatically</span>
+<span class="dec">@Component</span>({
+  <span class="var">changeDetection</span>: <span class="cls">ChangeDetectionStrategy</span>.<span class="var">OnPush</span>,
+  <span class="var">template</span>: <span class="str">`
+    &lt;div *ngIf="loading$ | async"&gt;Loading...&lt;/div&gt;
+    &lt;div *ngFor="let p of products$ | async"&gt;{{ p.name }}&lt;/div&gt;
+
+    &lt;!-- Avoid multiple subscriptions for same observable --&gt;
+    &lt;ng-container *ngIf="products$ | async as products"&gt;
+      &lt;span&gt;{{ products.length }} items&lt;/span&gt;
+      &lt;div *ngFor="let p of products"&gt;{{ p.name }}&lt;/div&gt;
+    &lt;/ng-container&gt;
+  `</span>
+})
+<span class="kw">export class</span> <span class="cls">ProductsComponent</span> {
+  <span class="var">products$</span> = <span class="kw">this</span>.<span class="var">store</span>.<span class="fn">select</span>(<span class="var">selectAllProducts</span>);
+  <span class="var">loading$</span>  = <span class="kw">this</span>.<span class="var">store</span>.<span class="fn">select</span>(<span class="var">selectLoading</span>);
+  <span class="cmt">// ✅ no subscribe, no unsubscribe, no markForCheck needed!</span>
+}</pre>
+      </div>
+      <div class="tip-box">
+        <div class="tip-hdr">✅ async pipe + OnPush = perfect combo</div>
+        <p>async pipe internally calls <code>markForCheck()</code> when the Observable emits, which queues the OnPush component for the next CD check. This is the recommended pattern for reactive Angular applications.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 7 — SIGNALS ANGULAR 16+ ══ -->
+  <div class="slide" id="s7">
+    <div class="slide-header"><span class="topic-badge">07</span><h1>🆕 Signals — Angular 16+ Change Detection Revolution</h1></div>
+    <div class="content">
+      <div class="two-col">
+        <div class="new-box">
+          <div class="new-hdr">🆕 What are Signals? (Angular 16+)</div>
+          <p>A <strong>Signal</strong> is a reactive primitive — a wrapper around a value that notifies Angular precisely <em>which components need updating</em> when the value changes. No Zone.js needed, no full-tree scan.</p>
+          <br/>
+          <p>3 Signal primitives:</p>
+          <ul>
+            <li><code>signal()</code> — writable value</li>
+            <li><code>computed()</code> — derived value (memoized)</li>
+            <li><code>effect()</code> — side effects when signal changes</li>
+          </ul>
+        </div>
+        <div class="card accent-orange">
+          <h3>Signals vs Zone.js</h3>
+          <table style="margin-top:6px;">
+            <thead><tr><th></th><th>Zone.js</th><th>Signals</th></tr></thead>
+            <tbody>
+              <tr><td>CD trigger</td><td>Any async event → full tree scan</td><td>Only affected components</td></tr>
+              <tr><td>Granularity</td><td>Component level</td><td>Template binding level</td></tr>
+              <tr><td>Performance</td><td>O(tree size)</td><td>O(consumers)</td></tr>
+              <tr><td>Boilerplate</td><td>NgZone, runOutsideAngular</td><td>None</td></tr>
+              <tr><td>Angular version</td><td>All versions</td><td>Angular 16+</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="code-block">
+        <pre><span class="kw">import</span> { <span class="fn">signal</span>, <span class="fn">computed</span>, <span class="fn">effect</span> } <span class="kw">from</span> <span class="str">'@angular/core'</span>;
+
+<span class="dec">@Component</span>({
+  <span class="var">changeDetection</span>: <span class="cls">ChangeDetectionStrategy</span>.<span class="var">OnPush</span>,
+  <span class="var">template</span>: <span class="str">`
+    &lt;p&gt;Count: {{ count() }}&lt;/p&gt;
+    &lt;p&gt;Double: {{ double() }}&lt;/p&gt;
+    &lt;button (click)="increment()"&gt;+1&lt;/button&gt;
+  `</span>
+})
+<span class="kw">export class</span> <span class="cls">CounterComponent</span> {
+
+  <span class="cmt">// Writable signal</span>
+  <span class="var">count</span> = <span class="fn">signal</span>(<span class="num">0</span>);
+
+  <span class="cmt">// Computed — auto-recalculates when count changes</span>
+  <span class="var">double</span> = <span class="fn">computed</span>(() => <span class="kw">this</span>.<span class="var">count</span>() * <span class="num">2</span>);
+
+  <span class="cmt">// Effect — runs when count changes (side effects)</span>
+  <span class="var">_log</span> = <span class="fn">effect</span>(() => <span class="var">console</span>.<span class="fn">log</span>(<span class="str">'Count changed:'</span>, <span class="kw">this</span>.<span class="var">count</span>()));
+
+  <span class="fn">increment</span>() {
+    <span class="kw">this</span>.<span class="var">count</span>.<span class="fn">update</span>(<span class="var">v</span> => <span class="var">v</span> + <span class="num">1</span>);  <span class="cmt">// update based on prev value</span>
+    <span class="cmt">// OR: this.count.set(5)       — set to exact value</span>
+  }
+}
+
+<span class="cmt">// Signals with OnPush — Angular updates ONLY the bindings that read changed signals</span>
+<span class="cmt">// No markForCheck() needed — Angular tracks signal reads automatically!</span>
+<span class="dec">@Component</span>({
+  <span class="var">changeDetection</span>: <span class="cls">ChangeDetectionStrategy</span>.<span class="var">OnPush</span>,
+  <span class="var">template</span>: <span class="str">`&lt;p&gt;{{ products().length }} products&lt;/p&gt;`</span>
+})
+<span class="kw">export class</span> <span class="cls">ProductsComponent</span> {
+  <span class="var">products</span> = <span class="fn">signal</span>&lt;<span class="cls">Product</span>[]&gt;([]);
+
+  <span class="fn">load</span>() {
+    <span class="kw">this</span>.<span class="var">productService</span>.<span class="fn">getAll</span>().<span class="fn">subscribe</span>(<span class="var">p</span> => {
+      <span class="kw">this</span>.<span class="var">products</span>.<span class="fn">set</span>(<span class="var">p</span>);  <span class="cmt">// ✅ no markForCheck needed! Signal notifies Angular</span>
+    });
+  }
+}</pre>
+      </div>
+      <div class="new-box">
+        <div class="new-hdr">🆕 input() / output() / model() signals (Angular 17.1+)</div>
+        <p><code>input()</code> replaces <code>@Input()</code> and is a read-only Signal. <code>model()</code> is a two-way signal. <code>output()</code> replaces <code>@Output()</code>. These integrate directly with the signal-based CD system.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 8 — ZONELESS ══ -->
+  <div class="slide" id="s8">
+    <div class="slide-header"><span class="topic-badge">08</span><h1>🆕 Zoneless Change Detection — Angular 18+</h1></div>
+    <div class="content">
+      <div class="new-box">
+        <div class="new-hdr">🆕 What is Zoneless? (Angular 18 experimental, Angular 19 stable)</div>
+        <p>Angular can now run <strong>without Zone.js entirely</strong>. Instead of patching all async APIs and doing full-tree scans, CD is triggered <strong>only by Signals, markForCheck, or detectChanges</strong>. This is the future of Angular performance.</p>
+      </div>
+      <div class="code-block">
+        <pre><span class="cmt">// app.config.ts — enable Zoneless (Angular 18+)</span>
+<span class="kw">import</span> { <span class="fn">provideExperimentalZonelessChangeDetection</span> } <span class="kw">from</span> <span class="str">'@angular/core'</span>;
+
+<span class="kw">export const</span> <span class="var">appConfig</span>: <span class="cls">ApplicationConfig</span> = {
+  <span class="var">providers</span>: [
+    <span class="fn">provideExperimentalZonelessChangeDetection</span>(),  <span class="cmt">// ← enables Zoneless</span>
+    <span class="fn">provideRouter</span>(<span class="var">routes</span>),
+  ]
+};
+
+<span class="cmt">// angular.json — remove zone.js from polyfills</span>
+<span class="cmt">// "polyfills": []  ← remove zone.js!</span>
+
+<span class="cmt">// ── In Zoneless app — update via Signals ────────────────────────────</span>
+<span class="dec">@Component</span>({
+  <span class="var">template</span>: <span class="str">`&lt;p&gt;{{ name() }}&lt;/p&gt;&lt;button (click)="update()"&gt;Change&lt;/button&gt;`</span>
+})
+<span class="kw">export class</span> <span class="cls">MyComponent</span> {
+  <span class="var">name</span> = <span class="fn">signal</span>(<span class="str">'Nitin'</span>);
+
+  <span class="fn">update</span>() {
+    <span class="kw">this</span>.<span class="var">name</span>.<span class="fn">set</span>(<span class="str">'Kumar'</span>);  <span class="cmt">// ✅ only this binding updates — no global CD!</span>
+  }
+}
+
+<span class="cmt">// Or with markForCheck for non-signal use cases</span>
+<span class="dec">@Component</span>({ <span class="var">template</span>: <span class="str">`{{ title }}`</span> })
+<span class="kw">export class</span> <span class="cls">HeaderComponent</span> {
+  <span class="var">title</span> = <span class="str">''</span>;
+  <span class="fn">constructor</span>(<span class="kw">private</span> <span class="var">cdr</span>: <span class="cls">ChangeDetectorRef</span>, <span class="kw">private</span> <span class="var">svc</span>: <span class="cls">TitleService</span>) {
+    <span class="kw">this</span>.<span class="var">svc</span>.<span class="var">title$</span>.<span class="fn">subscribe</span>(<span class="var">t</span> => {
+      <span class="kw">this</span>.<span class="var">title</span> = <span class="var">t</span>;
+      <span class="kw">this</span>.<span class="var">cdr</span>.<span class="fn">markForCheck</span>();  <span class="cmt">// still works in Zoneless</span>
+    });
+  }
+}</pre>
+      </div>
+      <div class="three-col">
+        <div class="new-box">
+          <div class="new-hdr">🚀 Zoneless Benefits</div>
+          <ul>
+            <li>Smaller bundle (no zone.js ~15KB)</li>
+            <li>Faster initial load</li>
+            <li>No patching browser APIs</li>
+            <li>Better SSR / SSG performance</li>
+            <li>Easier integration with micro-frontends</li>
+          </ul>
+        </div>
+        <div class="card accent-yellow">
+          <h3>Evolution Timeline</h3>
+          <ul>
+            <li><strong>Angular 2–15</strong> — Zone.js required</li>
+            <li><strong>Angular 16</strong> — Signals introduced (dev preview)</li>
+            <li><strong>Angular 17</strong> — Signals stable, new control flow</li>
+            <li><strong>Angular 18</strong> — Zoneless experimental</li>
+            <li><strong>Angular 19</strong> — Zoneless stable ✅</li>
+          </ul>
+        </div>
+        <div class="tip-box">
+          <div class="tip-hdr">✅ Migration Path</div>
+          <ul>
+            <li>Start with OnPush everywhere</li>
+            <li>Replace BehaviorSubjects with Signals</li>
+            <li>Replace @Input()/@Output() with input()/output()</li>
+            <li>Enable Zoneless experimentally</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 9 — PERFORMANCE PATTERNS ══ -->
+  <div class="slide" id="s9">
+    <div class="slide-header"><span class="topic-badge">09</span><h1>Performance Patterns &amp; Anti-Patterns</h1></div>
+    <div class="content">
+      <div class="two-col">
+        <div class="card accent-green">
+          <h3>✅ Best Practices</h3>
+          <ul>
+            <li>Use <code>OnPush</code> for ALL components</li>
+            <li>Use <code>async</code> pipe over manual subscribe</li>
+            <li>Use <code>trackBy</code> in <code>*ngFor</code></li>
+            <li>Use <strong>pure pipes</strong> over methods in templates</li>
+            <li>Use <code>ngZone.runOutsideAngular()</code> for non-UI work</li>
+            <li>Use <strong>Signals</strong> instead of class properties (Angular 16+)</li>
+            <li>Avoid expensive logic in getters / template expressions</li>
+          </ul>
+        </div>
+        <div class="card accent-red">
+          <h3>❌ Anti-Patterns</h3>
+          <ul>
+            <li>Methods in templates: <code>{{ getItems() }}</code> — called on every CD</li>
+            <li>Impure pipes — recalculate on every CD</li>
+            <li>Mutating objects with OnPush</li>
+            <li>Manual subscribe without unsubscribe</li>
+            <li><code>detectChanges()</code> inside loops</li>
+            <li>Heavy computation in ngDoCheck</li>
+            <li>Third-party events without <code>runOutsideAngular</code></li>
+          </ul>
+        </div>
+      </div>
+      <div class="code-block">
+        <pre><span class="cmt">// ❌ BAD — method called on EVERY change detection cycle</span>
+<span class="kw">export class</span> <span class="cls">BadComponent</span> {
+  <span class="fn">getFilteredProducts</span>() {  <span class="cmt">// ← called 100s of times per second!</span>
+    <span class="kw">return</span> <span class="kw">this</span>.<span class="var">products</span>.<span class="fn">filter</span>(<span class="var">p</span> => <span class="var">p</span>.<span class="var">price</span> > <span class="num">100</span>);
+  }
+}
+<span class="cmt">// template: *ngFor="let p of getFilteredProducts()"  ❌</span>
+
+<span class="cmt">// ✅ GOOD — use pure pipe (only recalculates when input changes)</span>
+<span class="dec">@Pipe</span>({ <span class="var">name</span>: <span class="str">'filterByPrice'</span>, <span class="var">pure</span>: <span class="kw">true</span> })  <span class="cmt">// pure: true is default</span>
+<span class="kw">export class</span> <span class="cls">FilterByPricePipe</span> <span class="kw">implements</span> <span class="cls">PipeTransform</span> {
+  <span class="fn">transform</span>(<span class="var">products</span>: <span class="cls">Product</span>[], <span class="var">minPrice</span>: <span class="typ">number</span>): <span class="cls">Product</span>[] {
+    <span class="kw">return</span> <span class="var">products</span>.<span class="fn">filter</span>(<span class="var">p</span> => <span class="var">p</span>.<span class="var">price</span> > <span class="var">minPrice</span>);
+  }
+}
+<span class="cmt">// template: *ngFor="let p of products | filterByPrice:100"  ✅</span>
+
+<span class="cmt">// ✅ GOOD — trackBy avoids re-rendering unchanged list items</span>
+<span class="kw">export class</span> <span class="cls">ProductListComponent</span> {
+  <span class="fn">trackByProductId</span>(<span class="var">index</span>: <span class="typ">number</span>, <span class="var">product</span>: <span class="cls">Product</span>): <span class="typ">number</span> {
+    <span class="kw">return</span> <span class="var">product</span>.<span class="var">id</span>;
+  }
+}
+<span class="cmt">// template: *ngFor="let p of products; trackBy: trackByProductId"  ✅</span>
+
+<span class="cmt">// ✅ GOOD — Signal replaces method call</span>
+<span class="kw">export class</span> <span class="cls">GoodComponent</span> {
+  <span class="var">products</span>  = <span class="fn">signal</span>&lt;<span class="cls">Product</span>[]&gt;([]);
+  <span class="var">expensive</span> = <span class="fn">computed</span>(() =>
+    <span class="kw">this</span>.<span class="var">products</span>().<span class="fn">filter</span>(<span class="var">p</span> => <span class="var">p</span>.<span class="var">price</span> > <span class="num">100</span>)  <span class="cmt">// only recalculates when products changes</span>
+  );
+}
+<span class="cmt">// template: *ngFor="let p of expensive()"  ✅</span></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 10 — MEMORY TIPS ══ -->
+  <div class="slide" id="s10">
+    <div class="slide-header"><span class="topic-badge">10</span><h1>🧠 Memory Tips, Quick Reference &amp; Cheatsheet</h1></div>
+    <div class="content">
+      <div class="two-col">
+        <div class="mem-box">
+          <div class="mem-hdr">📺 TV Analogy</div>
+          <ul>
+            <li><strong>Default</strong> = Old TV — scans ALL channels to find what changed</li>
+            <li><strong>OnPush</strong> = Smart TV — only updates the app you're using</li>
+            <li><strong>Signals</strong> = Streaming — only loads the specific scene that changed</li>
+            <li><strong>Zoneless</strong> = No remote needed — screen updates itself</li>
+          </ul>
+        </div>
+        <div class="mem-box">
+          <div class="mem-hdr">🔑 When to use what</div>
+          <ul>
+            <li><strong>Default</strong> — quick prototypes, simple apps</li>
+            <li><strong>OnPush</strong> — all components in production (always)</li>
+            <li><strong>markForCheck</strong> — OnPush + async service without async pipe</li>
+            <li><strong>detectChanges</strong> — immediate sync DOM update needed</li>
+            <li><strong>detach/reattach</strong> — real-time stock tickers, live grids</li>
+            <li><strong>Signals</strong> — new projects Angular 16+</li>
+            <li><strong>Zoneless</strong> — Angular 18+ new apps</li>
+          </ul>
+        </div>
+      </div>
+      <div class="card accent-yellow">
+        <h3>Complete Quick Reference</h3>
+        <table style="margin-top:8px;">
+          <thead><tr><th>Topic</th><th>Key Point</th><th>Version</th></tr></thead>
+          <tbody>
+            <tr><td>Default CD</td><td>Checks ALL components every cycle</td><td>All</td></tr>
+            <tr><td>OnPush CD</td><td>Checks only when input ref changes, event fires, async pipe emits, markForCheck called</td><td>All</td></tr>
+            <tr><td>Zone.js</td><td>Patches async APIs; calls <code>ApplicationRef.tick()</code></td><td>All</td></tr>
+            <tr><td>markForCheck()</td><td>Queues OnPush component for next CD cycle</td><td>All</td></tr>
+            <tr><td>detectChanges()</td><td>Immediately runs CD on component subtree</td><td>All</td></tr>
+            <tr><td>detach()</td><td>Removes from CD tree — manual control only</td><td>All</td></tr>
+            <tr><td>async pipe</td><td>Subscribes + unsubscribes + markForCheck automatically</td><td>All</td></tr>
+            <tr><td>signal()</td><td>Fine-grained reactive state — no Zone.js needed</td><td>16+</td></tr>
+            <tr><td>computed()</td><td>Memoized derived signal — only updates when deps change</td><td>16+</td></tr>
+            <tr><td>effect()</td><td>Runs side effects when signals change</td><td>16+</td></tr>
+            <tr><td>input() / output()</td><td>Signal-based replacement for @Input/@Output</td><td>17.1+</td></tr>
+            <tr><td>Zoneless</td><td>No Zone.js; CD only via signals / markForCheck</td><td>18+</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="three-col">
+        <div class="tip-box">
+          <div class="tip-hdr">🎯 OnPush triggers</div>
+          <p><strong>I</strong>nput new reference<br/><strong>E</strong>vent from component<br/><strong>M</strong>arkForCheck called<br/><strong>A</strong>sync pipe emits<br/><strong>S</strong>ignal changes<br/><em>(IEMAS)</em></p>
+        </div>
+        <div class="tip-box">
+          <div class="tip-hdr">🆕 Angular 16-19 evolution</div>
+          <p>16 → Signals dev preview<br/>17 → Signals stable + @if @for<br/>17.1 → input()/output()<br/>18 → Zoneless experimental<br/>19 → Zoneless stable</p>
+        </div>
+        <div class="tip-box">
+          <div class="tip-hdr">🔥 Top Perf Tips</div>
+          <p>1. OnPush everywhere<br/>2. async pipe, no subscribe<br/>3. trackBy in *ngFor<br/>4. Pure pipes not methods<br/>5. runOutsideAngular for 3rd party<br/>6. Signals for new code</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 11 — INTERVIEW Q&A ══ -->
+  <div class="slide" id="s11">
+    <div class="slide-header"><span class="topic-badge">11</span><h1>Senior-Level Interview Q&amp;A</h1></div>
+    <div class="content">
+      <div class="iq-item">
+        <div class="iq-q">Q1. What is the difference between Default and OnPush change detection?</div>
+        <div class="iq-a"><strong>Default</strong> checks every component on every CD cycle triggered by any async event. <strong>OnPush</strong> skips a component unless: an <code>@Input()</code> reference changes, an event fires from that component, <code>markForCheck()</code> is called, an <code>async</code> pipe emits, or a Signal it reads changes. OnPush significantly reduces unnecessary re-renders in large trees.</div>
+      </div>
+      <div class="iq-item">
+        <div class="iq-q">Q2. What is Zone.js and what does runOutsideAngular do?</div>
+        <div class="iq-a">Zone.js monkey-patches async browser APIs (setTimeout, XHR, Promises) and notifies Angular's NgZone after each async task completes, triggering <code>ApplicationRef.tick()</code> which runs CD. <code>runOutsideAngular()</code> executes code without Zone.js interception — no CD is triggered. Used for: Google Maps/Chart.js init, WebSocket heartbeats, or heavy canvas animations that shouldn't trigger Angular CD.</div>
+      </div>
+      <div class="iq-item">
+        <div class="iq-q">Q3. What is the difference between markForCheck() and detectChanges()?</div>
+        <div class="iq-a"><strong>markForCheck()</strong> marks the component and its ancestors as dirty, queuing them for the <em>next</em> CD cycle (async). <strong>detectChanges()</strong> immediately runs CD synchronously on the component and its children right now. Use <code>markForCheck()</code> for OnPush + async subscriptions. Use <code>detectChanges()</code> only when you need an immediate synchronous update (e.g., after third-party library manipulation).</div>
+      </div>
+      <div class="iq-item">
+        <div class="iq-q">Q4. Why is using a method in the template a performance issue?</div>
+        <div class="iq-a">A method like <code>{{ getFilteredItems() }}</code> is called on <em>every single CD cycle</em> — potentially hundreds of times per second. Use a <strong>pure pipe</strong> instead (only recalculates when input reference changes) or a <strong>computed Signal</strong> (recalculates only when its dependent signals change). Both are memoized and dramatically reduce computation.</div>
+      </div>
+      <div class="iq-item">
+        <div class="iq-q">Q5. What are Angular Signals and how do they improve change detection?</div>
+        <div class="iq-a">Signals (Angular 16+) are reactive primitives — <code>signal()</code>, <code>computed()</code>, <code>effect()</code>. When a Signal's value changes, Angular knows <em>precisely which template bindings</em> read that signal and updates only those — no full component tree scan. This eliminates the need for Zone.js, avoids unnecessary checks, and enables truly granular updates at the binding level rather than component level.</div>
+      </div>
+      <div class="iq-item">
+        <div class="iq-q">Q6. What is Zoneless change detection in Angular 18+? How does it work?</div>
+        <div class="iq-a">Zoneless removes Zone.js entirely from the Angular app. CD is triggered only by: Signal value changes, <code>markForCheck()</code> / <code>detectChanges()</code> calls, or async pipe emissions. Benefits: ~15KB smaller bundle, no browser API patching, better SSR performance, easier micro-frontend integration. Enable with <code>provideExperimentalZonelessChangeDetection()</code>. Became stable in Angular 19. The migration path is: OnPush everywhere → adopt Signals → enable Zoneless.</div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /deck -->
+
+<nav id="nav">
+  <button id="btn-prev" disabled>&#8592;</button>
+  <span id="counter">1 / 12</span>
+  <button id="btn-next">&#8594;</button>
+</nav>
+<div id="hint">← → arrow keys to navigate</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const total  = slides.length;
+  let cur = 0;
+  const bar     = document.getElementById('progress-bar');
+  const counter = document.getElementById('counter');
+  const btnPrev = document.getElementById('btn-prev');
+  const btnNext = document.getElementById('btn-next');
+  function goTo(n) {
+    slides[cur].classList.remove('active');
+    cur = Math.max(0, Math.min(n, total - 1));
+    slides[cur].classList.add('active');
+    counter.textContent = `${cur + 1} / ${total}`;
+    bar.style.width = `${((cur + 1) / total) * 100}%`;
+    btnPrev.disabled = cur === 0;
+    btnNext.disabled = cur === total - 1;
+    slides[cur].scrollTop = 0;
+  }
+  btnPrev.addEventListener('click', () => goTo(cur - 1));
+  btnNext.addEventListener('click', () => goTo(cur + 1));
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') goTo(cur + 1);
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   goTo(cur - 1);
+  });
+  goTo(0);
+</script>
+</body>
+</html>
