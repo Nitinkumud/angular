@@ -248,6 +248,26 @@
           </ul>
         </div>
       </div>
+      <div class="card accent-yellow">
+        <h3>🐒 What does "Monkey-Patching" mean?</h3>
+        <p style="margin-bottom:8px;">Monkey-patching means <strong>replacing or wrapping an existing function at runtime</strong> — without modifying the original source code. Zone.js does this at app startup, before your code runs.</p>
+        <div class="code-block">
+          <pre><span class="cmt">// Original browser API</span>
+<span class="var">window</span>.<span class="fn">setTimeout</span> = <span class="kw">function</span>(<span class="var">fn</span>, <span class="var">delay</span>) { <span class="cmt">/* native browser code */</span> };
+
+<span class="cmt">// Zone.js silently REPLACES it with its own wrapped version</span>
+<span class="var">window</span>.<span class="fn">setTimeout</span> = <span class="kw">function</span>(<span class="var">fn</span>, <span class="var">delay</span>) {
+  <span class="kw">return</span> <span class="fn">nativeSetTimeout</span>(<span class="kw">function</span>() {
+    <span class="var">zone</span>.<span class="fn">run</span>(<span class="var">fn</span>);          <span class="cmt">// ← intercepts: "async task completed!"</span>
+    <span class="fn">notifyAngular</span>();       <span class="cmt">// ← tells Angular → run Change Detection now</span>
+  }, <span class="var">delay</span>);
+};
+
+<span class="cmt">// Your code calls setTimeout() thinking it's the real one…</span>
+<span class="cmt">// …but it's actually Zone.js's version watching in the background 🐒</span></pre>
+        </div>
+        <p style="margin-top:8px; font-size:12px; color:#8b949e;">🔔 <strong>Doorbell analogy:</strong> Imagine swapping a store's doorbell with your own — every time a customer enters, YOU are notified, but the store owner has no idea you swapped the bell. That's monkey-patching.</p>
+      </div>
       <div class="code-block">
         <pre><span class="cmt">// NgZone — run code INSIDE or OUTSIDE Angular's zone</span>
 <span class="kw">import</span> { <span class="cls">NgZone</span> } <span class="kw">from</span> <span class="str">'@angular/core'</span>;
