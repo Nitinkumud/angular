@@ -345,6 +345,146 @@ footer h1, footer h2, footer h3</span>  { <span class="prop">color</span>: <span
     </div>
   </div>
 
+  <!-- ══ SLIDE 1c — PSEUDO-CLASSES & PSEUDO-ELEMENTS ══ -->
+  <div class="slide" id="s1c">
+    <div class="slide-header"><span class="topic-badge">01c</span><h1>Pseudo-Classes &amp; Pseudo-Elements</h1></div>
+    <div class="content">
+
+      <!-- DIFFERENCE -->
+      <div class="two-col">
+        <div class="card accent-cyan">
+          <h3>🔵 Pseudo-Class — styles based on STATE or POSITION</h3>
+          <p style="margin-bottom:8px;">A pseudo-class selects an element when it is in a <strong>certain state</strong>. Written with a <strong>single colon</strong> <code>:</code></p>
+          <p style="font-size:11.5px; color:#8b949e; margin-bottom:8px;">Think of it as: <em>"Style this element WHEN something is true about it"</em></p>
+          <ul>
+            <li><code>:hover</code> — mouse is over it</li>
+            <li><code>:focus</code> — keyboard-focused (input, button)</li>
+            <li><code>:active</code> — currently being clicked</li>
+            <li><code>:checked</code> — checkbox/radio is checked</li>
+            <li><code>:disabled</code> — form element is disabled</li>
+            <li><code>:first-child</code> — first child of parent</li>
+            <li><code>:last-child</code> — last child of parent</li>
+            <li><code>:nth-child(n)</code> — every nth child</li>
+            <li><code>:not(.class)</code> — does NOT match selector</li>
+            <li><code>:visited</code> — link already visited</li>
+          </ul>
+        </div>
+        <div class="card accent-purple">
+          <h3>🟣 Pseudo-Element — styles a PART of an element</h3>
+          <p style="margin-bottom:8px;">A pseudo-element targets a <strong>specific part</strong> of an element or inserts virtual content. Written with a <strong>double colon</strong> <code>::</code></p>
+          <p style="font-size:11.5px; color:#8b949e; margin-bottom:8px;">Think of it as: <em>"Style this PART of the element, or CREATE a virtual part"</em></p>
+          <ul>
+            <li><code>::before</code> — inserts content BEFORE element's content</li>
+            <li><code>::after</code> — inserts content AFTER element's content</li>
+            <li><code>::first-line</code> — first line of text</li>
+            <li><code>::first-letter</code> — first letter (drop-cap effect)</li>
+            <li><code>::placeholder</code> — input placeholder text</li>
+            <li><code>::selection</code> — text user has highlighted</li>
+            <li><code>::marker</code> — list item bullet/number</li>
+            <li><code>::backdrop</code> — behind a dialog element</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- KEY DIFFERENCE VISUAL -->
+      <div class="card accent-yellow">
+        <h3>🎯 Key difference — one colon vs two colons</h3>
+        <div class="two-col" style="margin-top:8px;">
+          <div style="background:#1c2128; border-radius:8px; padding:12px;">
+            <div style="font-size:11px; color:#8b949e; margin-bottom:6px; text-transform:uppercase; letter-spacing:1px;">Pseudo-Class : (single colon)</div>
+            <div class="code-block">
+              <pre><span class="sel">button<span style="color:#22d3ee;">:hover</span></span>    { <span class="prop">background</span>: <span class="val">blue</span>; }
+<span class="sel">input<span style="color:#22d3ee;">:focus</span></span>     { <span class="prop">border-color</span>: <span class="val">green</span>; }
+<span class="sel">li<span style="color:#22d3ee;">:first-child</span></span> { <span class="prop">font-weight</span>: <span class="val">bold</span>; }
+<span class="sel">li<span style="color:#22d3ee;">:nth-child(2n)</span></span> { <span class="prop">background</span>: <span class="val">#f0f0f0</span>; }
+<span class="cmt">/* even rows zebra striping */</span></pre>
+            </div>
+            <p style="font-size:11.5px; color:#8b949e; margin-top:6px;">👆 Selects the REAL element when something is true</p>
+          </div>
+          <div style="background:#1c2128; border-radius:8px; padding:12px;">
+            <div style="font-size:11px; color:#8b949e; margin-bottom:6px; text-transform:uppercase; letter-spacing:1px;">Pseudo-Element :: (double colon)</div>
+            <div class="code-block">
+              <pre><span class="sel">p<span style="color:#d2a8ff;">::first-letter</span></span> { <span class="prop">font-size</span>: <span class="num">2em</span>; }
+<span class="sel">input<span style="color:#d2a8ff;">::placeholder</span></span> { <span class="prop">color</span>: <span class="val">#aaa</span>; }
+<span class="sel">::selection</span>    { <span class="prop">background</span>: <span class="val">#ff0</span>; }
+<span class="cmt">/* highlighted text turns yellow */</span></pre>
+            </div>
+            <p style="font-size:11.5px; color:#8b949e; margin-top:6px;">👆 Targets a PART of the element, not the whole thing</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ::before / ::after DEEP DIVE -->
+      <div class="card accent-orange">
+        <h3>✨ ::before &amp; ::after — Most used pseudo-elements</h3>
+        <div class="code-block">
+          <pre><span class="cmt">/* ::before and ::after create virtual child elements — need 'content' property */</span>
+<span class="sel">.badge</span> {
+  <span class="prop">position</span>: <span class="val">relative</span>;
+}
+<span class="sel">.badge::before</span> {
+  <span class="prop">content</span>: <span class="str">"🔥 "</span>;     <span class="cmt">/* required — even empty string '' works */</span>
+  <span class="prop">color</span>: <span class="val">orange</span>;
+}
+<span class="sel">.badge::after</span> {
+  <span class="prop">content</span>: <span class="str">" ★"</span>;
+}
+
+<span class="cmt">/* Real-world: required field asterisk */</span>
+<span class="sel">label.required::after</span> {
+  <span class="prop">content</span>: <span class="str">" *"</span>;
+  <span class="prop">color</span>: <span class="val">red</span>;
+}
+
+<span class="cmt">/* Real-world: tooltip with CSS only */</span>
+<span class="sel">[data-tooltip]</span>         { <span class="prop">position</span>: <span class="val">relative</span>; }
+<span class="sel">[data-tooltip]::after</span>  {
+  <span class="prop">content</span>: <span class="fn">attr</span>(<span class="var">data-tooltip</span>); <span class="cmt">/* reads from HTML attribute */</span>
+  <span class="prop">position</span>: <span class="val">absolute</span>; <span class="prop">bottom</span>: <span class="num">100%</span>;
+  <span class="prop">background</span>: <span class="val">#333</span>; <span class="prop">color</span>: <span class="val">#fff</span>;
+  <span class="prop">display</span>: <span class="val">none</span>;
+}
+<span class="sel">[data-tooltip]:hover::after</span> { <span class="prop">display</span>: <span class="val">block</span>; } <span class="cmt">/* show on hover */</span>
+
+<span class="cmt">/* Real-world: clearfix hack (old but still seen in interviews) */</span>
+<span class="sel">.clearfix::after</span> {
+  <span class="prop">content</span>: <span class="str">''</span>;
+  <span class="prop">display</span>: <span class="val">block</span>;
+  <span class="prop">clear</span>: <span class="val">both</span>;
+}</pre>
+        </div>
+      </div>
+
+      <!-- nth-child -->
+      <div class="two-col">
+        <div class="card accent-green">
+          <h3>:nth-child() — Pattern formulas</h3>
+          <div class="code-block">
+            <pre><span class="sel">li:nth-child(1)</span>    { } <span class="cmt">/* first item */</span>
+<span class="sel">li:nth-child(2n)</span>   { } <span class="cmt">/* every even: 2,4,6 */</span>
+<span class="sel">li:nth-child(2n+1)</span> { } <span class="cmt">/* every odd:  1,3,5 */</span>
+<span class="sel">li:nth-child(3n)</span>   { } <span class="cmt">/* every 3rd: 3,6,9 */</span>
+<span class="sel">li:nth-child(-n+3)</span> { } <span class="cmt">/* first 3 only */</span>
+
+<span class="cmt">/* Shorthand aliases */</span>
+<span class="sel">li:nth-child(even)</span> { } <span class="cmt">/* = 2n  */</span>
+<span class="sel">li:nth-child(odd)</span>  { } <span class="cmt">/* = 2n+1 */</span></pre>
+          </div>
+        </div>
+        <div class="tip-box" style="align-self:start;">
+          <div class="tip-hdr">💡 Single vs Double colon — Interview Trick</div>
+          <ul>
+            <li><code>:pseudo-class</code> — state or position (<strong>1 colon</strong>)</li>
+            <li><code>::pseudo-element</code> — virtual part (<strong>2 colons</strong>)</li>
+            <li>Old CSS2 used single colon for both (<code>:before</code>) — still works but double colon is correct CSS3+</li>
+            <li>Specificity: pseudo-class = class level (0,1,0). Pseudo-element = element level (0,0,1)</li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
   <!-- ══ SLIDE 2 — BOX MODEL ══ -->
   <div class="slide" id="s2">
     <div class="slide-header"><span class="topic-badge">02</span><h1>Box Model &amp; Positioning</h1></div>
@@ -961,7 +1101,7 @@ footer h1, footer h2, footer h3</span>  { <span class="prop">color</span>: <span
 
 <nav id="nav">
   <button id="btn-prev" disabled>&#8592;</button>
-  <span id="counter">1 / 12</span>
+  <span id="counter">1 / 13</span>
   <button id="btn-next">&#8594;</button>
 </nav>
 <div id="hint">← → arrow keys to navigate</div>
