@@ -163,76 +163,184 @@
     </div>
   </div>
 
-  <!-- ══ SLIDE 1 — SPECIFICITY & CASCADE ══ -->
+  <!-- ══ SLIDE 1 — SPECIFICITY & CASCADE — SIMPLE INTRO ══ -->
   <div class="slide" id="s1">
-    <div class="slide-header"><span class="topic-badge">01</span><h1>Specificity &amp; the Cascade</h1></div>
+    <div class="slide-header"><span class="topic-badge">01</span><h1>Specificity &amp; the Cascade — Simple Intro</h1></div>
     <div class="content">
-      <div class="two-col">
-        <div class="card accent-cyan">
-          <h3>What is the Cascade?</h3>
-          <p>When multiple CSS rules target the same element, the browser resolves conflicts using three factors in order:</p>
-          <br/>
-          <ul>
-            <li><strong>1. Origin &amp; Importance</strong> — <code>!important</code> &gt; author &gt; browser default</li>
-            <li><strong>2. Specificity</strong> — which selector is more specific</li>
-            <li><strong>3. Source Order</strong> — last rule wins when specificity is equal</li>
-          </ul>
+
+      <!-- REAL LIFE ANALOGY -->
+      <div class="card accent-cyan">
+        <h3>🎯 Real-Life Analogy — The "Who Has More Authority?" Rule</h3>
+        <p>Imagine three people all give the same employee a different instruction:</p>
+        <div class="three-col" style="margin-top:10px;">
+          <div style="background:#1c2128; border-radius:8px; padding:10px; text-align:center;">
+            <div style="font-size:28px;">👷</div>
+            <div style="font-size:12px; font-weight:700; color:#3fb950; margin:4px 0;">Intern</div>
+            <div style="font-size:11px; color:#8b949e;">"Wear blue"</div>
+            <div style="font-size:10px; color:#484f58; margin-top:4px;">= element selector <code>p { }</code></div>
+          </div>
+          <div style="background:#1c2128; border-radius:8px; padding:10px; text-align:center;">
+            <div style="font-size:28px;">👔</div>
+            <div style="font-size:12px; font-weight:700; color:#ffa657; margin:4px 0;">Manager</div>
+            <div style="font-size:11px; color:#8b949e;">"Wear red"</div>
+            <div style="font-size:10px; color:#484f58; margin-top:4px;">= class selector <code>.text { }</code></div>
+          </div>
+          <div style="background:#1c2128; border-radius:8px; padding:10px; text-align:center;">
+            <div style="font-size:28px;">👑</div>
+            <div style="font-size:12px; font-weight:700; color:#f85149; margin:4px 0;">CEO</div>
+            <div style="font-size:11px; color:#8b949e;">"Wear green"</div>
+            <div style="font-size:10px; color:#484f58; margin-top:4px;">= ID selector <code>#title { }</code></div>
+          </div>
         </div>
-        <div class="card accent-orange">
-          <h3>Specificity Score — (A, B, C)</h3>
-          <p style="margin-bottom:8px; font-size:12px;">Three columns — higher A wins, then B, then C:</p>
-          <div style="display:flex; flex-direction:column; gap:8px;">
-            <div style="display:flex; align-items:center; gap:10px;">
-              <div class="spec">
-                <div><div class="spec-box spec-a">1</div><div class="spec-lbl">A</div></div>
-                <div><div class="spec-box spec-b">0</div><div class="spec-lbl">B</div></div>
-                <div><div class="spec-box spec-c">0</div><div class="spec-lbl">C</div></div>
-              </div>
-              <span style="font-size:12px; color:#c9d1d9;"><code>#myId</code> — inline &amp; ID selectors</span>
-            </div>
-            <div style="display:flex; align-items:center; gap:10px;">
-              <div class="spec">
-                <div><div class="spec-box spec-a">0</div><div class="spec-lbl">A</div></div>
-                <div><div class="spec-box spec-b">1</div><div class="spec-lbl">B</div></div>
-                <div><div class="spec-box spec-c">0</div><div class="spec-lbl">C</div></div>
-              </div>
-              <span style="font-size:12px; color:#c9d1d9;"><code>.class</code> / <code>[attr]</code> / <code>:hover</code></span>
-            </div>
-            <div style="display:flex; align-items:center; gap:10px;">
-              <div class="spec">
-                <div><div class="spec-box spec-a">0</div><div class="spec-lbl">A</div></div>
-                <div><div class="spec-box spec-b">0</div><div class="spec-lbl">B</div></div>
-                <div><div class="spec-box spec-c">1</div><div class="spec-lbl">C</div></div>
-              </div>
-              <span style="font-size:12px; color:#c9d1d9;"><code>div</code> / <code>p</code> / <code>::before</code></span>
-            </div>
+        <p style="margin-top:10px; font-size:12.5px;">Employee listens to the <strong>highest authority</strong> — CEO wins. That's <strong>specificity</strong>. CSS works the same way.</p>
+      </div>
+
+      <!-- WHAT IS CASCADE -->
+      <div class="card accent-orange">
+        <h3>🌊 What is the Cascade? — 3-step decision process</h3>
+        <p style="margin-bottom:8px;">Browser follows these steps IN ORDER when two CSS rules conflict:</p>
+        <div class="three-col">
+          <div style="background:#1c2128; border-radius:8px; padding:10px;">
+            <div style="font-size:22px; margin-bottom:4px;">🥇</div>
+            <div style="font-weight:700; font-size:12px; color:#f85149;">Step 1 — Importance</div>
+            <div style="font-size:11.5px; color:#c9d1d9; margin-top:4px;"><code>!important</code> beats everything<br/>Author styles beat browser defaults</div>
+          </div>
+          <div style="background:#1c2128; border-radius:8px; padding:10px;">
+            <div style="font-size:22px; margin-bottom:4px;">🥈</div>
+            <div style="font-weight:700; font-size:12px; color:#ffa657;">Step 2 — Specificity</div>
+            <div style="font-size:11.5px; color:#c9d1d9; margin-top:4px;">More specific selector wins<br/>ID &gt; Class &gt; Element</div>
+          </div>
+          <div style="background:#1c2128; border-radius:8px; padding:10px;">
+            <div style="font-size:22px; margin-bottom:4px;">🥉</div>
+            <div style="font-weight:700; font-size:12px; color:#3fb950;">Step 3 — Source Order</div>
+            <div style="font-size:11.5px; color:#c9d1d9; margin-top:4px;">Same specificity?<br/>Last rule in the file wins</div>
           </div>
         </div>
       </div>
-      <div class="code-block">
-        <pre><span class="cmt">/* Specificity examples — higher wins */</span>
 
-<span class="sel">p</span>                    { <span class="prop">color</span>: <span class="val">blue</span>; }      <span class="cmt">/* (0,0,1)   ← loses */</span>
-<span class="sel">.text</span>               { <span class="prop">color</span>: <span class="val">red</span>; }       <span class="cmt">/* (0,1,0)   ← wins over element */</span>
-<span class="sel">#title</span>              { <span class="prop">color</span>: <span class="val">green</span>; }     <span class="cmt">/* (1,0,0)   ← wins over class */</span>
-<span class="sel">p.text</span>              { <span class="prop">color</span>: <span class="val">purple</span>; }    <span class="cmt">/* (0,1,1)   ← element + class */</span>
-<span class="sel">div p.text</span>          { <span class="prop">color</span>: <span class="val">orange</span>; }    <span class="cmt">/* (0,1,2)   ← more elements */</span>
-<span class="sel">.nav .menu .item a</span>  { <span class="prop">color</span>: <span class="val">pink</span>; }      <span class="cmt">/* (0,3,1)   ← 3 classes + 1 element */</span>
-
-<span class="cmt">/* !important overrides everything (avoid using it!) */</span>
-<span class="sel">p</span> { <span class="prop">color</span>: <span class="val">blue</span> <span class="kw">!important</span>; }  <span class="cmt">/* wins over #id — but bad practice */</span>
-
-<span class="cmt">/* Source order — when specificity is EQUAL, last one wins */</span>
-<span class="sel">.text</span> { <span class="prop">color</span>: <span class="val">red</span>; }
-<span class="sel">.text</span> { <span class="prop">color</span>: <span class="val">blue</span>; }   <span class="cmt">/* ← wins — same specificity, comes last */</span>
-
-<span class="cmt">/* :is() / :where() — modern selectors */</span>
-<span class="sel">:is(h1, h2, h3)</span>       { <span class="prop">color</span>: <span class="val">red</span>; }   <span class="cmt">/* takes specificity of MOST specific arg */</span>
-<span class="sel">:where(h1, h2, h3)</span>    { <span class="prop">color</span>: <span class="val">red</span>; }   <span class="cmt">/* always specificity (0,0,0) — easy to override */</span></pre>
+      <!-- SPECIFICITY SCORE TABLE -->
+      <div class="card accent-purple">
+        <h3>🏆 Specificity Score — Think of it like a 3-digit number (A, B, C)</h3>
+        <p style="font-size:12px; margin-bottom:10px; color:#8b949e;">Count each type of selector. Higher number wins. A always beats B, B always beats C — like hundreds, tens, units.</p>
+        <table>
+          <thead><tr><th>Selector Type</th><th>What it matches</th><th>Score</th><th>Example</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><strong style="color:#f85149;">A — ID</strong></td>
+              <td><code>#id</code></td>
+              <td><span class="badge badge-red">(1, 0, 0)</span></td>
+              <td><code>#submit</code> → score 100</td>
+            </tr>
+            <tr>
+              <td><strong style="color:#58a6ff;">B — Class / Attribute / Pseudo-class</strong></td>
+              <td><code>.class</code> <code>[type]</code> <code>:hover</code> <code>:first-child</code></td>
+              <td><span class="badge badge-blue">(0, 1, 0)</span></td>
+              <td><code>.btn</code> → score 010</td>
+            </tr>
+            <tr>
+              <td><strong style="color:#3fb950;">C — Element / Pseudo-element</strong></td>
+              <td><code>div</code> <code>p</code> <code>span</code> <code>::before</code></td>
+              <td><span class="badge badge-green">(0, 0, 1)</span></td>
+              <td><code>p</code> → score 001</td>
+            </tr>
+            <tr>
+              <td><strong style="color:#8b949e;">Universal / Combinators</strong></td>
+              <td><code>*</code> <code>&gt;</code> <code>+</code> <code>~</code></td>
+              <td><span class="badge badge-yellow">(0, 0, 0)</span></td>
+              <td><code>* { }</code> → score 000</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
+
+      <div class="warn-box">
+        <div class="warn-hdr">⚠️ Inline styles &amp; !important are the exceptions</div>
+        <p><strong>Inline style</strong> (style="...") scores <strong>(1,0,0,0)</strong> — beats all selectors. <code>!important</code> ignores all specificity rules entirely and forces that value — use it only as a last resort.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 1b — SPECIFICITY EXAMPLES ══ -->
+  <div class="slide" id="s1b">
+    <div class="slide-header"><span class="topic-badge">01b</span><h1>Specificity — Step-by-Step Examples</h1></div>
+    <div class="content">
+
+      <!-- WORKED EXAMPLES -->
+      <div class="card accent-cyan">
+        <h3>🔢 Calculate specificity — worked examples</h3>
+        <table style="margin-top:8px;">
+          <thead><tr><th>Selector</th><th>Count IDs (A)</th><th>Count Classes (B)</th><th>Count Elements (C)</th><th>Score</th><th>Winner?</th></tr></thead>
+          <tbody>
+            <tr><td><code>p</code></td><td>0</td><td>0</td><td>1</td><td><span class="badge badge-green">(0,0,1)</span></td><td>❌ loses</td></tr>
+            <tr><td><code>.text</code></td><td>0</td><td>1</td><td>0</td><td><span class="badge badge-blue">(0,1,0)</span></td><td>beats <code>p</code></td></tr>
+            <tr><td><code>p.text</code></td><td>0</td><td>1</td><td>1</td><td><span class="badge badge-blue">(0,1,1)</span></td><td>beats <code>.text</code></td></tr>
+            <tr><td><code>div p.text</code></td><td>0</td><td>1</td><td>2</td><td><span class="badge badge-blue">(0,1,2)</span></td><td>beats <code>p.text</code></td></tr>
+            <tr><td><code>#title</code></td><td>1</td><td>0</td><td>0</td><td><span class="badge badge-red">(1,0,0)</span></td><td>beats ALL above</td></tr>
+            <tr><td><code>#title.active</code></td><td>1</td><td>1</td><td>0</td><td><span class="badge badge-red">(1,1,0)</span></td><td>beats <code>#title</code></td></tr>
+            <tr><td><code>.nav .menu .item a</code></td><td>0</td><td>3</td><td>1</td><td><span class="badge badge-blue">(0,3,1)</span></td><td>still loses to any #id</td></tr>
+          </tbody>
+        </table>
+        <p style="margin-top:8px; font-size:11.5px; color:#8b949e;">💡 Even 100 classes (0,100,0) CANNOT beat a single ID (1,0,0) — A column always wins.</p>
+      </div>
+
+      <!-- SOURCE ORDER + REAL SCENARIO -->
+      <div class="two-col">
+        <div class="card accent-green">
+          <h3>📋 Source Order — Last rule wins (equal specificity)</h3>
+          <div class="code-block">
+            <pre><span class="cmt">/* Both rules have same specificity (0,1,0) */</span>
+<span class="sel">.btn</span> { <span class="prop">color</span>: <span class="val">red</span>; }
+<span class="sel">.btn</span> { <span class="prop">color</span>: <span class="val">blue</span>; }  <span class="cmt">/* ✅ wins — comes last */</span>
+
+<span class="cmt">/* This is why CSS file order matters! */</span>
+<span class="cmt">/* Bootstrap styles first, then your overrides */</span>
+<span class="kw">@import</span> <span class="str">'bootstrap.css'</span>;   <span class="cmt">/* first */</span>
+<span class="kw">@import</span> <span class="str">'my-styles.css'</span>;   <span class="cmt">/* ✅ overrides bootstrap */</span></pre>
+          </div>
+        </div>
+        <div class="card accent-red">
+          <h3>⚠️ !important — The Nuclear Option</h3>
+          <div class="code-block">
+            <pre><span class="cmt">/* !important ignores ALL specificity */</span>
+<span class="sel">#title</span>  { <span class="prop">color</span>: <span class="val">green</span>; }          <span class="cmt">/* (1,0,0) */</span>
+<span class="sel">p</span>       { <span class="prop">color</span>: <span class="val">blue</span> <span class="kw">!important</span>; } <span class="cmt">/* wins! */</span>
+
+<span class="cmt">/* !important vs !important → back to specificity */</span>
+<span class="sel">p</span>       { <span class="prop">color</span>: <span class="val">blue</span> <span class="kw">!important</span>; }
+<span class="sel">.text</span>  { <span class="prop">color</span>: <span class="val">red</span>  <span class="kw">!important</span>; } <span class="cmt">/* wins */</span>
+<span class="cmt">/* ❌ Avoid — creates unmaintainable CSS wars */</span></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- MODERN SELECTORS -->
+      <div class="card accent-yellow">
+        <h3>🆕 :is() and :where() — Modern CSS (2022+)</h3>
+        <div class="code-block">
+          <pre><span class="cmt">/* WITHOUT :is() — repetitive */</span>
+<span class="sel">header h1, header h2, header h3,
+footer h1, footer h2, footer h3</span>  { <span class="prop">color</span>: <span class="val">red</span>; }
+
+<span class="cmt">/* ✅ WITH :is() — clean. Specificity = most specific arg = h1 (0,0,1) */</span>
+<span class="sel">:is(header, footer) :is(h1, h2, h3)</span> { <span class="prop">color</span>: <span class="val">red</span>; }
+
+<span class="cmt">/* :where() — SAME effect but specificity is always (0,0,0) */</span>
+<span class="cmt">/* Great for base/reset styles that anyone can override easily */</span>
+<span class="sel">:where(h1, h2, h3)</span> { <span class="prop">margin</span>: <span class="num">0</span>; }  <span class="cmt">/* score (0,0,0) — any class overrides it */</span>
+
+<span class="cmt">/* :not() — specificity = the argument inside */</span>
+<span class="sel">p:not(.special)</span> { <span class="prop">color</span>: <span class="val">grey</span>; }  <span class="cmt">/* (0,1,1) — class .special counts */</span></pre>
+        </div>
+      </div>
+
       <div class="tip-box">
-        <div class="tip-hdr">✅ Best Practice — Keep specificity low</div>
-        <p>Use <strong>classes only</strong> (avoid IDs in CSS, avoid <code>!important</code>). Low specificity = easier to override, maintain, and scale. Use <code>:where()</code> for reusable utility styles that should always be overridable.</p>
+        <div class="tip-hdr">✅ Golden Rules to remember</div>
+        <ul>
+          <li>Never use <code>#id</code> in CSS — hard to override. Use classes only.</li>
+          <li>Avoid <code>!important</code> — use it only for utility classes like <code>.hidden { display:none !important }</code></li>
+          <li>Keep selectors short (1–2 levels) — <code>.card .title</code> not <code>.nav .sidebar .card .body .title</code></li>
+          <li>When two rules conflict and you can't figure out why — calculate (A, B, C) and the higher number wins.</li>
+        </ul>
       </div>
     </div>
   </div>
@@ -853,7 +961,7 @@
 
 <nav id="nav">
   <button id="btn-prev" disabled>&#8592;</button>
-  <span id="counter">1 / 11</span>
+  <span id="counter">1 / 12</span>
   <button id="btn-next">&#8594;</button>
 </nav>
 <div id="hint">← → arrow keys to navigate</div>
