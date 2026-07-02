@@ -485,6 +485,196 @@ footer h1, footer h2, footer h3</span>  { <span class="prop">color</span>: <span
     </div>
   </div>
 
+  <!-- ══ SLIDE 1d — PSEUDO LIVE DEMO ══ -->
+  <div class="slide" id="s1d">
+    <div class="slide-header"><span class="topic-badge">01d</span><h1>Pseudo-Classes &amp; Pseudo-Elements — Live Demo</h1></div>
+    <div class="content">
+
+      <style>
+        /* ── :hover ── */
+        .demo-hover-btn {
+          background: #1f6feb; color: #fff; border: none; border-radius: 7px;
+          padding: 9px 22px; font-size: 13px; cursor: pointer; transition: background .25s, transform .2s;
+        }
+        .demo-hover-btn:hover { background: #388bfd; transform: scale(1.06); }
+
+        /* ── :focus ── */
+        .demo-input {
+          background: #1c2128; border: 2px solid #30363d; border-radius: 7px;
+          padding: 8px 13px; color: #e6edf3; font-size: 13px; outline: none;
+          transition: border-color .25s, box-shadow .25s;
+        }
+        .demo-input:focus { border-color: #22d3ee; box-shadow: 0 0 0 3px rgba(34,211,238,.2); }
+        .demo-input::placeholder { color: #484f58; font-style: italic; }
+
+        /* ── :checked ── */
+        .demo-check-label { display:flex; align-items:center; gap:8px; font-size:13px; cursor:pointer; color:#c9d1d9; }
+        .demo-check { display:none; }
+        .demo-check-box {
+          width:20px; height:20px; border:2px solid #30363d; border-radius:4px;
+          display:flex; align-items:center; justify-content:center; transition: background .2s, border-color .2s;
+        }
+        .demo-check:checked + .demo-check-box { background: #3fb950; border-color: #3fb950; }
+        .demo-check:checked + .demo-check-box::after { content: '✓'; font-size:12px; color:#fff; font-weight:700; }
+        .demo-check:checked ~ .demo-check-text { color: #3fb950; text-decoration: line-through; }
+
+        /* ── :nth-child ── */
+        .demo-list { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 3px; }
+        .demo-list li { padding: 5px 10px; border-radius: 5px; font-size: 12px; background: #1c2128; color: #c9d1d9; }
+        .demo-list li:first-child  { background: #2a1f00; color: #e3b341; font-weight:700; }
+        .demo-list li:last-child   { background: #1a0a2a; color: #d2a8ff; font-weight:700; }
+        .demo-list li:nth-child(even) { background: #0d2340; color: #79c0ff; }
+        .demo-list li:hover { background: #21262d; }
+
+        /* ── :not() ── */
+        .demo-btn-group { display:flex; gap:8px; flex-wrap:wrap; }
+        .demo-btn-group .dbtn {
+          padding: 7px 16px; border-radius:6px; border:none; cursor:pointer;
+          font-size:12px; font-weight:600; background:#21262d; color:#8b949e; transition: background .2s;
+        }
+        .demo-btn-group .dbtn:not(.inactive):hover { background:#22d3ee; color:#000; }
+        .demo-btn-group .dbtn.inactive { opacity:.35; cursor:not-allowed; }
+
+        /* ── ::before / ::after ── */
+        .demo-required-label { font-size:13px; color:#c9d1d9; display:block; margin-bottom:4px; }
+        .demo-required-label.req::after { content: ' *'; color:#f85149; font-weight:700; }
+
+        .demo-tooltip-wrap { position:relative; display:inline-block; }
+        .demo-tooltip-wrap .demo-tt-btn {
+          background:#7c3aed; color:#fff; padding:7px 16px; border:none;
+          border-radius:7px; font-size:13px; cursor:pointer;
+        }
+        .demo-tooltip-wrap::after {
+          content: attr(data-tip);
+          position:absolute; bottom:calc(100% + 6px); left:50%; transform:translateX(-50%);
+          background:#0d1117; border:1px solid #30363d; color:#e6edf3;
+          font-size:11px; padding:5px 10px; border-radius:6px; white-space:nowrap;
+          opacity:0; pointer-events:none; transition: opacity .2s;
+        }
+        .demo-tooltip-wrap:hover::after { opacity:1; }
+
+        .demo-dropcap::first-letter {
+          font-size:2.8em; font-weight:700; float:left; line-height:1;
+          margin-right:5px; color:#22d3ee;
+        }
+        .demo-selection::selection { background:#ff6eb4; color:#fff; }
+
+        .demo-list-marker { list-style:none; padding:0; }
+        .demo-list-marker li { font-size:12.5px; color:#c9d1d9; padding:3px 0; }
+        .demo-list-marker li::marker { display:none; }
+        .demo-list-marker li::before { content:'▶ '; color:#ffa657; }
+      </style>
+
+      <div class="three-col">
+
+        <!-- COL 1: Pseudo-Classes interactive -->
+        <div class="card accent-cyan">
+          <h3>:hover &amp; :focus &amp; :checked — try them!</h3>
+          <div style="display:flex; flex-direction:column; gap:10px; margin-top:8px;">
+
+            <div>
+              <p style="font-size:11px; color:#8b949e; margin-bottom:5px;"><strong>:hover</strong> — move mouse over button</p>
+              <button class="demo-hover-btn">Hover me 🚀</button>
+            </div>
+
+            <div>
+              <p style="font-size:11px; color:#8b949e; margin-bottom:5px;"><strong>:focus &amp; ::placeholder</strong> — click the input</p>
+              <input class="demo-input" placeholder="Click me to focus..." type="text" />
+            </div>
+
+            <div>
+              <p style="font-size:11px; color:#8b949e; margin-bottom:5px;"><strong>:checked</strong> — tick the checkbox</p>
+              <label class="demo-check-label">
+                <input type="checkbox" class="demo-check" id="c1" />
+                <span class="demo-check-box"></span>
+                <span class="demo-check-text">Angular Interview Ready</span>
+              </label>
+              <label class="demo-check-label" style="margin-top:5px;">
+                <input type="checkbox" class="demo-check" id="c2" />
+                <span class="demo-check-box"></span>
+                <span class="demo-check-text">CSS Revised</span>
+              </label>
+            </div>
+
+            <div>
+              <p style="font-size:11px; color:#8b949e; margin-bottom:5px;"><strong>:not(.inactive)</strong> — inactive buttons won't highlight</p>
+              <div class="demo-btn-group">
+                <button class="dbtn">Save</button>
+                <button class="dbtn">Edit</button>
+                <button class="dbtn inactive">Delete</button>
+                <button class="dbtn inactive">Archive</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- COL 2: nth-child -->
+        <div class="card accent-purple">
+          <h3>:nth-child, :first-child, :last-child, :hover</h3>
+          <p style="font-size:11px; color:#8b949e; margin-top:4px; margin-bottom:6px;">
+            🟡 first-child &nbsp;|&nbsp; 🔵 even rows &nbsp;|&nbsp; 🟣 last-child &nbsp;|&nbsp; hover any row
+          </p>
+          <ul class="demo-list">
+            <li>Item 1 — :first-child 🟡</li>
+            <li>Item 2 — :nth-child(even) 🔵</li>
+            <li>Item 3</li>
+            <li>Item 4 — :nth-child(even) 🔵</li>
+            <li>Item 5</li>
+            <li>Item 6 — :last-child 🟣</li>
+          </ul>
+          <div class="code-block" style="margin-top:10px;">
+            <pre><span class="sel">li:first-child</span>      { <span class="prop">background</span>: <span class="val">gold-ish</span>; }
+<span class="sel">li:nth-child(even)</span>  { <span class="prop">background</span>: <span class="val">blue-ish</span>; }
+<span class="sel">li:last-child</span>       { <span class="prop">background</span>: <span class="val">purple</span>; }
+<span class="sel">li:hover</span>            { <span class="prop">background</span>: <span class="val">lighter</span>; }</pre>
+          </div>
+        </div>
+
+        <!-- COL 3: Pseudo-Elements -->
+        <div class="card accent-orange">
+          <h3>::before / ::after / ::first-letter / ::selection</h3>
+          <div style="display:flex; flex-direction:column; gap:11px; margin-top:8px;">
+
+            <div>
+              <p style="font-size:11px; color:#8b949e; margin-bottom:5px;"><strong>::after</strong> — required field star</p>
+              <label class="demo-required-label req">Email address</label>
+              <label class="demo-required-label req">Phone number</label>
+              <label class="demo-required-label">Optional note</label>
+            </div>
+
+            <div>
+              <p style="font-size:11px; color:#8b949e; margin-bottom:5px;"><strong>::after + attr()</strong> — CSS tooltip, hover the button</p>
+              <div class="demo-tooltip-wrap" data-tip="🎉 Tooltip via ::after + attr()!">
+                <button class="demo-tt-btn">Hover for tooltip</button>
+              </div>
+            </div>
+
+            <div>
+              <p style="font-size:11px; color:#8b949e; margin-bottom:5px;"><strong>::first-letter</strong> — drop cap</p>
+              <p class="demo-dropcap">Angular is a TypeScript-based web framework for building scalable apps.</p>
+            </div>
+
+            <div>
+              <p style="font-size:11px; color:#8b949e; margin-bottom:5px;"><strong>::selection</strong> — select this text with your mouse 👇</p>
+              <p class="demo-selection" style="font-size:13px; color:#c9d1d9; background:#1c2128; padding:6px 10px; border-radius:6px;">Try selecting this text — it turns pink!</p>
+            </div>
+
+            <div>
+              <p style="font-size:11px; color:#8b949e; margin-bottom:5px;"><strong>::before</strong> — custom list bullets</p>
+              <ul class="demo-list-marker">
+                <li>Flexbox</li>
+                <li>CSS Grid</li>
+                <li>Animations</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
   <!-- ══ SLIDE 2 — BOX MODEL ══ -->
   <div class="slide" id="s2">
     <div class="slide-header"><span class="topic-badge">02</span><h1>Box Model &amp; Positioning</h1></div>
@@ -1101,7 +1291,7 @@ footer h1, footer h2, footer h3</span>  { <span class="prop">color</span>: <span
 
 <nav id="nav">
   <button id="btn-prev" disabled>&#8592;</button>
-  <span id="counter">1 / 13</span>
+  <span id="counter">1 / 14</span>
   <button id="btn-next">&#8594;</button>
 </nav>
 <div id="hint">← → arrow keys to navigate</div>
