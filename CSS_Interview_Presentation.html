@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CSS Deep Dive – Senior Interview Preparation</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; overflow: hidden; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0d1117; color: #e6edf3; }
+    #deck { width: 100vw; height: 100vh; position: relative; }
+    .slide {
+      display: none; flex-direction: column; justify-content: flex-start;
+      padding: 38px 54px 76px; width: 100%; height: 100%;
+      overflow-y: auto; gap: 13px; animation: fadeIn .35s ease;
+    }
+    .slide.active { display: flex; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+    .slide-header {
+      display: flex; align-items: center; gap: 12px;
+      border-bottom: 2px solid #21262d; padding-bottom: 11px; flex-shrink: 0;
+    }
+    .topic-badge {
+      background: #0e7490; color: #fff; font-size: 11px; font-weight: 700;
+      letter-spacing: 1px; text-transform: uppercase; padding: 4px 10px;
+      border-radius: 20px; white-space: nowrap;
+    }
+    h1 { font-size: 24px; font-weight: 700; color: #ff6b6b; }
+    h2 { font-size: 17px; font-weight: 600; color: #ffa657; margin-bottom: 4px; }
+    h3 { font-size: 13px; font-weight: 600; color: #ffa657; margin-bottom: 3px; }
+
+    .title-slide {
+      justify-content: center; align-items: center; text-align: center;
+      background: radial-gradient(ellipse at 50% 0%, #001b24 0%, #0d1117 70%);
+    }
+    .title-slide h1 { font-size: 42px; margin-bottom: 10px; color: #22d3ee; }
+    .title-slide .subtitle { font-size: 16px; color: #8b949e; max-width: 740px; line-height: 1.65; }
+    .logo { font-size: 56px; margin-bottom: 12px; }
+    .topic-chips { display: flex; flex-wrap: wrap; gap: 7px; justify-content: center; margin-top: 18px; }
+    .chip { background: #161b22; border: 1px solid #30363d; border-radius: 20px; padding: 5px 13px; font-size: 12px; color: #8b949e; }
+
+    .content { flex: 1; display: flex; flex-direction: column; gap: 12px; }
+    .two-col   { display: grid; grid-template-columns: 1fr 1fr; gap: 13px; }
+    .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 11px; }
+
+    .card { background: #161b22; border: 1px solid #30363d; border-radius: 9px; padding: 12px 14px; }
+    .card.accent-red    { border-left: 4px solid #f85149; }
+    .card.accent-blue   { border-left: 4px solid #1f6feb; }
+    .card.accent-green  { border-left: 4px solid #3fb950; }
+    .card.accent-orange { border-left: 4px solid #f97316; }
+    .card.accent-purple { border-left: 4px solid #d2a8ff; }
+    .card.accent-yellow { border-left: 4px solid #e3b341; }
+    .card.accent-cyan   { border-left: 4px solid #22d3ee; }
+    .card.accent-pink   { border-left: 4px solid #ff6eb4; }
+
+    p  { font-size: 13px; line-height: 1.75; color: #c9d1d9; }
+    li { font-size: 12.5px; line-height: 1.85; color: #c9d1d9; margin-left: 16px; }
+    ul { padding-left: 4px; }
+    strong { color: #f0f6fc; }
+    code { font-family: 'Consolas', monospace; font-size: 11.5px; background: #1c2128; color: #79c0ff; padding: 2px 6px; border-radius: 4px; }
+
+    .code-block { background: #1c2128; border: 1px solid #30363d; border-radius: 8px; padding: 12px 14px; overflow-x: auto; flex-shrink: 0; }
+    .code-block pre { font-family: 'Consolas', monospace; font-size: 11.5px; line-height: 1.75; color: #e6edf3; white-space: pre; margin: 0; }
+    .kw  { color: #ff7b72; }
+    .fn  { color: #d2a8ff; }
+    .str { color: #a5d6ff; }
+    .num { color: #79c0ff; }
+    .cmt { color: #8b949e; font-style: italic; }
+    .var { color: #ffa657; }
+    .dec { color: #ff6b6b; }
+    .cls { color: #f0c674; }
+    .typ { color: #56d364; }
+    .prop { color: #79c0ff; }
+    .val  { color: #a5d6ff; }
+    .sel  { color: #7ee787; }
+    .at   { color: #d2a8ff; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    th { background: #161b22; color: #22d3ee; text-align: left; padding: 7px 10px; border-bottom: 2px solid #30363d; font-weight: 600; }
+    td { padding: 6px 10px; border-bottom: 1px solid #21262d; color: #c9d1d9; vertical-align: top; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #161b22; }
+
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 11px; font-size: 10.5px; font-weight: 700; white-space: nowrap; }
+    .badge-green  { background: #1a3c1a; color: #3fb950; }
+    .badge-red    { background: #3a1818; color: #f85149; }
+    .badge-blue   { background: #0d2340; color: #58a6ff; }
+    .badge-yellow { background: #2e2200; color: #e3b341; }
+    .badge-cyan   { background: #002a30; color: #22d3ee; }
+
+    .tip-box { background: #1c2a1c; border: 1px solid #3fb950; border-left: 4px solid #3fb950; border-radius: 8px; padding: 9px 13px; }
+    .tip-box .tip-hdr { font-size: 10.5px; font-weight: 700; color: #3fb950; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }
+    .tip-box p, .tip-box li { font-size: 12px; color: #c9d1d9; }
+
+    .warn-box { background: #2a1a00; border: 1px solid #e3b341; border-left: 4px solid #e3b341; border-radius: 8px; padding: 9px 13px; }
+    .warn-box .warn-hdr { font-size: 10.5px; font-weight: 700; color: #e3b341; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }
+    .warn-box p, .warn-box li { font-size: 12px; color: #c9d1d9; }
+
+    .new-box { background: #002a30; border: 1px solid #22d3ee; border-left: 4px solid #22d3ee; border-radius: 8px; padding: 9px 13px; }
+    .new-box .new-hdr { font-size: 10.5px; font-weight: 700; color: #22d3ee; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }
+    .new-box p, .new-box li { font-size: 12px; color: #c9d1d9; }
+
+    .mem-box { background: #1e1a2e; border: 1px solid #d2a8ff; border-left: 4px solid #d2a8ff; border-radius: 8px; padding: 9px 13px; }
+    .mem-box .mem-hdr { font-size: 10.5px; font-weight: 700; color: #d2a8ff; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }
+    .mem-box p, .mem-box li { font-size: 12px; color: #c9d1d9; }
+
+    .iq-item { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 11px 14px; margin-bottom: 5px; }
+    .iq-q { font-size: 13px; font-weight: 600; color: #f0f6fc; margin-bottom: 4px; }
+    .iq-a { font-size: 12px; color: #c9d1d9; line-height: 1.7; }
+
+    /* specificity visualiser */
+    .spec { display: flex; gap: 4px; align-items: center; }
+    .spec-box { width: 38px; height: 38px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700; }
+    .spec-a { background: #3a1818; color: #f85149; }
+    .spec-b { background: #0d2340; color: #58a6ff; }
+    .spec-c { background: #1a3c1a; color: #3fb950; }
+    .spec-lbl { font-size: 10px; color: #8b949e; text-align: center; margin-top: 2px; }
+
+    /* flex demo boxes */
+    .demo-row { display: flex; gap: 6px; background: #1c2128; border-radius: 6px; padding: 8px; margin-top: 6px; }
+    .demo-box { background: #0e7490; border-radius: 4px; padding: 8px 14px; font-size: 12px; font-weight: 700; color: #fff; }
+    .demo-box.grow { flex-grow: 1; }
+    .demo-box.col  { background: #7c3aed; }
+
+    #nav {
+      position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+      display: flex; align-items: center; gap: 16px;
+      background: #161b22cc; backdrop-filter: blur(8px);
+      border: 1px solid #30363d; border-radius: 40px; padding: 9px 22px; z-index: 1000;
+    }
+    #nav button { background: none; border: none; color: #8b949e; cursor: pointer; font-size: 20px; padding: 4px 8px; border-radius: 6px; transition: color .2s, background .2s; }
+    #nav button:hover:not(:disabled) { color: #e6edf3; background: #21262d; }
+    #nav button:disabled { opacity: 0.3; cursor: default; }
+    #counter { font-size: 13px; color: #8b949e; min-width: 64px; text-align: center; }
+    #progress-bar { position: fixed; top: 0; left: 0; height: 3px; background: #0e7490; transition: width .3s ease; z-index: 999; }
+    #hint { position: fixed; bottom: 20px; right: 24px; font-size: 11px; color: #484f58; }
+    .slide::-webkit-scrollbar { width: 6px; }
+    .slide::-webkit-scrollbar-track { background: transparent; }
+    .slide::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
+  </style>
+</head>
+<body>
+<div id="progress-bar"></div>
+<div id="deck">
+
+  <!-- ══ SLIDE 0 — TITLE ══ -->
+  <div class="slide title-slide active" id="s0">
+    <div class="logo">🎨</div>
+    <h1>CSS – Deep Dive</h1>
+    <p class="subtitle">Specificity, Box Model, Positioning, Flexbox, CSS Grid, Custom Properties, Responsive Design, Animations, Angular ViewEncapsulation &amp; Senior Interview Q&amp;A.</p>
+    <div class="topic-chips">
+      <span class="chip">Cascade &amp; Specificity</span>
+      <span class="chip">Box Model</span>
+      <span class="chip">Positioning</span>
+      <span class="chip">Flexbox</span>
+      <span class="chip">CSS Grid</span>
+      <span class="chip">CSS Variables</span>
+      <span class="chip">Responsive Design</span>
+      <span class="chip">Animations</span>
+      <span class="chip">:host &amp; ::ng-deep</span>
+      <span class="chip">Performance</span>
+      <span class="chip">Interview Q&amp;A</span>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 1 — SPECIFICITY & CASCADE ══ -->
+  <div class="slide" id="s1">
+    <div class="slide-header"><span class="topic-badge">01</span><h1>Specificity &amp; the Cascade</h1></div>
+    <div class="content">
+      <div class="two-col">
+        <div class="card accent-cyan">
+          <h3>What is the Cascade?</h3>
+          <p>When multiple CSS rules target the same element, the browser resolves conflicts using three factors in order:</p>
+          <br/>
+          <ul>
+            <li><strong>1. Origin &amp; Importance</strong> — <code>!important</code> &gt; author &gt; browser default</li>
+            <li><strong>2. Specificity</strong> — which selector is more specific</li>
+            <li><strong>3. Source Order</strong> — last rule wins when specificity is equal</li>
+          </ul>
+        </div>
+        <div class="card accent-orange">
+          <h3>Specificity Score — (A, B, C)</h3>
+          <p style="margin-bottom:8px; font-size:12px;">Three columns — higher A wins, then B, then C:</p>
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <div class="spec">
+                <div><div class="spec-box spec-a">1</div><div class="spec-lbl">A</div></div>
+                <div><div class="spec-box spec-b">0</div><div class="spec-lbl">B</div></div>
+                <div><div class="spec-box spec-c">0</div><div class="spec-lbl">C</div></div>
+              </div>
+              <span style="font-size:12px; color:#c9d1d9;"><code>#myId</code> — inline &amp; ID selectors</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:10px;">
+              <div class="spec">
+                <div><div class="spec-box spec-a">0</div><div class="spec-lbl">A</div></div>
+                <div><div class="spec-box spec-b">1</div><div class="spec-lbl">B</div></div>
+                <div><div class="spec-box spec-c">0</div><div class="spec-lbl">C</div></div>
+              </div>
+              <span style="font-size:12px; color:#c9d1d9;"><code>.class</code> / <code>[attr]</code> / <code>:hover</code></span>
+            </div>
+            <div style="display:flex; align-items:center; gap:10px;">
+              <div class="spec">
+                <div><div class="spec-box spec-a">0</div><div class="spec-lbl">A</div></div>
+                <div><div class="spec-box spec-b">0</div><div class="spec-lbl">B</div></div>
+                <div><div class="spec-box spec-c">1</div><div class="spec-lbl">C</div></div>
+              </div>
+              <span style="font-size:12px; color:#c9d1d9;"><code>div</code> / <code>p</code> / <code>::before</code></span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="code-block">
+        <pre><span class="cmt">/* Specificity examples — higher wins */</span>
+
+<span class="sel">p</span>                    { <span class="prop">color</span>: <span class="val">blue</span>; }      <span class="cmt">/* (0,0,1)   ← loses */</span>
+<span class="sel">.text</span>               { <span class="prop">color</span>: <span class="val">red</span>; }       <span class="cmt">/* (0,1,0)   ← wins over element */</span>
+<span class="sel">#title</span>              { <span class="prop">color</span>: <span class="val">green</span>; }     <span class="cmt">/* (1,0,0)   ← wins over class */</span>
+<span class="sel">p.text</span>              { <span class="prop">color</span>: <span class="val">purple</span>; }    <span class="cmt">/* (0,1,1)   ← element + class */</span>
+<span class="sel">div p.text</span>          { <span class="prop">color</span>: <span class="val">orange</span>; }    <span class="cmt">/* (0,1,2)   ← more elements */</span>
+<span class="sel">.nav .menu .item a</span>  { <span class="prop">color</span>: <span class="val">pink</span>; }      <span class="cmt">/* (0,3,1)   ← 3 classes + 1 element */</span>
+
+<span class="cmt">/* !important overrides everything (avoid using it!) */</span>
+<span class="sel">p</span> { <span class="prop">color</span>: <span class="val">blue</span> <span class="kw">!important</span>; }  <span class="cmt">/* wins over #id — but bad practice */</span>
+
+<span class="cmt">/* Source order — when specificity is EQUAL, last one wins */</span>
+<span class="sel">.text</span> { <span class="prop">color</span>: <span class="val">red</span>; }
+<span class="sel">.text</span> { <span class="prop">color</span>: <span class="val">blue</span>; }   <span class="cmt">/* ← wins — same specificity, comes last */</span>
+
+<span class="cmt">/* :is() / :where() — modern selectors */</span>
+<span class="sel">:is(h1, h2, h3)</span>       { <span class="prop">color</span>: <span class="val">red</span>; }   <span class="cmt">/* takes specificity of MOST specific arg */</span>
+<span class="sel">:where(h1, h2, h3)</span>    { <span class="prop">color</span>: <span class="val">red</span>; }   <span class="cmt">/* always specificity (0,0,0) — easy to override */</span></pre>
+      </div>
+      <div class="tip-box">
+        <div class="tip-hdr">✅ Best Practice — Keep specificity low</div>
+        <p>Use <strong>classes only</strong> (avoid IDs in CSS, avoid <code>!important</code>). Low specificity = easier to override, maintain, and scale. Use <code>:where()</code> for reusable utility styles that should always be overridable.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 2 — BOX MODEL ══ -->
+  <div class="slide" id="s2">
+    <div class="slide-header"><span class="topic-badge">02</span><h1>Box Model &amp; Positioning</h1></div>
+    <div class="content">
+      <div class="two-col">
+        <div class="card accent-cyan">
+          <h3>Box Model</h3>
+          <p>Every element is a rectangular box with 4 layers:</p>
+          <div style="margin-top:10px; border:2px solid #e3b341; border-radius:6px; padding:10px; font-size:12px; color:#e3b341; text-align:center;">
+            margin
+            <div style="border:2px solid #f97316; border-radius:4px; padding:8px; margin-top:6px; color:#f97316;">
+              border
+              <div style="border:2px solid #22d3ee; border-radius:4px; padding:8px; margin-top:4px; color:#22d3ee;">
+                padding
+                <div style="background:#1c2128; border-radius:4px; padding:8px; margin-top:4px; color:#e6edf3;">
+                  content (width × height)
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card accent-orange">
+          <h3>box-sizing</h3>
+          <div class="code-block">
+            <pre><span class="cmt">/* content-box (default) */</span>
+<span class="cmt">/* width = content only */</span>
+<span class="cmt">/* total = width + padding + border */</span>
+<span class="sel">.box</span> {
+  <span class="prop">width</span>: <span class="num">200px</span>;
+  <span class="prop">padding</span>: <span class="num">20px</span>;
+  <span class="prop">border</span>: <span class="num">2px</span> <span class="val">solid</span>;
+  <span class="cmt">/* TOTAL = 244px ← surprise! */</span>
+}
+
+<span class="cmt">/* border-box (recommended) */</span>
+<span class="cmt">/* width INCLUDES padding + border */</span>
+<span class="sel">*, *::before, *::after</span> {
+  <span class="prop">box-sizing</span>: <span class="val">border-box</span>;
+  <span class="cmt">/* total = exactly 200px ✅ */</span>
+}</pre>
+          </div>
+        </div>
+      </div>
+      <div class="card accent-blue">
+        <h3>Positioning — 5 values explained</h3>
+        <table style="margin-top:6px;">
+          <thead><tr><th>Value</th><th>Removed from flow?</th><th>Positioned relative to</th><th>Use case</th></tr></thead>
+          <tbody>
+            <tr><td><code>static</code></td><td>No (default)</td><td>Normal document flow</td><td>Default, no special positioning</td></tr>
+            <tr><td><code>relative</code></td><td>No — holds space</td><td>Its own normal position</td><td>Offset without affecting others; creates stacking context for children</td></tr>
+            <tr><td><code>absolute</code></td><td>✅ Yes</td><td>Nearest positioned ancestor (non-static)</td><td>Dropdowns, tooltips, badges overlaid on parent</td></tr>
+            <tr><td><code>fixed</code></td><td>✅ Yes</td><td>Viewport</td><td>Sticky headers, chat buttons, cookie banners</td></tr>
+            <tr><td><code>sticky</code></td><td>No — hybrid</td><td>Scroll container until threshold</td><td>Table headers, nav that sticks after scrolling</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="code-block">
+        <pre><span class="cmt">/* absolute child inside relative parent — classic pattern */</span>
+<span class="sel">.parent</span> { <span class="prop">position</span>: <span class="val">relative</span>; }
+<span class="sel">.badge</span>  { <span class="prop">position</span>: <span class="val">absolute</span>; <span class="prop">top</span>: <span class="num">-8px</span>; <span class="prop">right</span>: <span class="num">-8px</span>; }
+
+<span class="cmt">/* sticky — sticks at 0px from top when scrolling */</span>
+<span class="sel">.table-header</span> { <span class="prop">position</span>: <span class="val">sticky</span>; <span class="prop">top</span>: <span class="num">0</span>; <span class="prop">z-index</span>: <span class="num">10</span>; }</pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 3 — FLEXBOX ══ -->
+  <div class="slide" id="s3">
+    <div class="slide-header"><span class="topic-badge">03</span><h1>Flexbox — Complete Guide</h1></div>
+    <div class="content">
+      <div class="two-col">
+        <div class="card accent-cyan">
+          <h3>Container Properties (parent)</h3>
+          <div class="code-block">
+            <pre><span class="sel">.container</span> {
+  <span class="prop">display</span>: <span class="val">flex</span>;
+  <span class="prop">flex-direction</span>: <span class="val">row</span>;       <span class="cmt">/* row|column|row-reverse|column-reverse */</span>
+  <span class="prop">flex-wrap</span>: <span class="val">nowrap</span>;         <span class="cmt">/* nowrap|wrap|wrap-reverse */</span>
+  <span class="prop">justify-content</span>: <span class="val">flex-start</span>; <span class="cmt">/* main axis alignment */</span>
+  <span class="cmt">/*  flex-start | flex-end | center</span>
+  <span class="cmt">      space-between | space-around | space-evenly */</span>
+  <span class="prop">align-items</span>: <span class="val">stretch</span>;      <span class="cmt">/* cross axis — single line */</span>
+  <span class="cmt">/*  flex-start | flex-end | center | baseline */</span>
+  <span class="prop">align-content</span>: <span class="val">flex-start</span>;  <span class="cmt">/* cross axis — multi-line (wrap) */</span>
+  <span class="prop">gap</span>: <span class="num">16px</span>;                   <span class="cmt">/* space between items ✅ modern */</span>
+}</pre>
+          </div>
+        </div>
+        <div class="card accent-purple">
+          <h3>Item Properties (children)</h3>
+          <div class="code-block">
+            <pre><span class="sel">.item</span> {
+  <span class="prop">flex-grow</span>: <span class="num">0</span>;    <span class="cmt">/* grow to fill remaining space */</span>
+  <span class="prop">flex-shrink</span>: <span class="num">1</span>; <span class="cmt">/* shrink if needed */</span>
+  <span class="prop">flex-basis</span>: <span class="val">auto</span>; <span class="cmt">/* initial size before grow/shrink */</span>
+
+  <span class="cmt">/* Shorthand: flex: grow shrink basis */</span>
+  <span class="prop">flex</span>: <span class="num">1</span>;          <span class="cmt">/* flex: 1 1 0% — grow equally ✅ */</span>
+  <span class="prop">flex</span>: <span class="val">none</span>;      <span class="cmt">/* flex: 0 0 auto — fixed size */</span>
+  <span class="prop">flex</span>: <span class="num">0 1 200px</span>; <span class="cmt">/* can shrink, won't grow */</span>
+
+  <span class="prop">align-self</span>: <span class="val">center</span>;   <span class="cmt">/* override align-items for this item */</span>
+  <span class="prop">order</span>: <span class="num">2</span>;              <span class="cmt">/* visual order (not DOM order) */</span>
+}</pre>
+          </div>
+        </div>
+      </div>
+      <div class="card accent-yellow">
+        <h3>Common Patterns</h3>
+        <div class="code-block">
+          <pre><span class="cmt">/* ✅ Perfect centering — one of the most asked interview questions */</span>
+<span class="sel">.center</span> {
+  <span class="prop">display</span>: <span class="val">flex</span>;
+  <span class="prop">justify-content</span>: <span class="val">center</span>;
+  <span class="prop">align-items</span>: <span class="val">center</span>;
+}
+
+<span class="cmt">/* ✅ Space between nav items, logo left, links right */</span>
+<span class="sel">.navbar</span> {
+  <span class="prop">display</span>: <span class="val">flex</span>;
+  <span class="prop">justify-content</span>: <span class="val">space-between</span>;
+  <span class="prop">align-items</span>: <span class="val">center</span>;
+}
+
+<span class="cmt">/* ✅ Sticky footer layout */</span>
+<span class="sel">body</span> { <span class="prop">display</span>: <span class="val">flex</span>; <span class="prop">flex-direction</span>: <span class="val">column</span>; <span class="prop">min-height</span>: <span class="num">100vh</span>; }
+<span class="sel">main</span> { <span class="prop">flex</span>: <span class="num">1</span>; }   <span class="cmt">/* grows to fill — footer pushed down ✅ */</span>
+
+<span class="cmt">/* ✅ Equal-width columns */</span>
+<span class="sel">.col</span> { <span class="prop">flex</span>: <span class="num">1</span>; }  <span class="cmt">/* all columns share space equally */</span></pre>
+        </div>
+      </div>
+      <div class="two-col">
+        <div class="tip-box">
+          <div class="tip-hdr">✅ Main Axis vs Cross Axis</div>
+          <ul>
+            <li><strong>flex-direction: row</strong> → main axis = horizontal, cross = vertical</li>
+            <li><strong>flex-direction: column</strong> → main axis = vertical, cross = horizontal</li>
+            <li><code>justify-content</code> always controls the <strong>main axis</strong></li>
+            <li><code>align-items</code> always controls the <strong>cross axis</strong></li>
+          </ul>
+        </div>
+        <div class="tip-box">
+          <div class="tip-hdr">✅ Use Flexbox for</div>
+          <ul>
+            <li>1-dimensional layouts (row OR column)</li>
+            <li>Navigation bars, toolbars</li>
+            <li>Centering content</li>
+            <li>Equal-height sidebar + main</li>
+            <li>Card groups with consistent height</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 4 — CSS GRID ══ -->
+  <div class="slide" id="s4">
+    <div class="slide-header"><span class="topic-badge">04</span><h1>CSS Grid — Complete Guide</h1></div>
+    <div class="content">
+      <div class="two-col">
+        <div class="card accent-cyan">
+          <h3>Container Properties</h3>
+          <div class="code-block">
+            <pre><span class="sel">.grid</span> {
+  <span class="prop">display</span>: <span class="val">grid</span>;
+
+  <span class="cmt">/* Define columns */</span>
+  <span class="prop">grid-template-columns</span>: <span class="num">200px</span> <span class="num">1fr</span> <span class="num">1fr</span>;    <span class="cmt">/* 3 cols */</span>
+  <span class="prop">grid-template-columns</span>: <span class="fn">repeat</span>(<span class="num">3</span>, <span class="num">1fr</span>);   <span class="cmt">/* 3 equal */</span>
+  <span class="prop">grid-template-columns</span>: <span class="fn">repeat</span>(<span class="val">auto-fit</span>, <span class="fn">minmax</span>(<span class="num">250px</span>, <span class="num">1fr</span>)); <span class="cmt">/* responsive</span> <span class="cmt">✅ */</span>
+
+  <span class="cmt">/* Define rows */</span>
+  <span class="prop">grid-template-rows</span>: <span class="val">auto</span> <span class="num">1fr</span> <span class="val">auto</span>;   <span class="cmt">/* header, main, footer */</span>
+
+  <span class="prop">gap</span>: <span class="num">16px</span>;                 <span class="cmt">/* row + column gap */</span>
+  <span class="prop">column-gap</span>: <span class="num">24px</span>;         <span class="cmt">/* column gap only */</span>
+  <span class="prop">row-gap</span>: <span class="num">12px</span>;            <span class="cmt">/* row gap only */</span>
+
+  <span class="prop">justify-items</span>: <span class="val">stretch</span>;  <span class="cmt">/* horizontal align of items in cell */</span>
+  <span class="prop">align-items</span>: <span class="val">stretch</span>;    <span class="cmt">/* vertical align of items in cell */</span>
+}</pre>
+          </div>
+        </div>
+        <div class="card accent-purple">
+          <h3>Item Placement</h3>
+          <div class="code-block">
+            <pre><span class="sel">.item</span> {
+  <span class="cmt">/* Span across columns / rows */</span>
+  <span class="prop">grid-column</span>: <span class="num">1</span> / <span class="num">3</span>;      <span class="cmt">/* col line 1 to 3 (2 cols) */</span>
+  <span class="prop">grid-column</span>: <span class="num">1</span> / <span class="val">-1</span>;     <span class="cmt">/* full width ✅ */</span>
+  <span class="prop">grid-column</span>: <span class="val">span</span> <span class="num">2</span>;     <span class="cmt">/* span 2 columns */</span>
+
+  <span class="prop">grid-row</span>: <span class="num">1</span> / <span class="num">3</span>;         <span class="cmt">/* row line 1 to 3 */</span>
+
+  <span class="cmt">/* Named placement */</span>
+  <span class="prop">grid-area</span>: <span class="val">header</span>;        <span class="cmt">/* must match template-areas name */</span>
+
+  <span class="prop">justify-self</span>: <span class="val">center</span>;    <span class="cmt">/* override justify-items for this item */</span>
+  <span class="prop">align-self</span>: <span class="val">end</span>;          <span class="cmt">/* override align-items for this item */</span>
+}</pre>
+          </div>
+        </div>
+      </div>
+      <div class="card accent-green">
+        <h3>grid-template-areas — visual layout</h3>
+        <div class="code-block">
+          <pre><span class="sel">.layout</span> {
+  <span class="prop">display</span>: <span class="val">grid</span>;
+  <span class="prop">grid-template-columns</span>: <span class="num">220px</span> <span class="num">1fr</span>;
+  <span class="prop">grid-template-rows</span>: <span class="val">auto</span> <span class="num">1fr</span> <span class="val">auto</span>;
+  <span class="prop">grid-template-areas</span>:
+    <span class="str">"header  header"</span>
+    <span class="str">"sidebar main  "</span>
+    <span class="str">"footer  footer"</span>;
+  <span class="prop">min-height</span>: <span class="num">100vh</span>;
+}
+<span class="sel">header</span>  { <span class="prop">grid-area</span>: <span class="val">header</span>; }
+<span class="sel">aside</span>   { <span class="prop">grid-area</span>: <span class="val">sidebar</span>; }
+<span class="sel">main</span>    { <span class="prop">grid-area</span>: <span class="val">main</span>; }
+<span class="sel">footer</span>  { <span class="prop">grid-area</span>: <span class="val">footer</span>; }
+
+<span class="cmt">/* ✅ Responsive card grid — auto layout without media queries */</span>
+<span class="sel">.cards</span> {
+  <span class="prop">display</span>: <span class="val">grid</span>;
+  <span class="prop">grid-template-columns</span>: <span class="fn">repeat</span>(<span class="val">auto-fit</span>, <span class="fn">minmax</span>(<span class="num">280px</span>, <span class="num">1fr</span>));
+  <span class="prop">gap</span>: <span class="num">20px</span>;
+  <span class="cmt">/* ← creates as many columns as fit, each min 280px, max 1fr */</span>
+}</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 5 — FLEXBOX VS GRID ══ -->
+  <div class="slide" id="s5">
+    <div class="slide-header"><span class="topic-badge">05</span><h1>Flexbox vs CSS Grid — When to Use Which</h1></div>
+    <div class="content">
+      <div class="two-col">
+        <div class="card accent-cyan">
+          <h3>Flexbox — 1D layout</h3>
+          <ul>
+            <li>Works in <strong>one direction</strong> at a time — row or column</li>
+            <li>Content-driven — items determine their own size</li>
+            <li>Ideal for <strong>components</strong> (nav bar, button group, card header)</li>
+          </ul>
+          <br/>
+          <p style="font-size:12px; color:#8b949e;"><strong>Use when:</strong></p>
+          <ul>
+            <li>✅ Navigation / toolbar</li>
+            <li>✅ Centering one element</li>
+            <li>✅ Row of buttons or icons</li>
+            <li>✅ Sidebar + main content side by side</li>
+            <li>✅ Wrapping tag chips</li>
+          </ul>
+        </div>
+        <div class="card accent-purple">
+          <h3>CSS Grid — 2D layout</h3>
+          <ul>
+            <li>Works in <strong>two directions</strong> — rows AND columns together</li>
+            <li>Layout-driven — parent defines the grid, children placed in it</li>
+            <li>Ideal for <strong>page layouts</strong> and complex grids</li>
+          </ul>
+          <br/>
+          <p style="font-size:12px; color:#8b949e;"><strong>Use when:</strong></p>
+          <ul>
+            <li>✅ Full page layout (header/sidebar/main/footer)</li>
+            <li>✅ Card grid with consistent row height</li>
+            <li>✅ Dashboard with tiles</li>
+            <li>✅ Magazine / article layout</li>
+            <li>✅ Any 2D positioning needed</li>
+          </ul>
+        </div>
+      </div>
+      <div class="card accent-yellow">
+        <h3>Side-by-side comparison</h3>
+        <table style="margin-top:8px;">
+          <thead><tr><th></th><th>Flexbox</th><th>CSS Grid</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Dimensions</strong></td><td>1D — row OR column</td><td>2D — rows AND columns</td></tr>
+            <tr><td><strong>Control</strong></td><td>Children control their size</td><td>Parent controls the grid</td></tr>
+            <tr><td><strong>Alignment</strong></td><td>Along one axis primarily</td><td>Both axes independently</td></tr>
+            <tr><td><strong>Overlapping items</strong></td><td>❌ Not supported</td><td>✅ Items can overlap using grid-area</td></tr>
+            <tr><td><strong>Browser support</strong></td><td>All browsers ✅</td><td>All modern browsers ✅</td></tr>
+            <tr><td><strong>Best for</strong></td><td>Components, nav, button groups</td><td>Page layouts, dashboards, galleries</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="tip-box">
+        <div class="tip-hdr">✅ They work great TOGETHER</div>
+        <p>Use <strong>Grid for the overall page layout</strong>, then <strong>Flexbox inside each grid area</strong> to arrange the content within it. They are complementary, not competing.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 6 — CSS VARIABLES ══ -->
+  <div class="slide" id="s6">
+    <div class="slide-header"><span class="topic-badge">06</span><h1>CSS Custom Properties (Variables)</h1></div>
+    <div class="content">
+      <div class="two-col">
+        <div class="card accent-cyan">
+          <h3>Defining &amp; Using Variables</h3>
+          <div class="code-block">
+            <pre><span class="cmt">/* Define on :root — globally available */</span>
+<span class="sel">:root</span> {
+  <span class="prop">--primary</span>: <span class="val">#3b82f6</span>;
+  <span class="prop">--accent</span>:  <span class="val">#f97316</span>;
+  <span class="prop">--text</span>:    <span class="val">#1f2937</span>;
+  <span class="prop">--radius</span>:  <span class="num">8px</span>;
+  <span class="prop">--spacing-md</span>: <span class="num">16px</span>;
+}
+
+<span class="cmt">/* Use with var() */</span>
+<span class="sel">.btn</span> {
+  <span class="prop">background</span>: <span class="fn">var</span>(<span class="prop">--primary</span>);
+  <span class="prop">border-radius</span>: <span class="fn">var</span>(<span class="prop">--radius</span>);
+  <span class="prop">padding</span>: <span class="fn">var</span>(<span class="prop">--spacing-md</span>);
+  <span class="cmt">/* fallback value */</span>
+  <span class="prop">color</span>: <span class="fn">var</span>(<span class="prop">--text</span>, <span class="val">#000</span>);
+}</pre>
+          </div>
+        </div>
+        <div class="card accent-orange">
+          <h3>Dark / Light Theme Toggle</h3>
+          <div class="code-block">
+            <pre><span class="sel">:root</span> {
+  <span class="prop">--bg</span>:   <span class="val">#ffffff</span>;
+  <span class="prop">--text</span>: <span class="val">#111111</span>;
+}
+<span class="sel">[data-theme="dark"]</span> {
+  <span class="prop">--bg</span>:   <span class="val">#0d1117</span>;
+  <span class="prop">--text</span>: <span class="val">#e6edf3</span>;
+}
+<span class="cmt">/* OS-level preference */</span>
+<span class="at">@media</span> (<span class="prop">prefers-color-scheme</span>: <span class="val">dark</span>) {
+  <span class="sel">:root</span> { <span class="prop">--bg</span>: <span class="val">#0d1117</span>; }
+}
+
+<span class="cmt">/* Change theme via JS */</span>
+<span class="fn">document</span>.<span class="var">documentElement</span>
+  .<span class="fn">setAttribute</span>(<span class="str">'data-theme'</span>, <span class="str">'dark'</span>);</pre>
+          </div>
+        </div>
+      </div>
+      <div class="card accent-green">
+        <h3>CSS Variables in Angular — :host &amp; ::ng-deep</h3>
+        <div class="code-block">
+          <pre><span class="cmt">/* component.scss — Angular ViewEncapsulation */</span>
+<span class="sel">:host</span> {
+  <span class="cmt">/* Styles the component's HOST element itself */</span>
+  <span class="prop">display</span>: <span class="val">block</span>;
+  <span class="prop">--card-radius</span>: <span class="num">8px</span>;   <span class="cmt">/* scoped CSS variable */</span>
+}
+<span class="sel">:host(.active)</span> { <span class="prop">border</span>: <span class="num">2px</span> <span class="val">solid blue</span>; }   <span class="cmt">/* conditional host class */</span>
+<span class="sel">:host-context(.dark-theme)</span> { <span class="prop">background</span>: <span class="val">#000</span>; } <span class="cmt">/* parent context */</span>
+
+<span class="cmt">/* ::ng-deep — pierce through ViewEncapsulation to style child components */</span>
+<span class="cmt">/* DEPRECATED but still used — prefer CSS variables instead */</span>
+<span class="sel">::ng-deep .mat-button</span> { <span class="prop">border-radius</span>: <span class="num">4px</span>; }
+
+<span class="cmt">/* ✅ Better — expose CSS variable from parent, consume in child */</span>
+<span class="sel">.parent</span>     { <span class="prop">--btn-radius</span>: <span class="num">4px</span>; }
+<span class="sel">.child .btn</span> { <span class="prop">border-radius</span>: <span class="fn">var</span>(<span class="prop">--btn-radius</span>, <span class="num">8px</span>); }</pre>
+        </div>
+      </div>
+      <div class="tip-box">
+        <div class="tip-hdr">✅ CSS Variables vs SCSS Variables</div>
+        <p>SCSS variables (<code>$primary</code>) are compiled away at build time — they don't exist in the browser. CSS custom properties (<code>--primary</code>) are live in the browser and can be changed at runtime via JavaScript. Always prefer CSS custom properties for theming.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 7 — RESPONSIVE DESIGN ══ -->
+  <div class="slide" id="s7">
+    <div class="slide-header"><span class="topic-badge">07</span><h1>Responsive Design — Media Queries &amp; Modern Techniques</h1></div>
+    <div class="content">
+      <div class="two-col">
+        <div class="card accent-cyan">
+          <h3>Media Queries</h3>
+          <div class="code-block">
+            <pre><span class="cmt">/* Mobile-first approach (recommended) */</span>
+<span class="cmt">/* Start with mobile styles, scale up */</span>
+
+<span class="sel">.grid</span> {
+  <span class="prop">grid-template-columns</span>: <span class="num">1fr</span>;    <span class="cmt">/* mobile: 1 col */</span>
+}
+<span class="at">@media</span> (<span class="prop">min-width</span>: <span class="num">768px</span>) {
+  <span class="sel">.grid</span> { <span class="prop">grid-template-columns</span>: <span class="fn">repeat</span>(<span class="num">2</span>, <span class="num">1fr</span>); }
+}
+<span class="at">@media</span> (<span class="prop">min-width</span>: <span class="num">1024px</span>) {
+  <span class="sel">.grid</span> { <span class="prop">grid-template-columns</span>: <span class="fn">repeat</span>(<span class="num">3</span>, <span class="num">1fr</span>); }
+}
+
+<span class="cmt">/* Other media features */</span>
+<span class="at">@media</span> (<span class="prop">prefers-color-scheme</span>: <span class="val">dark</span>) { }
+<span class="at">@media</span> (<span class="prop">prefers-reduced-motion</span>: <span class="val">reduce</span>) { }
+<span class="at">@media</span> (<span class="prop">orientation</span>: <span class="val">landscape</span>) { }
+<span class="at">@media</span> <span class="val">print</span> { }</pre>
+          </div>
+        </div>
+        <div class="card accent-purple">
+          <h3>🆕 Container Queries (CSS 2023)</h3>
+          <div class="code-block">
+            <pre><span class="cmt">/* Respond to PARENT container size, not viewport */</span>
+<span class="cmt">/* Solves: same component in sidebar (narrow) */</span>
+<span class="cmt">/* vs main content (wide) — different layouts */</span>
+<span class="sel">.card-wrapper</span> {
+  <span class="prop">container-type</span>: <span class="val">inline-size</span>;
+  <span class="prop">container-name</span>: <span class="val">card</span>;
+}
+<span class="at">@container</span> <span class="val">card</span> (<span class="prop">min-width</span>: <span class="num">400px</span>) {
+  <span class="sel">.card</span> {
+    <span class="prop">display</span>: <span class="val">flex</span>;         <span class="cmt">/* horizontal when wide */</span>
+  }
+}
+<span class="at">@container</span> <span class="val">card</span> (<span class="prop">max-width</span>: <span class="num">399px</span>) {
+  <span class="sel">.card</span> {
+    <span class="prop">flex-direction</span>: <span class="val">column</span>; <span class="cmt">/* vertical when narrow */</span>
+  }
+}</pre>
+          </div>
+        </div>
+      </div>
+      <div class="card accent-orange">
+        <h3>Responsive Units</h3>
+        <table style="margin-top:6px;">
+          <thead><tr><th>Unit</th><th>Relative to</th><th>Best use</th></tr></thead>
+          <tbody>
+            <tr><td><code>px</code></td><td>Fixed pixels</td><td>Borders, shadows, icons</td></tr>
+            <tr><td><code>%</code></td><td>Parent element</td><td>Widths inside flex/grid</td></tr>
+            <tr><td><code>em</code></td><td>Parent font-size</td><td>Component-relative spacing (compounding — be careful)</td></tr>
+            <tr><td><code>rem</code></td><td>Root font-size (16px)</td><td>Font sizes, spacing — predictable ✅</td></tr>
+            <tr><td><code>vw / vh</code></td><td>Viewport width/height</td><td>Full-screen sections, hero areas</td></tr>
+            <tr><td><code>clamp()</code></td><td>Fluid range</td><td>Fluid typography / spacing ✅ modern</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="code-block">
+        <pre><span class="cmt">/* ✅ Fluid typography with clamp(min, preferred, max) */</span>
+<span class="sel">h1</span> { <span class="prop">font-size</span>: <span class="fn">clamp</span>(<span class="num">24px</span>, <span class="num">5vw</span>, <span class="num">48px</span>); }
+<span class="cmt">/*  ↑ min 24px on small screens, scales with viewport, max 48px */</span>
+
+<span class="cmt">/* ✅ No-media-query responsive grid */</span>
+<span class="sel">.cards</span> {
+  <span class="prop">grid-template-columns</span>: <span class="fn">repeat</span>(<span class="val">auto-fit</span>, <span class="fn">minmax</span>(<span class="num">min</span>(<span class="num">100%</span>, <span class="num">280px</span>), <span class="num">1fr</span>));
+}</pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 8 — ANIMATIONS ══ -->
+  <div class="slide" id="s8">
+    <div class="slide-header"><span class="topic-badge">08</span><h1>CSS Transitions &amp; Animations</h1></div>
+    <div class="content">
+      <div class="two-col">
+        <div class="card accent-cyan">
+          <h3>Transitions — between two states</h3>
+          <div class="code-block">
+            <pre><span class="sel">.btn</span> {
+  <span class="prop">background</span>: <span class="val">blue</span>;
+  <span class="cmt">/* property duration timing-function delay */</span>
+  <span class="prop">transition</span>: <span class="val">background</span> <span class="num">.3s</span> <span class="val">ease</span>;
+  <span class="prop">transition</span>: <span class="val">all</span> <span class="num">.3s</span> <span class="val">ease</span>;          <span class="cmt">/* ❌ avoid 'all' — perf */</span>
+  <span class="prop">transition</span>: <span class="val">transform</span> <span class="num">.3s</span>, <span class="val">opacity</span> <span class="num">.2s</span>; <span class="cmt">/* ✅ specific */</span>
+}
+<span class="sel">.btn:hover</span> { <span class="prop">background</span>: <span class="val">darkblue</span>; }
+
+<span class="cmt">/* ✅ High performance: only animate these two — no reflow */</span>
+<span class="cmt">/* transform and opacity run on the GPU compositor thread */</span>
+<span class="sel">.card</span>       { <span class="prop">transform</span>: <span class="fn">translateY</span>(<span class="num">0</span>); <span class="prop">opacity</span>: <span class="num">1</span>; <span class="prop">transition</span>: <span class="val">transform</span> <span class="num">.3s</span>; }
+<span class="sel">.card:hover</span> { <span class="prop">transform</span>: <span class="fn">translateY</span>(<span class="num">-4px</span>); }</pre>
+          </div>
+        </div>
+        <div class="card accent-purple">
+          <h3>Keyframe Animations</h3>
+          <div class="code-block">
+            <pre><span class="at">@keyframes</span> <span class="fn">fadeInUp</span> {
+  <span class="sel">from</span> { <span class="prop">opacity</span>: <span class="num">0</span>; <span class="prop">transform</span>: <span class="fn">translateY</span>(<span class="num">20px</span>); }
+  <span class="sel">to</span>   { <span class="prop">opacity</span>: <span class="num">1</span>; <span class="prop">transform</span>: <span class="fn">translateY</span>(<span class="num">0</span>); }
+}
+<span class="at">@keyframes</span> <span class="fn">spin</span> {
+  <span class="sel">to</span> { <span class="prop">transform</span>: <span class="fn">rotate</span>(<span class="num">360deg</span>); }
+}
+
+<span class="sel">.element</span> {
+  <span class="cmt">/* name duration timing fill-mode delay iterations */</span>
+  <span class="prop">animation</span>: <span class="fn">fadeInUp</span> <span class="num">.5s</span> <span class="val">ease</span> <span class="val">forwards</span>;
+  <span class="prop">animation</span>: <span class="fn">spin</span> <span class="num">1s</span> <span class="val">linear</span> <span class="val">infinite</span>;
+}
+
+<span class="cmt">/* Respect user's motion preference */</span>
+<span class="at">@media</span> (<span class="prop">prefers-reduced-motion</span>: <span class="val">reduce</span>) {
+  <span class="sel">*</span> { <span class="prop">animation-duration</span>: <span class="num">.01ms</span> <span class="kw">!important</span>; }
+}</pre>
+          </div>
+        </div>
+      </div>
+      <div class="card accent-yellow">
+        <h3>Performance — What can be animated cheaply?</h3>
+        <table style="margin-top:6px;">
+          <thead><tr><th>Property</th><th>Triggers</th><th>Performance</th></tr></thead>
+          <tbody>
+            <tr><td><code>transform</code> (translate, scale, rotate)</td><td>Composite only</td><td>🟢 GPU — cheapest</td></tr>
+            <tr><td><code>opacity</code></td><td>Composite only</td><td>🟢 GPU — cheapest</td></tr>
+            <tr><td><code>background-color</code>, <code>color</code></td><td>Paint</td><td>🟡 OK — no layout shift</td></tr>
+            <tr><td><code>width</code>, <code>height</code>, <code>top</code>, <code>left</code></td><td>Layout + Paint + Composite</td><td>🔴 Expensive — causes reflow</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="tip-box">
+        <div class="tip-hdr">✅ Golden Rule — Only animate transform &amp; opacity</div>
+        <p>Use <code>transform: translateX()</code> instead of <code>left</code>. Use <code>transform: scale()</code> instead of <code>width/height</code>. Add <code>will-change: transform</code> to hint the browser to promote the element to its own GPU layer before animation starts.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 9 — MEMORY + CHEATSHEET ══ -->
+  <div class="slide" id="s9">
+    <div class="slide-header"><span class="topic-badge">09</span><h1>🧠 Memory Tips &amp; Cheatsheet</h1></div>
+    <div class="content">
+      <div class="two-col">
+        <div class="mem-box">
+          <div class="mem-hdr">🎯 Specificity — "I Be Celebrating"</div>
+          <ul>
+            <li><strong>I</strong>nline styles — (1,0,0,0)</li>
+            <li><strong>I</strong>D selectors — (0,1,0,0)</li>
+            <li><strong>C</strong>lass / attribute / pseudo-class — (0,0,1,0)</li>
+            <li><strong>E</strong>lement / pseudo-element — (0,0,0,1)</li>
+          </ul>
+        </div>
+        <div class="mem-box">
+          <div class="mem-hdr">🎯 Flexbox — "JA" rule</div>
+          <ul>
+            <li><strong>J</strong>ustify-content → <strong>main</strong> axis</li>
+            <li><strong>A</strong>lign-items → <strong>cross</strong> axis</li>
+            <li>Centering = <code>justify-content: center</code> + <code>align-items: center</code></li>
+            <li>Direction changes which axis is "main"</li>
+          </ul>
+        </div>
+      </div>
+      <div class="card accent-cyan">
+        <h3>Complete Cheatsheet</h3>
+        <table style="margin-top:6px;">
+          <thead><tr><th>Topic</th><th>Key Point</th></tr></thead>
+          <tbody>
+            <tr><td>Cascade order</td><td>!important → Specificity → Source order</td></tr>
+            <tr><td>Specificity</td><td>inline > #id > .class > element</td></tr>
+            <tr><td>box-sizing</td><td><code>border-box</code> = width includes padding+border ✅</td></tr>
+            <tr><td>position: absolute</td><td>Nearest <em>positioned</em> (non-static) ancestor</td></tr>
+            <tr><td>position: sticky</td><td>Hybrid — in flow until scroll threshold</td></tr>
+            <tr><td>Flexbox 1D</td><td>justify-content (main) + align-items (cross)</td></tr>
+            <tr><td>flex: 1</td><td>shorthand for flex: 1 1 0% — grow equally</td></tr>
+            <tr><td>CSS Grid 2D</td><td>grid-template-columns + grid-template-areas</td></tr>
+            <tr><td>auto-fit + minmax</td><td>Responsive grid without media queries</td></tr>
+            <tr><td>CSS Variables</td><td>Define on :root, use var(--name, fallback)</td></tr>
+            <tr><td>:host</td><td>Styles the component element itself in Angular</td></tr>
+            <tr><td>::ng-deep</td><td>Pierces encapsulation — deprecated, use CSS vars</td></tr>
+            <tr><td>Animate cheaply</td><td>Only transform + opacity → GPU, no reflow</td></tr>
+            <tr><td>Container Queries</td><td>@container — respond to parent, not viewport (2023)</td></tr>
+            <tr><td>clamp()</td><td>clamp(min, preferred, max) — fluid sizing</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="three-col">
+        <div class="tip-box">
+          <div class="tip-hdr">✅ Flexbox vs Grid</div>
+          <p><strong>Flex</strong> = 1D, component-level<br/><strong>Grid</strong> = 2D, page-level layout<br/>Use both together!</p>
+        </div>
+        <div class="tip-box">
+          <div class="tip-hdr">✅ CSS Variables win</div>
+          <p>SCSS vars = compile-time only<br/>CSS vars = runtime, JS-updatable<br/>Use CSS vars for theming</p>
+        </div>
+        <div class="tip-box">
+          <div class="tip-hdr">✅ Mobile First</div>
+          <p>Write mobile styles first<br/>Add <code>min-width</code> breakpoints<br/>Use clamp() + auto-fit to reduce media queries</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 10 — INTERVIEW Q&A ══ -->
+  <div class="slide" id="s10">
+    <div class="slide-header"><span class="topic-badge">10</span><h1>Senior-Level Interview Q&amp;A</h1></div>
+    <div class="content">
+      <div class="iq-item">
+        <div class="iq-q">Q1. What is CSS specificity? How is it calculated? What wins — class or ID?</div>
+        <div class="iq-a">Specificity determines which rule applies when multiple rules target the same element. It's calculated as (A, B, C): A = inline/ID selectors, B = classes/attributes/pseudo-classes, C = elements/pseudo-elements. A higher A always wins regardless of B and C. So <strong>ID (0,1,0,0) always beats class (0,0,1,0)</strong>. <code>!important</code> overrides all specificity. Best practice: keep specificity low by using classes only, avoid IDs in CSS.</div>
+      </div>
+      <div class="iq-item">
+        <div class="iq-q">Q2. What is the difference between display:none, visibility:hidden, and opacity:0?</div>
+        <div class="iq-a"><strong>display:none</strong> — removes from layout entirely, no space, not accessible, no events. <strong>visibility:hidden</strong> — invisible but still occupies space in layout, children can override with <code>visibility:visible</code>, no events. <strong>opacity:0</strong> — invisible, occupies space, still receives pointer events (clicks!), can be animated via GPU cheaply. Use <code>opacity:0</code> + <code>pointer-events:none</code> for fade-out animations.</div>
+      </div>
+      <div class="iq-item">
+        <div class="iq-q">Q3. When would you use Flexbox vs CSS Grid?</div>
+        <div class="iq-a"><strong>Flexbox</strong> is for 1D layouts — items in a row or column. Content drives the sizing. Best for: nav bars, button groups, centering. <strong>CSS Grid</strong> is for 2D layouts — rows and columns simultaneously. Layout drives the structure. Best for: full page layout, dashboards, card grids. They work together: use Grid for the page, Flexbox inside each grid area for the content.</div>
+      </div>
+      <div class="iq-item">
+        <div class="iq-q">Q4. How does position:absolute work? What is its containing block?</div>
+        <div class="iq-a">An absolute element is removed from document flow and positioned relative to its nearest <strong>positioned ancestor</strong> — any ancestor with <code>position</code> other than <code>static</code> (i.e. relative, absolute, fixed, sticky). If no positioned ancestor exists, it's positioned relative to the initial containing block (viewport). Common pattern: add <code>position:relative</code> to a parent to contain an <code>absolute</code> child (tooltip, badge, dropdown).</div>
+      </div>
+      <div class="iq-item">
+        <div class="iq-q">Q5. Why should you only animate transform and opacity for performance?</div>
+        <div class="iq-a">Animating properties like <code>width</code>, <code>top</code>, or <code>margin</code> triggers the full rendering pipeline: Layout → Paint → Composite. This is expensive. <code>transform</code> and <code>opacity</code> skip Layout and Paint entirely — they only trigger the Composite step, which runs on the GPU compositor thread separate from the main thread. This results in buttery-smooth 60fps animations even when the main thread is busy. Use <code>will-change: transform</code> to promote the element to its own GPU layer before animation begins.</div>
+      </div>
+      <div class="iq-item">
+        <div class="iq-q">Q6. What is ::ng-deep and why is it deprecated in Angular?</div>
+        <div class="iq-a"><code>::ng-deep</code> (previously <code>/deep/</code> or <code>>>></code>) pierces Angular's ViewEncapsulation to style child component internals. It's deprecated because it disables encapsulation globally for the affected rule, making styles bleed unpredictably. The recommended alternatives are: (1) expose <strong>CSS custom properties</strong> (variables) as theming API of the child component, (2) use <code>ViewEncapsulation.None</code> if the child is intentionally unencapsulated, or (3) pass style inputs to the child component.</div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /deck -->
+
+<nav id="nav">
+  <button id="btn-prev" disabled>&#8592;</button>
+  <span id="counter">1 / 11</span>
+  <button id="btn-next">&#8594;</button>
+</nav>
+<div id="hint">← → arrow keys to navigate</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const total  = slides.length;
+  let cur = 0;
+  const bar     = document.getElementById('progress-bar');
+  const counter = document.getElementById('counter');
+  const btnPrev = document.getElementById('btn-prev');
+  const btnNext = document.getElementById('btn-next');
+  function goTo(n) {
+    slides[cur].classList.remove('active');
+    cur = Math.max(0, Math.min(n, total - 1));
+    slides[cur].classList.add('active');
+    counter.textContent = `${cur + 1} / ${total}`;
+    bar.style.width = `${((cur + 1) / total) * 100}%`;
+    btnPrev.disabled = cur === 0;
+    btnNext.disabled = cur === total - 1;
+    slides[cur].scrollTop = 0;
+  }
+  btnPrev.addEventListener('click', () => goTo(cur - 1));
+  btnNext.addEventListener('click', () => goTo(cur + 1));
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') goTo(cur + 1);
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   goTo(cur - 1);
+  });
+  goTo(0);
+</script>
+</body>
+</html>
