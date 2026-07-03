@@ -1095,17 +1095,28 @@ footer h1, footer h2, footer h3</span>  { <span class="prop">color</span>: <span
               <div class="fx-wrap jc-end"><div class="fx-item">A</div><div class="fx-item i2">B</div><div class="fx-item i3">C</div></div>
             </div>
             <div class="fx-section">
-              <div class="fx-label">justify-content: space-between</div>
+              <div class="fx-label">justify-content: space-between &nbsp;→&nbsp; <span style="color:#ffa657;">space only BETWEEN — edges touch walls</span></div>
               <div class="fx-wrap jc-between"><div class="fx-item">A</div><div class="fx-item i2">B</div><div class="fx-item i3">C</div></div>
+              <div style="font-size:10.5px; color:#484f58; font-family:'Consolas',monospace; padding:2px 4px;">|A─────────B─────────C|</div>
             </div>
             <div class="fx-section">
-              <div class="fx-label">justify-content: space-around</div>
+              <div class="fx-label">justify-content: space-around &nbsp;→&nbsp; <span style="color:#ffa657;">equal space around each — edges = half gap</span></div>
               <div class="fx-wrap jc-around"><div class="fx-item">A</div><div class="fx-item i2">B</div><div class="fx-item i3">C</div></div>
+              <div style="font-size:10.5px; color:#484f58; font-family:'Consolas',monospace; padding:2px 4px;">|─A──B──C─|  &nbsp; edge = ½ of middle gap</div>
             </div>
             <div class="fx-section">
-              <div class="fx-label">justify-content: space-evenly</div>
+              <div class="fx-label">justify-content: space-evenly &nbsp;→&nbsp; <span style="color:#3fb950;">ALL gaps identical — edges = middle gap ✅</span></div>
               <div class="fx-wrap jc-evenly"><div class="fx-item">A</div><div class="fx-item i2">B</div><div class="fx-item i3">C</div></div>
+              <div style="font-size:10.5px; color:#484f58; font-family:'Consolas',monospace; padding:2px 4px;">|──A────B────C──|  &nbsp; every gap equal</div>
             </div>
+          </div>
+          <div class="mem-box" style="margin-top:8px;">
+            <div class="mem-hdr">🧠 Memory Trick</div>
+            <ul>
+              <li><strong>between</strong> = space only <em>between</em> items, edges = 0</li>
+              <li><strong>around</strong> = space <em>around</em> each item, so edges = ½ of middle</li>
+              <li><strong>evenly</strong> = <em>every</em> gap identical including edges ✅</li>
+            </ul>
           </div>
         </div>
 
