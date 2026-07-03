@@ -1122,32 +1122,71 @@ footer h1, footer h2, footer h3</span>  { <span class="prop">color</span>: <span
 
         <div class="card accent-purple">
           <h3>align-items — cross axis alignment</h3>
-          <div style="display:flex; flex-direction:column; gap:6px; margin-top:8px;">
+
+          <!-- AXIS EXPLAINER -->
+          <div style="background:#1c2128; border-radius:8px; padding:9px 12px; margin-bottom:8px; margin-top:6px;">
+            <div style="font-size:11px; color:#8b949e; margin-bottom:6px; font-weight:700; text-transform:uppercase; letter-spacing:1px;">🧭 Main Axis vs Cross Axis</div>
+            <div style="display:flex; gap:16px; flex-wrap:wrap;">
+              <div style="flex:1; min-width:140px;">
+                <div style="font-size:11px; color:#f97316; font-weight:700; margin-bottom:3px;">→ Main Axis</div>
+                <ul style="padding-left:0;">
+                  <li style="font-size:11px; margin-left:12px; color:#c9d1d9;">Direction items are placed (<code>flex-direction</code>)</li>
+                  <li style="font-size:11px; margin-left:12px; color:#c9d1d9;"><code>row</code> → horizontal →</li>
+                  <li style="font-size:11px; margin-left:12px; color:#c9d1d9;"><code>column</code> → vertical ↓</li>
+                  <li style="font-size:11px; margin-left:12px; color:#c9d1d9;">Controlled by <strong>justify-content</strong></li>
+                </ul>
+              </div>
+              <div style="flex:1; min-width:140px;">
+                <div style="font-size:11px; color:#22d3ee; font-weight:700; margin-bottom:3px;">↕ Cross Axis</div>
+                <ul style="padding-left:0;">
+                  <li style="font-size:11px; margin-left:12px; color:#c9d1d9;">Always <strong>perpendicular</strong> to main axis</li>
+                  <li style="font-size:11px; margin-left:12px; color:#c9d1d9;"><code>row</code> → cross axis = vertical ↕</li>
+                  <li style="font-size:11px; margin-left:12px; color:#c9d1d9;"><code>column</code> → cross axis = horizontal →</li>
+                  <li style="font-size:11px; margin-left:12px; color:#c9d1d9;">Controlled by <strong>align-items</strong></li>
+                </ul>
+              </div>
+            </div>
+            <div style="font-size:11px; color:#8b949e; margin-top:5px; font-style:italic;">💡 All demos below use <code>flex-direction: row</code>, so cross axis = vertical. Items of different heights show the effect clearly.</div>
+          </div>
+
+          <div style="display:flex; flex-direction:column; gap:6px;">
             <div class="fx-section">
-              <div class="fx-label">align-items: flex-start</div>
+              <div class="fx-label">align-items: <strong style="color:#79c0ff;">flex-start</strong> — all items stick to the <strong>TOP</strong> of the container</div>
               <div class="fx-wrap ai-start jc-start"><div class="fx-item">A</div><div class="fx-item i2 tall">B</div><div class="fx-item i3 taller">C</div></div>
+              <div style="font-size:10.5px; color:#484f58; font-family:'Consolas',monospace; padding:2px 4px;">Items align to the start of cross axis (top when row)</div>
             </div>
             <div class="fx-section">
-              <div class="fx-label">align-items: center</div>
+              <div class="fx-label">align-items: <strong style="color:#79c0ff;">center</strong> — all items float to the <strong>MIDDLE</strong> vertically</div>
               <div class="fx-wrap ai-center jc-start"><div class="fx-item">A</div><div class="fx-item i2 tall">B</div><div class="fx-item i3 taller">C</div></div>
+              <div style="font-size:10.5px; color:#484f58; font-family:'Consolas',monospace; padding:2px 4px;">Cross axis center — use this for vertical centering ✅</div>
             </div>
             <div class="fx-section">
-              <div class="fx-label">align-items: flex-end</div>
+              <div class="fx-label">align-items: <strong style="color:#79c0ff;">flex-end</strong> — all items drop to the <strong>BOTTOM</strong></div>
               <div class="fx-wrap ai-end jc-start"><div class="fx-item">A</div><div class="fx-item i2 tall">B</div><div class="fx-item i3 taller">C</div></div>
+              <div style="font-size:10.5px; color:#484f58; font-family:'Consolas',monospace; padding:2px 4px;">Items align to end of cross axis (bottom when row)</div>
             </div>
             <div class="fx-section">
-              <div class="fx-label">align-items: stretch (fills height)</div>
+              <div class="fx-label">align-items: <strong style="color:#79c0ff;">stretch</strong> — all items <strong>FILL</strong> the full container height (default)</div>
               <div class="fx-wrap ai-stretch jc-start"><div class="fx-item">A</div><div class="fx-item i2">B</div><div class="fx-item i3">C</div></div>
+              <div style="font-size:10.5px; color:#484f58; font-family:'Consolas',monospace; padding:2px 4px;">Items expand to fill cross axis — equal height cards ✅</div>
             </div>
             <div class="fx-section">
-              <div class="fx-label">align-self override (per item)</div>
+              <div class="fx-label">align-<strong style="color:#ffa657;">self</strong> — <strong>each item</strong> sets its own position independently</div>
               <div class="fx-wrap as-wrap ai-stretch jc-start">
                 <div class="fx-item as-start">top</div>
                 <div class="fx-item i2 as-center">mid</div>
                 <div class="fx-item i3 as-end">bot</div>
                 <div class="fx-item" style="background:#f97316; align-self:stretch;">str</div>
               </div>
+              <div style="font-size:10.5px; color:#484f58; font-family:'Consolas',monospace; padding:2px 4px;">align-self overrides align-items for that specific item only</div>
             </div>
+          </div>
+
+          <div class="mem-box" style="margin-top:8px;">
+            <div class="mem-hdr">🧠 Simple Rule</div>
+            <p><strong>justify-content</strong> = arrange items <strong>left/right</strong> (main axis, row direction)<br/>
+            <strong>align-items</strong> = arrange items <strong>up/down</strong> (cross axis, row direction)<br/>
+            <strong>align-self</strong> = same as align-items but for <strong>one specific item</strong> only</p>
           </div>
         </div>
       </div>
