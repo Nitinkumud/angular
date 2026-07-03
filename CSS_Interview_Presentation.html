@@ -917,89 +917,294 @@ footer h1, footer h2, footer h3</span>  { <span class="prop">color</span>: <span
   <div class="slide" id="s3">
     <div class="slide-header"><span class="topic-badge">03</span><h1>Flexbox — Complete Guide</h1></div>
     <div class="content">
+
+      <!-- AXIS DIAGRAM -->
+      <div class="card accent-cyan">
+        <h3>🧭 Main Axis vs Cross Axis — the most important concept</h3>
+        <div class="two-col" style="margin-top:8px;">
+          <div style="background:#1c2128; border-radius:8px; padding:10px;">
+            <div style="font-size:11px; color:#8b949e; margin-bottom:6px; text-transform:uppercase; letter-spacing:1px;">flex-direction: row (default)</div>
+            <div style="display:flex; align-items:center; gap:6px; margin-bottom:6px;">
+              <div style="flex:1; background:#0d2340; border-radius:5px; padding:6px; font-size:11px; color:#79c0ff; text-align:center;">1</div>
+              <div style="flex:1; background:#0d2340; border-radius:5px; padding:6px; font-size:11px; color:#79c0ff; text-align:center;">2</div>
+              <div style="flex:1; background:#0d2340; border-radius:5px; padding:6px; font-size:11px; color:#79c0ff; text-align:center;">3</div>
+            </div>
+            <div style="font-size:11px; color:#f97316;">→ Main axis = HORIZONTAL (justify-content)</div>
+            <div style="font-size:11px; color:#22d3ee;">↕ Cross axis = VERTICAL (align-items)</div>
+          </div>
+          <div style="background:#1c2128; border-radius:8px; padding:10px;">
+            <div style="font-size:11px; color:#8b949e; margin-bottom:6px; text-transform:uppercase; letter-spacing:1px;">flex-direction: column</div>
+            <div style="display:flex; flex-direction:column; gap:4px; margin-bottom:6px;">
+              <div style="background:#2a1a3e; border-radius:5px; padding:5px 10px; font-size:11px; color:#d2a8ff; text-align:center;">1</div>
+              <div style="background:#2a1a3e; border-radius:5px; padding:5px 10px; font-size:11px; color:#d2a8ff; text-align:center;">2</div>
+              <div style="background:#2a1a3e; border-radius:5px; padding:5px 10px; font-size:11px; color:#d2a8ff; text-align:center;">3</div>
+            </div>
+            <div style="font-size:11px; color:#f97316;">↕ Main axis = VERTICAL (justify-content)</div>
+            <div style="font-size:11px; color:#22d3ee;">→ Cross axis = HORIZONTAL (align-items)</div>
+          </div>
+        </div>
+        <p style="font-size:11.5px; color:#8b949e; margin-top:6px;">💡 <strong>justify-content</strong> always works along the <strong>main axis</strong>. <strong>align-items</strong> always works along the <strong>cross axis</strong>.</p>
+      </div>
+
       <div class="two-col">
-        <div class="card accent-cyan">
+        <!-- CONTAINER PROPS -->
+        <div class="card accent-orange">
           <h3>Container Properties (parent)</h3>
           <div class="code-block">
             <pre><span class="sel">.container</span> {
   <span class="prop">display</span>: <span class="val">flex</span>;
-  <span class="prop">flex-direction</span>: <span class="val">row</span>;       <span class="cmt">/* row|column|row-reverse|column-reverse */</span>
-  <span class="prop">flex-wrap</span>: <span class="val">nowrap</span>;         <span class="cmt">/* nowrap|wrap|wrap-reverse */</span>
-  <span class="prop">justify-content</span>: <span class="val">flex-start</span>; <span class="cmt">/* main axis alignment */</span>
-  <span class="cmt">/*  flex-start | flex-end | center</span>
-  <span class="cmt">      space-between | space-around | space-evenly */</span>
-  <span class="prop">align-items</span>: <span class="val">stretch</span>;      <span class="cmt">/* cross axis — single line */</span>
-  <span class="cmt">/*  flex-start | flex-end | center | baseline */</span>
-  <span class="prop">align-content</span>: <span class="val">flex-start</span>;  <span class="cmt">/* cross axis — multi-line (wrap) */</span>
-  <span class="prop">gap</span>: <span class="num">16px</span>;                   <span class="cmt">/* space between items ✅ modern */</span>
+
+  <span class="cmt">/* Direction */</span>
+  <span class="prop">flex-direction</span>: <span class="val">row</span>;          <span class="cmt">/* → items in a row */</span>
+  <span class="prop">flex-direction</span>: <span class="val">column</span>;       <span class="cmt">/* ↓ items in a column */</span>
+  <span class="prop">flex-direction</span>: <span class="val">row-reverse</span>;  <span class="cmt">/* ← reversed row */</span>
+
+  <span class="cmt">/* Wrapping */</span>
+  <span class="prop">flex-wrap</span>: <span class="val">nowrap</span>;   <span class="cmt">/* all in one line (default) */</span>
+  <span class="prop">flex-wrap</span>: <span class="val">wrap</span>;     <span class="cmt">/* overflow to next line ✅ */</span>
+
+  <span class="cmt">/* Main axis alignment */</span>
+  <span class="prop">justify-content</span>: <span class="val">flex-start</span>;    <span class="cmt">/* |123_____| */</span>
+  <span class="prop">justify-content</span>: <span class="val">flex-end</span>;      <span class="cmt">/* |_____123| */</span>
+  <span class="prop">justify-content</span>: <span class="val">center</span>;        <span class="cmt">/* |__123___| */</span>
+  <span class="prop">justify-content</span>: <span class="val">space-between</span>; <span class="cmt">/* |1___2___3| */</span>
+  <span class="prop">justify-content</span>: <span class="val">space-around</span>;  <span class="cmt">/* |_1__2__3_| */</span>
+  <span class="prop">justify-content</span>: <span class="val">space-evenly</span>; <span class="cmt">/* |__1__2__3__| */</span>
+
+  <span class="cmt">/* Cross axis alignment */</span>
+  <span class="prop">align-items</span>: <span class="val">stretch</span>;     <span class="cmt">/* fill height (default) */</span>
+  <span class="prop">align-items</span>: <span class="val">flex-start</span>;  <span class="cmt">/* top */</span>
+  <span class="prop">align-items</span>: <span class="val">flex-end</span>;    <span class="cmt">/* bottom */</span>
+  <span class="prop">align-items</span>: <span class="val">center</span>;      <span class="cmt">/* middle ✅ centering! */</span>
+  <span class="prop">align-items</span>: <span class="val">baseline</span>;    <span class="cmt">/* align text baseline */</span>
+
+  <span class="prop">gap</span>: <span class="num">16px</span>;  <span class="cmt">/* row-gap + column-gap ✅ modern */</span>
 }</pre>
           </div>
         </div>
+
+        <!-- ITEM PROPS -->
         <div class="card accent-purple">
           <h3>Item Properties (children)</h3>
           <div class="code-block">
             <pre><span class="sel">.item</span> {
-  <span class="prop">flex-grow</span>: <span class="num">0</span>;    <span class="cmt">/* grow to fill remaining space */</span>
-  <span class="prop">flex-shrink</span>: <span class="num">1</span>; <span class="cmt">/* shrink if needed */</span>
-  <span class="prop">flex-basis</span>: <span class="val">auto</span>; <span class="cmt">/* initial size before grow/shrink */</span>
+  <span class="cmt">/* flex-grow: how much to GROW */</span>
+  <span class="prop">flex-grow</span>: <span class="num">0</span>;  <span class="cmt">/* won't grow (default) */</span>
+  <span class="prop">flex-grow</span>: <span class="num">1</span>;  <span class="cmt">/* grows to fill space */</span>
+  <span class="prop">flex-grow</span>: <span class="num">2</span>;  <span class="cmt">/* grows twice as much as flex-grow:1 */</span>
+
+  <span class="cmt">/* flex-shrink: how much to SHRINK */</span>
+  <span class="prop">flex-shrink</span>: <span class="num">1</span>;  <span class="cmt">/* shrinks equally (default) */</span>
+  <span class="prop">flex-shrink</span>: <span class="num">0</span>;  <span class="cmt">/* never shrinks — fixed size */</span>
+
+  <span class="cmt">/* flex-basis: starting SIZE before grow/shrink */</span>
+  <span class="prop">flex-basis</span>: <span class="val">auto</span>;   <span class="cmt">/* use content size (default) */</span>
+  <span class="prop">flex-basis</span>: <span class="num">200px</span>; <span class="cmt">/* start at 200px */</span>
+  <span class="prop">flex-basis</span>: <span class="num">0</span>;     <span class="cmt">/* start from zero */</span>
 
   <span class="cmt">/* Shorthand: flex: grow shrink basis */</span>
-  <span class="prop">flex</span>: <span class="num">1</span>;          <span class="cmt">/* flex: 1 1 0% — grow equally ✅ */</span>
-  <span class="prop">flex</span>: <span class="val">none</span>;      <span class="cmt">/* flex: 0 0 auto — fixed size */</span>
-  <span class="prop">flex</span>: <span class="num">0 1 200px</span>; <span class="cmt">/* can shrink, won't grow */</span>
+  <span class="prop">flex</span>: <span class="num">1</span>;          <span class="cmt">/* = flex: 1 1 0% ← equal share ✅ */</span>
+  <span class="prop">flex</span>: <span class="val">none</span>;      <span class="cmt">/* = flex: 0 0 auto ← fixed size */</span>
+  <span class="prop">flex</span>: <span class="num">0 0 150px</span>; <span class="cmt">/* fixed 150px, no grow/shrink */</span>
 
-  <span class="prop">align-self</span>: <span class="val">center</span>;   <span class="cmt">/* override align-items for this item */</span>
-  <span class="prop">order</span>: <span class="num">2</span>;              <span class="cmt">/* visual order (not DOM order) */</span>
+  <span class="cmt">/* Per-item overrides */</span>
+  <span class="prop">align-self</span>: <span class="val">center</span>;   <span class="cmt">/* override parent's align-items */</span>
+  <span class="prop">order</span>: <span class="num">-1</span>;             <span class="cmt">/* move to front visually */</span>
 }</pre>
           </div>
         </div>
       </div>
-      <div class="card accent-yellow">
-        <h3>Common Patterns</h3>
-        <div class="code-block">
-          <pre><span class="cmt">/* ✅ Perfect centering — one of the most asked interview questions */</span>
-<span class="sel">.center</span> {
-  <span class="prop">display</span>: <span class="val">flex</span>;
-  <span class="prop">justify-content</span>: <span class="val">center</span>;
-  <span class="prop">align-items</span>: <span class="val">center</span>;
-}
 
-<span class="cmt">/* ✅ Space between nav items, logo left, links right */</span>
-<span class="sel">.navbar</span> {
-  <span class="prop">display</span>: <span class="val">flex</span>;
-  <span class="prop">justify-content</span>: <span class="val">space-between</span>;
-  <span class="prop">align-items</span>: <span class="val">center</span>;
-}
+    </div>
+  </div>
 
-<span class="cmt">/* ✅ Sticky footer layout */</span>
-<span class="sel">body</span> { <span class="prop">display</span>: <span class="val">flex</span>; <span class="prop">flex-direction</span>: <span class="val">column</span>; <span class="prop">min-height</span>: <span class="num">100vh</span>; }
-<span class="sel">main</span> { <span class="prop">flex</span>: <span class="num">1</span>; }   <span class="cmt">/* grows to fill — footer pushed down ✅ */</span>
+  <!-- ══ SLIDE 3b — FLEXBOX LIVE DEMO ══ -->
+  <div class="slide" id="s3b">
+    <div class="slide-header"><span class="topic-badge">03b</span><h1>Flexbox — Live Visual Demo</h1></div>
+    <div class="content">
+      <style>
+        .fx-wrap { background:#1c2128; border-radius:8px; padding:8px; display:flex; gap:6px; min-height:56px; }
+        .fx-item { background:#1f6feb; color:#fff; font-size:12px; font-weight:700; border-radius:5px; padding:8px 14px; display:flex; align-items:center; justify-content:center; white-space:nowrap; }
+        .fx-item.i2 { background:#7c3aed; }
+        .fx-item.i3 { background:#0e7490; }
+        .fx-item.tall { height:60px; }
+        .fx-item.taller { height:80px; }
+        .fx-label { font-size:10.5px; color:#8b949e; margin-bottom:4px; font-family:'Consolas',monospace; }
+        .fx-section { margin-bottom:4px; }
 
-<span class="cmt">/* ✅ Equal-width columns */</span>
-<span class="sel">.col</span> { <span class="prop">flex</span>: <span class="num">1</span>; }  <span class="cmt">/* all columns share space equally */</span></pre>
-        </div>
-      </div>
+        /* justify-content demos */
+        .jc-start   { justify-content: flex-start; }
+        .jc-end     { justify-content: flex-end; }
+        .jc-center  { justify-content: center; }
+        .jc-between { justify-content: space-between; }
+        .jc-around  { justify-content: space-around; }
+        .jc-evenly  { justify-content: space-evenly; }
+
+        /* align-items demos */
+        .ai-start    { align-items: flex-start; height:70px; }
+        .ai-end      { align-items: flex-end; height:70px; }
+        .ai-center   { align-items: center; height:70px; }
+        .ai-stretch  { align-items: stretch; height:70px; }
+        .ai-baseline { align-items: baseline; height:70px; }
+
+        /* flex-grow demos */
+        .fg-0 { flex-grow:0; }
+        .fg-1 { flex-grow:1; }
+        .fg-2 { flex-grow:2; background:#f97316; }
+
+        /* order demo */
+        .ord-1 { order:3; background:#f85149; }
+        .ord-2 { order:1; background:#3fb950; }
+        .ord-3 { order:2; background:#e3b341; color:#000; }
+
+        /* align-self demo */
+        .as-wrap { height:80px; }
+        .as-start  { align-self: flex-start; }
+        .as-center { align-self: center; }
+        .as-end    { align-self: flex-end; }
+        .as-stretch { align-self: stretch; }
+
+        /* real patterns */
+        .fx-navbar { background:#161b22; border-radius:8px; padding:10px 14px; display:flex; justify-content:space-between; align-items:center; border:1px solid #30363d; }
+        .fx-logo { font-size:13px; font-weight:700; color:#22d3ee; }
+        .fx-links { display:flex; gap:14px; }
+        .fx-link { font-size:12px; color:#8b949e; cursor:pointer; }
+        .fx-footer-layout { background:#161b22; border:1px solid #30363d; border-radius:8px; overflow:hidden; }
+        .fx-footer-layout header { background:#0d2340; padding:6px 12px; font-size:11px; color:#79c0ff; }
+        .fx-footer-layout main   { padding:8px 12px; font-size:11px; color:#8b949e; flex:1; }
+        .fx-footer-layout footer { background:#21262d; padding:6px 12px; font-size:11px; color:#484f58; }
+        .fx-footer-col { display:flex; flex-direction:column; height:120px; }
+      </style>
+
+      <!-- justify-content + align-items in 2 columns -->
       <div class="two-col">
-        <div class="tip-box">
-          <div class="tip-hdr">✅ Main Axis vs Cross Axis</div>
-          <ul>
-            <li><strong>flex-direction: row</strong> → main axis = horizontal, cross = vertical</li>
-            <li><strong>flex-direction: column</strong> → main axis = vertical, cross = horizontal</li>
-            <li><code>justify-content</code> always controls the <strong>main axis</strong></li>
-            <li><code>align-items</code> always controls the <strong>cross axis</strong></li>
-          </ul>
+
+        <div class="card accent-cyan">
+          <h3>justify-content — main axis spacing</h3>
+          <div style="display:flex; flex-direction:column; gap:6px; margin-top:8px;">
+            <div class="fx-section">
+              <div class="fx-label">justify-content: flex-start</div>
+              <div class="fx-wrap jc-start"><div class="fx-item">A</div><div class="fx-item i2">B</div><div class="fx-item i3">C</div></div>
+            </div>
+            <div class="fx-section">
+              <div class="fx-label">justify-content: center</div>
+              <div class="fx-wrap jc-center"><div class="fx-item">A</div><div class="fx-item i2">B</div><div class="fx-item i3">C</div></div>
+            </div>
+            <div class="fx-section">
+              <div class="fx-label">justify-content: flex-end</div>
+              <div class="fx-wrap jc-end"><div class="fx-item">A</div><div class="fx-item i2">B</div><div class="fx-item i3">C</div></div>
+            </div>
+            <div class="fx-section">
+              <div class="fx-label">justify-content: space-between</div>
+              <div class="fx-wrap jc-between"><div class="fx-item">A</div><div class="fx-item i2">B</div><div class="fx-item i3">C</div></div>
+            </div>
+            <div class="fx-section">
+              <div class="fx-label">justify-content: space-around</div>
+              <div class="fx-wrap jc-around"><div class="fx-item">A</div><div class="fx-item i2">B</div><div class="fx-item i3">C</div></div>
+            </div>
+            <div class="fx-section">
+              <div class="fx-label">justify-content: space-evenly</div>
+              <div class="fx-wrap jc-evenly"><div class="fx-item">A</div><div class="fx-item i2">B</div><div class="fx-item i3">C</div></div>
+            </div>
+          </div>
         </div>
-        <div class="tip-box">
-          <div class="tip-hdr">✅ Use Flexbox for</div>
-          <ul>
-            <li>1-dimensional layouts (row OR column)</li>
-            <li>Navigation bars, toolbars</li>
-            <li>Centering content</li>
-            <li>Equal-height sidebar + main</li>
-            <li>Card groups with consistent height</li>
-          </ul>
+
+        <div class="card accent-purple">
+          <h3>align-items — cross axis alignment</h3>
+          <div style="display:flex; flex-direction:column; gap:6px; margin-top:8px;">
+            <div class="fx-section">
+              <div class="fx-label">align-items: flex-start</div>
+              <div class="fx-wrap ai-start jc-start"><div class="fx-item">A</div><div class="fx-item i2 tall">B</div><div class="fx-item i3 taller">C</div></div>
+            </div>
+            <div class="fx-section">
+              <div class="fx-label">align-items: center</div>
+              <div class="fx-wrap ai-center jc-start"><div class="fx-item">A</div><div class="fx-item i2 tall">B</div><div class="fx-item i3 taller">C</div></div>
+            </div>
+            <div class="fx-section">
+              <div class="fx-label">align-items: flex-end</div>
+              <div class="fx-wrap ai-end jc-start"><div class="fx-item">A</div><div class="fx-item i2 tall">B</div><div class="fx-item i3 taller">C</div></div>
+            </div>
+            <div class="fx-section">
+              <div class="fx-label">align-items: stretch (fills height)</div>
+              <div class="fx-wrap ai-stretch jc-start"><div class="fx-item">A</div><div class="fx-item i2">B</div><div class="fx-item i3">C</div></div>
+            </div>
+            <div class="fx-section">
+              <div class="fx-label">align-self override (per item)</div>
+              <div class="fx-wrap as-wrap ai-stretch jc-start">
+                <div class="fx-item as-start">top</div>
+                <div class="fx-item i2 as-center">mid</div>
+                <div class="fx-item i3 as-end">bot</div>
+                <div class="fx-item" style="background:#f97316; align-self:stretch;">str</div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
+
+      <!-- flex-grow + real patterns -->
+      <div class="two-col">
+        <div class="card accent-orange">
+          <h3>flex-grow &amp; order</h3>
+          <div style="display:flex; flex-direction:column; gap:8px; margin-top:8px;">
+            <div class="fx-section">
+              <div class="fx-label">flex-grow:0 / flex-grow:1 / flex-grow:2</div>
+              <div class="fx-wrap" style="gap:6px;">
+                <div class="fx-item fg-0">grow:0</div>
+                <div class="fx-item i2 fg-1">grow:1</div>
+                <div class="fx-item fg-2">grow:2 (2×)</div>
+              </div>
+            </div>
+            <div class="fx-section">
+              <div class="fx-label">flex:1 on all — equal columns</div>
+              <div class="fx-wrap" style="gap:6px;">
+                <div class="fx-item" style="flex:1;">Col</div>
+                <div class="fx-item i2" style="flex:1;">Col</div>
+                <div class="fx-item i3" style="flex:1;">Col</div>
+              </div>
+            </div>
+            <div class="fx-section">
+              <div class="fx-label">order: DOM is 🔴1 🟢2 🟡3, displayed as 🟢 🟡 🔴</div>
+              <div class="fx-wrap">
+                <div class="fx-item ord-1">DOM:1 ord:3</div>
+                <div class="fx-item ord-2">DOM:2 ord:1</div>
+                <div class="fx-item ord-3">DOM:3 ord:2</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card accent-green">
+          <h3>Real-world patterns</h3>
+          <div style="display:flex; flex-direction:column; gap:10px; margin-top:8px;">
+            <div>
+              <div class="fx-label">Navbar — logo left, links right</div>
+              <div class="fx-navbar">
+                <span class="fx-logo">⚡ MyApp</span>
+                <div class="fx-links">
+                  <span class="fx-link">Home</span>
+                  <span class="fx-link">About</span>
+                  <span class="fx-link">Contact</span>
+                </div>
+              </div>
+            </div>
+            <div>
+              <div class="fx-label">Sticky footer — main fills remaining space</div>
+              <div class="fx-footer-layout fx-footer-col">
+                <header>Header</header>
+                <main>Main content (flex:1 — grows to fill)</main>
+                <footer>Footer — always at bottom</footer>
+              </div>
+            </div>
+            <div>
+              <div class="fx-label">Perfect centering</div>
+              <div class="fx-wrap" style="justify-content:center; align-items:center; height:56px;">
+                <div class="fx-item" style="background:#7c3aed;">I am perfectly centered ✅</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -1462,7 +1667,7 @@ footer h1, footer h2, footer h3</span>  { <span class="prop">color</span>: <span
 
 <nav id="nav">
   <button id="btn-prev" disabled>&#8592;</button>
-  <span id="counter">1 / 15</span>
+  <span id="counter">1 / 16</span>
   <button id="btn-next">&#8594;</button>
 </nav>
 <div id="hint">← → arrow keys to navigate</div>
