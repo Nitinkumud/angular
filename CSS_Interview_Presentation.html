@@ -1262,77 +1262,294 @@ footer h1, footer h2, footer h3</span>  { <span class="prop">color</span>: <span
   <div class="slide" id="s4">
     <div class="slide-header"><span class="topic-badge">04</span><h1>CSS Grid — Complete Guide</h1></div>
     <div class="content">
+
+      <!-- CONCEPT BOX -->
+      <div class="card accent-cyan">
+        <h3>🗺️ How CSS Grid works — rows AND columns at the same time (2D)</h3>
+        <div class="two-col" style="margin-top:8px;">
+          <div style="background:#1c2128; border-radius:8px; padding:10px;">
+            <div style="font-size:11px; color:#8b949e; margin-bottom:6px; text-transform:uppercase; letter-spacing:1px;">Flexbox — 1D</div>
+            <div style="display:flex; gap:4px; margin-bottom:4px;">
+              <div style="background:#1f6feb; border-radius:4px; padding:5px 10px; font-size:11px; color:#fff;">1</div>
+              <div style="background:#7c3aed; border-radius:4px; padding:5px 10px; font-size:11px; color:#fff;">2</div>
+              <div style="background:#0e7490; border-radius:4px; padding:5px 10px; font-size:11px; color:#fff;">3</div>
+            </div>
+            <div style="font-size:11px; color:#f85149;">Only ONE direction at a time</div>
+          </div>
+          <div style="background:#1c2128; border-radius:8px; padding:10px;">
+            <div style="font-size:11px; color:#8b949e; margin-bottom:6px; text-transform:uppercase; letter-spacing:1px;">Grid — 2D (rows + columns)</div>
+            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:3px; margin-bottom:4px;">
+              <div style="background:#1f6feb; border-radius:3px; padding:5px; font-size:11px; color:#fff; text-align:center;">1</div>
+              <div style="background:#7c3aed; border-radius:3px; padding:5px; font-size:11px; color:#fff; text-align:center;">2</div>
+              <div style="background:#0e7490; border-radius:3px; padding:5px; font-size:11px; color:#fff; text-align:center;">3</div>
+              <div style="background:#f97316; border-radius:3px; padding:5px; font-size:11px; color:#fff; text-align:center;">4</div>
+              <div style="background:#3fb950; border-radius:3px; padding:5px; font-size:11px; color:#fff; text-align:center;">5</div>
+              <div style="background:#e3b341; border-radius:3px; padding:5px; font-size:11px; color:#000; text-align:center;">6</div>
+            </div>
+            <div style="font-size:11px; color:#3fb950;">Rows AND columns simultaneously ✅</div>
+          </div>
+        </div>
+      </div>
+
       <div class="two-col">
-        <div class="card accent-cyan">
-          <h3>Container Properties</h3>
+        <!-- CONTAINER -->
+        <div class="card accent-orange">
+          <h3>Container Properties (parent)</h3>
           <div class="code-block">
             <pre><span class="sel">.grid</span> {
   <span class="prop">display</span>: <span class="val">grid</span>;
 
-  <span class="cmt">/* Define columns */</span>
-  <span class="prop">grid-template-columns</span>: <span class="num">200px</span> <span class="num">1fr</span> <span class="num">1fr</span>;    <span class="cmt">/* 3 cols */</span>
-  <span class="prop">grid-template-columns</span>: <span class="fn">repeat</span>(<span class="num">3</span>, <span class="num">1fr</span>);   <span class="cmt">/* 3 equal */</span>
-  <span class="prop">grid-template-columns</span>: <span class="fn">repeat</span>(<span class="val">auto-fit</span>, <span class="fn">minmax</span>(<span class="num">250px</span>, <span class="num">1fr</span>)); <span class="cmt">/* responsive</span> <span class="cmt">✅ */</span>
+  <span class="cmt">/* ── Columns ────────────────────── */</span>
+  <span class="prop">grid-template-columns</span>: <span class="num">200px 1fr 1fr</span>;
+  <span class="cmt">/* fixed 200px, then 2 equal cols */</span>
 
-  <span class="cmt">/* Define rows */</span>
-  <span class="prop">grid-template-rows</span>: <span class="val">auto</span> <span class="num">1fr</span> <span class="val">auto</span>;   <span class="cmt">/* header, main, footer */</span>
+  <span class="prop">grid-template-columns</span>: <span class="fn">repeat</span>(<span class="num">3</span>, <span class="num">1fr</span>);
+  <span class="cmt">/* 3 equal columns */</span>
 
-  <span class="prop">gap</span>: <span class="num">16px</span>;                 <span class="cmt">/* row + column gap */</span>
-  <span class="prop">column-gap</span>: <span class="num">24px</span>;         <span class="cmt">/* column gap only */</span>
-  <span class="prop">row-gap</span>: <span class="num">12px</span>;            <span class="cmt">/* row gap only */</span>
+  <span class="prop">grid-template-columns</span>: <span class="fn">repeat</span>(<span class="val">auto-fit</span>, <span class="fn">minmax</span>(<span class="num">250px</span>, <span class="num">1fr</span>));
+  <span class="cmt">/* responsive — as many as fit ✅ */</span>
 
-  <span class="prop">justify-items</span>: <span class="val">stretch</span>;  <span class="cmt">/* horizontal align of items in cell */</span>
-  <span class="prop">align-items</span>: <span class="val">stretch</span>;    <span class="cmt">/* vertical align of items in cell */</span>
+  <span class="cmt">/* ── Rows ───────────────────────── */</span>
+  <span class="prop">grid-template-rows</span>: <span class="val">auto 1fr auto</span>;
+  <span class="cmt">/* header auto, main fills, footer auto */</span>
+
+  <span class="cmt">/* ── Gap ────────────────────────── */</span>
+  <span class="prop">gap</span>: <span class="num">16px</span>;          <span class="cmt">/* row + column gap */</span>
+  <span class="prop">column-gap</span>: <span class="num">24px</span>;
+  <span class="prop">row-gap</span>: <span class="num">12px</span>;
+
+  <span class="cmt">/* ── Alignment of items in cells ── */</span>
+  <span class="prop">justify-items</span>: <span class="val">stretch</span>;  <span class="cmt">/* horizontal in cell */</span>
+  <span class="prop">align-items</span>: <span class="val">stretch</span>;    <span class="cmt">/* vertical in cell */</span>
 }</pre>
           </div>
         </div>
+
+        <!-- ITEM PLACEMENT -->
         <div class="card accent-purple">
-          <h3>Item Placement</h3>
+          <h3>Item Placement — grid lines explained</h3>
+          <p style="font-size:11.5px; color:#8b949e; margin-bottom:8px;">Grid lines are numbered from 1. A 3-column grid has lines 1, 2, 3, 4. Line -1 = last line.</p>
+          <div style="background:#1c2128; border-radius:6px; padding:8px; margin-bottom:8px; font-family:'Consolas',monospace; font-size:11px; color:#8b949e;">
+            col: | 1 | 2 | 3 | 4 |<br/>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;↑   ↑   ↑   ↑<br/>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;line 1  2   3   4(-1)
+          </div>
           <div class="code-block">
             <pre><span class="sel">.item</span> {
-  <span class="cmt">/* Span across columns / rows */</span>
-  <span class="prop">grid-column</span>: <span class="num">1</span> / <span class="num">3</span>;      <span class="cmt">/* col line 1 to 3 (2 cols) */</span>
-  <span class="prop">grid-column</span>: <span class="num">1</span> / <span class="val">-1</span>;     <span class="cmt">/* full width ✅ */</span>
-  <span class="prop">grid-column</span>: <span class="val">span</span> <span class="num">2</span>;     <span class="cmt">/* span 2 columns */</span>
+  <span class="cmt">/* grid-column: start / end */</span>
+  <span class="prop">grid-column</span>: <span class="num">1</span> / <span class="num">3</span>;   <span class="cmt">/* col 1 to 3 = 2 cols wide */</span>
+  <span class="prop">grid-column</span>: <span class="num">1</span> / <span class="num">-1</span>;  <span class="cmt">/* col 1 to last = full width ✅ */</span>
+  <span class="prop">grid-column</span>: <span class="val">span</span> <span class="num">2</span>;  <span class="cmt">/* span 2 cols from wherever */</span>
 
-  <span class="prop">grid-row</span>: <span class="num">1</span> / <span class="num">3</span>;         <span class="cmt">/* row line 1 to 3 */</span>
+  <span class="cmt">/* grid-row: start / end */</span>
+  <span class="prop">grid-row</span>: <span class="num">1</span> / <span class="num">3</span>;     <span class="cmt">/* 2 rows tall */</span>
+  <span class="prop">grid-row</span>: <span class="val">span</span> <span class="num">2</span>;    <span class="cmt">/* span 2 rows */</span>
 
-  <span class="cmt">/* Named placement */</span>
-  <span class="prop">grid-area</span>: <span class="val">header</span>;        <span class="cmt">/* must match template-areas name */</span>
+  <span class="cmt">/* Shorthand: row-start / col-start / row-end / col-end */</span>
+  <span class="prop">grid-area</span>: <span class="num">1</span> / <span class="num">1</span> / <span class="num">2</span> / <span class="num">3</span>;
 
-  <span class="prop">justify-self</span>: <span class="val">center</span>;    <span class="cmt">/* override justify-items for this item */</span>
-  <span class="prop">align-self</span>: <span class="val">end</span>;          <span class="cmt">/* override align-items for this item */</span>
+  <span class="cmt">/* Named area (matches template-areas) */</span>
+  <span class="prop">grid-area</span>: <span class="val">header</span>;
+
+  <span class="prop">justify-self</span>: <span class="val">center</span>; <span class="cmt">/* horizontal align in cell */</span>
+  <span class="prop">align-self</span>: <span class="val">end</span>;      <span class="cmt">/* vertical align in cell */</span>
 }</pre>
           </div>
         </div>
       </div>
-      <div class="card accent-green">
-        <h3>grid-template-areas — visual layout</h3>
-        <div class="code-block">
-          <pre><span class="sel">.layout</span> {
-  <span class="prop">display</span>: <span class="val">grid</span>;
-  <span class="prop">grid-template-columns</span>: <span class="num">220px</span> <span class="num">1fr</span>;
-  <span class="prop">grid-template-rows</span>: <span class="val">auto</span> <span class="num">1fr</span> <span class="val">auto</span>;
-  <span class="prop">grid-template-areas</span>:
-    <span class="str">"header  header"</span>
-    <span class="str">"sidebar main  "</span>
-    <span class="str">"footer  footer"</span>;
-  <span class="prop">min-height</span>: <span class="num">100vh</span>;
-}
-<span class="sel">header</span>  { <span class="prop">grid-area</span>: <span class="val">header</span>; }
-<span class="sel">aside</span>   { <span class="prop">grid-area</span>: <span class="val">sidebar</span>; }
-<span class="sel">main</span>    { <span class="prop">grid-area</span>: <span class="val">main</span>; }
-<span class="sel">footer</span>  { <span class="prop">grid-area</span>: <span class="val">footer</span>; }
 
-<span class="cmt">/* ✅ Responsive card grid — auto layout without media queries */</span>
-<span class="sel">.cards</span> {
+      <!-- fr unit explainer -->
+      <div class="two-col">
+        <div class="card accent-yellow">
+          <h3>fr unit — fractional unit (most important!)</h3>
+          <p style="font-size:12px; color:#8b949e; margin-bottom:8px;"><code>1fr</code> means <strong>"1 part of the remaining free space"</strong>. Like sharing a pizza.</p>
+          <div class="code-block">
+            <pre><span class="cmt">/* 3 equal columns — each gets 1/3 of space */</span>
+<span class="prop">grid-template-columns</span>: <span class="num">1fr 1fr 1fr</span>;
+<span class="cmt">/* same as: repeat(3, 1fr) */</span>
+
+<span class="cmt">/* sidebar 1 part, main gets 3 parts */</span>
+<span class="prop">grid-template-columns</span>: <span class="num">1fr 3fr</span>;
+<span class="cmt">/* sidebar = 25%, main = 75% of free space */</span>
+
+<span class="cmt">/* fixed left, flexible right */</span>
+<span class="prop">grid-template-columns</span>: <span class="num">240px 1fr</span>;
+<span class="cmt">/* sidebar fixed 240px, main fills rest */</span></pre>
+          </div>
+        </div>
+        <div class="card accent-green">
+          <h3>grid-template-areas — name your layout zones</h3>
+          <div class="code-block">
+            <pre><span class="sel">.layout</span> {
   <span class="prop">display</span>: <span class="val">grid</span>;
-  <span class="prop">grid-template-columns</span>: <span class="fn">repeat</span>(<span class="val">auto-fit</span>, <span class="fn">minmax</span>(<span class="num">280px</span>, <span class="num">1fr</span>));
-  <span class="prop">gap</span>: <span class="num">20px</span>;
-  <span class="cmt">/* ← creates as many columns as fit, each min 280px, max 1fr */</span>
+  <span class="prop">grid-template-columns</span>: <span class="num">220px 1fr</span>;
+  <span class="prop">grid-template-rows</span>: <span class="val">auto 1fr auto</span>;
+  <span class="prop">grid-template-areas</span>:
+    <span class="str">"header  header"</span>   <span class="cmt">/* row 1: header spans both cols */</span>
+    <span class="str">"sidebar main  "</span>   <span class="cmt">/* row 2: sidebar + main */</span>
+    <span class="str">"footer  footer"</span>;  <span class="cmt">/* row 3: footer spans both */</span>
+}
+<span class="sel">header</span> { <span class="prop">grid-area</span>: <span class="val">header</span>; }
+<span class="sel">aside</span>  { <span class="prop">grid-area</span>: <span class="val">sidebar</span>; }
+<span class="sel">main</span>   { <span class="prop">grid-area</span>: <span class="val">main</span>; }
+<span class="sel">footer</span> { <span class="prop">grid-area</span>: <span class="val">footer</span>; }
+
+<span class="cmt">/* ✅ Responsive grid without media queries */</span>
+<span class="sel">.cards</span> {
+  <span class="prop">grid-template-columns</span>:
+    <span class="fn">repeat</span>(<span class="val">auto-fit</span>, <span class="fn">minmax</span>(<span class="num">280px</span>, <span class="num">1fr</span>));
 }</pre>
+          </div>
         </div>
       </div>
+
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 4b — CSS GRID LIVE DEMO ══ -->
+  <div class="slide" id="s4b">
+    <div class="slide-header"><span class="topic-badge">04b</span><h1>CSS Grid — Live Visual Demo</h1></div>
+    <div class="content">
+      <style>
+        .gd { display:grid; gap:6px; background:#1c2128; border-radius:8px; padding:8px; }
+        .gi { border-radius:5px; padding:8px; font-size:11.5px; font-weight:700; color:#fff; display:flex; align-items:center; justify-content:center; text-align:center; min-height:36px; }
+        .gc1 { background:#1f6feb; } .gc2 { background:#7c3aed; } .gc3 { background:#0e7490; }
+        .gc4 { background:#f97316; } .gc5 { background:#3fb950; color:#000; } .gc6 { background:#e3b341; color:#000; }
+        .gc7 { background:#f85149; } .gc8 { background:#d2a8ff; color:#000; } .gc9 { background:#56d364; color:#000; }
+        .g-label { font-size:10.5px; color:#8b949e; margin-bottom:4px; font-family:'Consolas',monospace; }
+        .g-section { margin-bottom:2px; }
+        /* page layout demo */
+        .demo-page { display:grid; grid-template-columns:80px 1fr; grid-template-rows:auto 1fr auto; gap:4px; height:160px; }
+        .demo-page .dp-header  { grid-area:1/1/2/3; background:#0d2340; border-radius:5px; display:flex; align-items:center; justify-content:center; font-size:11px; color:#79c0ff; font-weight:700; }
+        .demo-page .dp-sidebar { background:#1a0a2a; border-radius:5px; display:flex; align-items:center; justify-content:center; font-size:10px; color:#d2a8ff; font-weight:700; }
+        .demo-page .dp-main    { background:#1c2a1c; border-radius:5px; display:flex; align-items:center; justify-content:center; font-size:10px; color:#3fb950; font-weight:700; }
+        .demo-page .dp-footer  { grid-area:3/1/4/3; background:#21262d; border-radius:5px; display:flex; align-items:center; justify-content:center; font-size:10px; color:#484f58; font-weight:700; }
+        /* span demo */
+        .span-demo { display:grid; grid-template-columns:repeat(3,1fr); gap:5px; }
+        .span-full  { grid-column: 1 / -1; }
+        .span-two   { grid-column: span 2; }
+        .span-tall  { grid-row: span 2; }
+      </style>
+
+      <div class="two-col">
+
+        <!-- LEFT: column definitions -->
+        <div class="card accent-cyan">
+          <h3>grid-template-columns — column recipes</h3>
+          <div style="display:flex; flex-direction:column; gap:9px; margin-top:8px;">
+
+            <div class="g-section">
+              <div class="g-label">repeat(3, 1fr) — 3 equal columns</div>
+              <div class="gd" style="grid-template-columns:repeat(3,1fr);">
+                <div class="gi gc1">1</div><div class="gi gc2">2</div><div class="gi gc3">3</div>
+              </div>
+              <div style="font-size:10.5px;color:#484f58;font-family:Consolas;padding:2px 4px;">Each column = ⅓ of available space</div>
+            </div>
+
+            <div class="g-section">
+              <div class="g-label">240px 1fr — fixed sidebar + flexible main</div>
+              <div class="gd" style="grid-template-columns:70px 1fr;">
+                <div class="gi gc2">Sidebar (fixed)</div><div class="gi gc3">Main (fills rest)</div>
+              </div>
+              <div style="font-size:10.5px;color:#484f58;font-family:Consolas;padding:2px 4px;">1fr takes ALL remaining space after fixed column</div>
+            </div>
+
+            <div class="g-section">
+              <div class="g-label">1fr 2fr 1fr — sidebar / main(2×) / sidebar</div>
+              <div class="gd" style="grid-template-columns:1fr 2fr 1fr;">
+                <div class="gi gc1">1fr</div><div class="gi gc4">2fr (twice as wide)</div><div class="gi gc1">1fr</div>
+              </div>
+              <div style="font-size:10.5px;color:#484f58;font-family:Consolas;padding:2px 4px;">Total 4 parts: left=25%, middle=50%, right=25%</div>
+            </div>
+
+            <div class="g-section">
+              <div class="g-label">repeat(4, 1fr) — 4 equal columns</div>
+              <div class="gd" style="grid-template-columns:repeat(4,1fr);">
+                <div class="gi gc1">A</div><div class="gi gc2">B</div><div class="gi gc3">C</div><div class="gi gc4">D</div>
+                <div class="gi gc5">E</div><div class="gi gc6">F</div><div class="gi gc7">G</div><div class="gi gc8">H</div>
+              </div>
+              <div style="font-size:10.5px;color:#484f58;font-family:Consolas;padding:2px 4px;">Overflow rows auto-created at same column widths</div>
+            </div>
+
+            <div class="g-section">
+              <div class="g-label">auto-fit + minmax — responsive, NO media queries needed ✅</div>
+              <div class="gd" style="grid-template-columns:repeat(auto-fit,minmax(70px,1fr));">
+                <div class="gi gc1">Card</div><div class="gi gc2">Card</div><div class="gi gc3">Card</div>
+                <div class="gi gc4">Card</div><div class="gi gc5">Card</div>
+              </div>
+              <div style="font-size:10.5px;color:#484f58;font-family:Consolas;padding:2px 4px;">minmax(min, max): each col min 70px, max 1fr — wraps automatically</div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- RIGHT: spanning + areas + page layout -->
+        <div style="display:flex; flex-direction:column; gap:10px;">
+
+          <div class="card accent-purple">
+            <h3>grid-column / grid-row — spanning cells</h3>
+            <div style="display:flex; flex-direction:column; gap:8px; margin-top:8px;">
+
+              <div class="g-section">
+                <div class="g-label">grid-column: 1 / -1 → full width row (span all columns)</div>
+                <div class="gd span-demo">
+                  <div class="gi gc7 span-full">Full width (1 / -1)</div>
+                  <div class="gi gc1">1</div><div class="gi gc2">2</div><div class="gi gc3">3</div>
+                </div>
+              </div>
+
+              <div class="g-section">
+                <div class="g-label">grid-column: span 2 → item takes 2 columns</div>
+                <div class="gd span-demo">
+                  <div class="gi gc4 span-two">span 2</div><div class="gi gc3">1</div>
+                  <div class="gi gc2">2</div><div class="gi gc1">3</div><div class="gi gc5">4</div>
+                </div>
+              </div>
+
+              <div class="g-section">
+                <div class="g-label">grid-row: span 2 → item takes 2 rows tall</div>
+                <div class="gd" style="grid-template-columns:repeat(3,1fr);">
+                  <div class="gi gc7 span-tall" style="grid-row:span 2;">span 2 rows tall</div>
+                  <div class="gi gc2">A</div><div class="gi gc3">B</div>
+                  <div class="gi gc4">C</div><div class="gi gc5">D</div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <div class="card accent-green">
+            <h3>grid-template-areas — full page layout</h3>
+            <div class="g-label" style="margin-top:6px; margin-bottom:6px;">Named areas: "header header" / "sidebar main" / "footer footer"</div>
+            <div class="demo-page">
+              <div class="dp-header">📌 Header (spans full width)</div>
+              <div class="dp-sidebar">◀ Sidebar</div>
+              <div class="dp-main">Main Content</div>
+              <div class="dp-footer">Footer (spans full width)</div>
+            </div>
+            <div class="code-block" style="margin-top:8px;">
+              <pre><span class="prop">grid-template-areas</span>:
+  <span class="str">"header  header"</span>
+  <span class="str">"sidebar main  "</span>
+  <span class="str">"footer  footer"</span>;
+<span class="cmt">/* . = empty cell */</span>
+<span class="str">"sidebar .     "</span>  <span class="cmt">/* leave a cell empty */</span></pre>
+            </div>
+          </div>
+
+          <div class="mem-box">
+            <div class="mem-hdr">🧠 Memory Tricks</div>
+            <ul>
+              <li><strong>fr</strong> = <em>fractional</em> — divide free space into equal parts</li>
+              <li><strong>1/-1</strong> = start to end = full width always</li>
+              <li><strong>auto-fit + minmax</strong> = responsive grid in ONE line ✅</li>
+              <li><strong>template-areas</strong> = draw your layout with ASCII art names</li>
+            </ul>
+          </div>
+
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -1717,7 +1934,7 @@ footer h1, footer h2, footer h3</span>  { <span class="prop">color</span>: <span
 
 <nav id="nav">
   <button id="btn-prev" disabled>&#8592;</button>
-  <span id="counter">1 / 16</span>
+  <span id="counter">1 / 17</span>
   <button id="btn-next">&#8594;</button>
 </nav>
 <div id="hint">← → arrow keys to navigate</div>
