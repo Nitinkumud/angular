@@ -358,6 +358,224 @@
 </div>
 
 <!-- ══════════════════════════════════════════════════════════
+     SLIDE 2a — LCP DEEP DIVE
+═══════════════════════════════════════════════════════════════ -->
+<div class="slide" id="s2a">
+  <div class="slide-header">
+    <span class="topic-badge green">Core Web Vitals</span>
+    <h1>LCP — Largest Contentful Paint</h1>
+  </div>
+  <div class="content">
+    <div class="new-box">
+      <div class="new-hdr">What is LCP?</div>
+      <p><strong>LCP measures how fast the largest visible content element (image, heading, or banner) appears on screen after the user navigates to the page.</strong> It is the single most important indicator of perceived load speed.</p>
+    </div>
+
+    <div class="two-col">
+      <div>
+        <h2>What Elements Count for LCP?</h2>
+        <div class="card accent-blue">
+          <ul>
+            <li><strong>&lt;img&gt;</strong> tags — product images, hero banners</li>
+            <li><strong>&lt;image&gt;</strong> inside SVG</li>
+            <li><strong>CSS background-image</strong> elements (largest visible)</li>
+            <li><strong>&lt;video&gt;</strong> poster image</li>
+            <li><strong>Block-level text</strong> — large headings (<code>&lt;h1&gt;</code>, <code>&lt;p&gt;</code>)</li>
+          </ul>
+        </div>
+
+        <h2 style="margin-top:12px;">LCP Score Thresholds</h2>
+        <table>
+          <thead><tr><th>Score</th><th>Rating</th><th>Google's Verdict</th></tr></thead>
+          <tbody>
+            <tr><td style="color:#3fb950;">0 – 2.5s</td><td><span class="badge badge-green">Good</span></td><td>Google rewards this with better ranking</td></tr>
+            <tr><td style="color:#e3b341;">2.5 – 4s</td><td><span class="badge badge-yellow">Needs Work</span></td><td>Acceptable, but room to improve</td></tr>
+            <tr><td style="color:#f85149;">4s+</td><td><span class="badge badge-red">Poor</span></td><td>Ranking penalty, users bounce</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div>
+        <h2>Real-World Example</h2>
+        <div class="card accent-green">
+          <p>You open <strong>Flipkart</strong>. The first thing that appears is a large <strong>product image</strong> or <strong>sale banner</strong>.</p>
+          <br/>
+          <p>⏱️ <strong>LCP = the moment that big image becomes fully visible</strong></p>
+          <br/>
+          <p>If the image takes 5 seconds → LCP is Poor → user may leave → Google notices → ranking drops.</p>
+        </div>
+
+        <h2 style="margin-top:12px;">How Angular Hydration Improves LCP</h2>
+        <div class="diff-row">
+          <div class="diff-bad">
+            <h3>❌ Without Hydration</h3>
+            <p style="font-size:12px;">Angular destroys server HTML → hero image disappears → re-renders → LCP fires <strong>twice</strong>, second time much later</p>
+          </div>
+          <div class="diff-good">
+            <h3>✅ With Hydration</h3>
+            <p style="font-size:12px;">Server HTML stays intact → hero image never disappears → LCP fires <strong>once</strong>, at initial server paint</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tip-box">
+      <div class="tip-hdr">Pro Tip — How to Improve LCP</div>
+      <p>Use <strong>SSR + Hydration</strong> so critical content is in the HTML from the start. Add <code>loading="eager"</code> and <code>fetchpriority="high"</code> on your hero image. Use <code>NgOptimizedImage</code> directive in Angular — it adds these attributes automatically and serves modern formats (WebP/AVIF).</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     SLIDE 2b — FID DEEP DIVE
+═══════════════════════════════════════════════════════════════ -->
+<div class="slide" id="s2b">
+  <div class="slide-header">
+    <span class="topic-badge">Core Web Vitals</span>
+    <h1>FID — First Input Delay</h1>
+  </div>
+  <div class="content">
+    <div class="new-box">
+      <div class="new-hdr">What is FID?</div>
+      <p><strong>FID measures the time from when a user first interacts with the page (click, tap, key press) to when the browser actually begins processing that event.</strong> It captures the <em>responsiveness</em> of the page during load.</p>
+    </div>
+
+    <div class="two-col">
+      <div>
+        <h2>Why Does FID Happen?</h2>
+        <div class="card accent-orange">
+          <p>The browser's <strong>main thread</strong> is busy parsing and executing JavaScript. During this time it <strong>cannot respond to user input</strong>. The delay between the click and the response is FID.</p>
+          <br/>
+          <div class="flow" style="flex-direction:column; align-items:flex-start; gap:5px; padding:0;">
+            <div style="display:flex;gap:8px;align-items:center;"><span class="badge badge-blue">User clicks button</span></div>
+            <div style="display:flex;gap:8px;align-items:center;"><span style="color:#8b949e;font-size:12px;">↓</span></div>
+            <div style="display:flex;gap:8px;align-items:center;"><span class="badge badge-red">Main thread busy with JS</span></div>
+            <div style="display:flex;gap:8px;align-items:center;"><span style="color:#8b949e;font-size:12px;">↓ (FID = this delay)</span></div>
+            <div style="display:flex;gap:8px;align-items:center;"><span class="badge badge-green">Browser processes click</span></div>
+          </div>
+        </div>
+
+        <h2 style="margin-top:12px;">FID Score Thresholds</h2>
+        <table>
+          <thead><tr><th>Score</th><th>Rating</th><th>User Experience</th></tr></thead>
+          <tbody>
+            <tr><td style="color:#3fb950;">0 – 100ms</td><td><span class="badge badge-green">Good</span></td><td>Feels instant — user is happy</td></tr>
+            <tr><td style="color:#e3b341;">100 – 300ms</td><td><span class="badge badge-yellow">Needs Work</span></td><td>Noticeable lag</td></tr>
+            <tr><td style="color:#f85149;">300ms+</td><td><span class="badge badge-red">Poor</span></td><td>User thinks site is broken</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div>
+        <h2>Real-World Example</h2>
+        <div class="card accent-blue">
+          <p>You open a news website and immediately click <strong>"Subscribe"</strong>. The button <em>looks</em> clickable. But nothing happens for 2 seconds.</p>
+          <br/>
+          <p>The browser was busy downloading and running JavaScript. Your click was registered but processing was <strong>delayed by 2 seconds</strong> — that is a 2000ms FID.</p>
+        </div>
+
+        <h2 style="margin-top:12px;">How Angular Hydration Improves FID</h2>
+        <div class="diff-row">
+          <div class="diff-bad">
+            <h3>❌ Without Event Replay</h3>
+            <p style="font-size:12px;">User clicks "Add to Cart" before Angular is ready → click is <strong>silently lost</strong> → user frustrated, clicks again</p>
+          </div>
+          <div class="diff-good">
+            <h3>✅ With withEventReplay()</h3>
+            <p style="font-size:12px;">Click is <strong>captured and queued</strong> by JSAction → Angular ready → event <strong>replayed</strong> → user's action honoured</p>
+          </div>
+        </div>
+
+        <div class="warn-box" style="margin-top:8px;">
+          <div class="warn-hdr">Note: FID is being replaced by INP</div>
+          <p>Google is transitioning from FID to <strong>INP (Interaction to Next Paint)</strong> as a Core Web Vital. INP measures <em>all</em> interactions (not just the first), making it a more complete responsiveness metric. Angular's Event Replay and smaller bundles improve both.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     SLIDE 2c — CLS DEEP DIVE
+═══════════════════════════════════════════════════════════════ -->
+<div class="slide" id="s2c">
+  <div class="slide-header">
+    <span class="topic-badge yellow">Core Web Vitals</span>
+    <h1>CLS — Cumulative Layout Shift</h1>
+  </div>
+  <div class="content">
+    <div class="new-box">
+      <div class="new-hdr">What is CLS?</div>
+      <p><strong>CLS measures the total amount of unexpected layout shifts that occur during the entire life of a page.</strong> It quantifies how much visible content jumps around — a score of 0 means nothing moved, higher means more instability.</p>
+    </div>
+
+    <div class="two-col">
+      <div>
+        <h2>How CLS is Calculated</h2>
+        <div class="card accent-yellow">
+          <p style="font-size:12px;">For each layout shift: <code>Impact Fraction × Distance Fraction = Shift Score</code></p>
+          <br/>
+          <ul>
+            <li><strong>Impact Fraction</strong> — how much of the viewport was affected</li>
+            <li><strong>Distance Fraction</strong> — how far the element moved (% of viewport)</li>
+            <li>CLS = sum of all individual shift scores</li>
+          </ul>
+        </div>
+
+        <h2 style="margin-top:12px;">CLS Score Thresholds</h2>
+        <table>
+          <thead><tr><th>Score</th><th>Rating</th><th>User Experience</th></tr></thead>
+          <tbody>
+            <tr><td style="color:#3fb950;">0 – 0.1</td><td><span class="badge badge-green">Good</span></td><td>Stable — content doesn't jump</td></tr>
+            <tr><td style="color:#e3b341;">0.1 – 0.25</td><td><span class="badge badge-yellow">Needs Work</span></td><td>Noticeable shifts</td></tr>
+            <tr><td style="color:#f85149;">0.25+</td><td><span class="badge badge-red">Poor</span></td><td>User clicks wrong things</td></tr>
+          </tbody>
+        </table>
+
+        <h2 style="margin-top:12px;">Common Causes of CLS</h2>
+        <div class="card accent-red">
+          <ul>
+            <li>Images without <code>width</code> &amp; <code>height</code> attributes</li>
+            <li>Ads / embeds injected above existing content</li>
+            <li>Web fonts causing text to reflow (FOUT)</li>
+            <li>Angular <strong>destroying and re-rendering</strong> the DOM (the big one!)</li>
+            <li>Dynamic content inserted above the fold</li>
+          </ul>
+        </div>
+      </div>
+      <div>
+        <h2>Real-World Example</h2>
+        <div class="card accent-orange">
+          <p>You're reading an article. Just as you're about to click <strong>"Read More"</strong>, an ad banner loads above it — everything shifts down by 200px — you accidentally click the <strong>ad</strong> instead.</p>
+          <br/>
+          <p>This is a layout shift. CLS captures these frustrating moments.</p>
+        </div>
+
+        <h2 style="margin-top:12px;">CLS Visualised</h2>
+        <div class="code-block"><pre><span class="cmt">Before ad loads:        After ad loads:</span>
+<span class="typ">┌──────────────────┐</span>    <span class="typ">┌──────────────────┐</span>
+<span class="typ">│  Heading         │</span>    <span class="dec">│  [AD BANNER] ← NEW│</span>
+<span class="typ">│  Paragraph...    │</span>    <span class="typ">│  Heading  ↓ shift│</span>
+<span class="fn">│  [Read More btn] │</span>    <span class="typ">│  Paragraph...    │</span>
+<span class="typ">└──────────────────┘</span>    <span class="fn">│  [Read More btn] │</span>
+                         <span class="typ">└──────────────────┘</span>
+<span class="cmt">User clicks "Read More" → hits Ad instead!</span></pre></div>
+
+        <h2 style="margin-top:10px;">How Angular Hydration Fixes CLS</h2>
+        <div class="diff-row">
+          <div class="diff-bad">
+            <h3>❌ Without Hydration</h3>
+            <p style="font-size:12px;">Angular wipes &amp; redraws the whole DOM → <strong>massive layout shift</strong> → CLS score 0.5+</p>
+          </div>
+          <div class="diff-good">
+            <h3>✅ With Hydration</h3>
+            <p style="font-size:12px;">DOM stays intact → <strong>no reflow</strong> → CLS stays near <strong>0</strong></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
      SLIDE 3 — ENABLING HYDRATION
 ═══════════════════════════════════════════════════════════════ -->
 <div class="slide" id="s3">
@@ -1679,7 +1897,7 @@ Hover on child triggers:
 <div id="nav">
   <button id="btnFirst" title="First slide">⏮</button>
   <button id="btnPrev"  title="Previous">◀</button>
-  <span   id="counter">1 / 24</span>
+  <span   id="counter">1 / 27</span>
   <button id="btnNext"  title="Next">▶</button>
   <button id="btnLast"  title="Last slide">⏭</button>
 </div>
