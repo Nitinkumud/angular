@@ -1,0 +1,1728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Angular Hydration – Deep Dive (v17–v22)</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; overflow: hidden; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0d1117; color: #e6edf3; }
+    #deck { width: 100vw; height: 100vh; position: relative; }
+    .slide {
+      display: none; flex-direction: column; justify-content: flex-start;
+      padding: 40px 56px 76px; width: 100%; height: 100%;
+      overflow-y: auto; gap: 14px; animation: fadeIn .35s ease;
+    }
+    .slide.active { display: flex; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+    .slide-header {
+      display: flex; align-items: center; gap: 12px;
+      border-bottom: 2px solid #21262d; padding-bottom: 11px; flex-shrink: 0;
+    }
+    .topic-badge {
+      background: #0a4a7c; color: #58a6ff; font-size: 11px; font-weight: 700;
+      letter-spacing: 1px; text-transform: uppercase; padding: 4px 10px;
+      border-radius: 20px; white-space: nowrap;
+    }
+    .topic-badge.green  { background: #0f3520; color: #3fb950; }
+    .topic-badge.purple { background: #2a1a3e; color: #d2a8ff; }
+    .topic-badge.orange { background: #3a1800; color: #f97316; }
+    .topic-badge.red    { background: #3a1010; color: #f85149; }
+    .topic-badge.yellow { background: #2e2200; color: #e3b341; }
+    .topic-badge.cyan   { background: #0a2e2e; color: #39d0d8; }
+    .topic-badge.pink   { background: #2e0a1e; color: #ff6eb4; }
+    h1 { font-size: 25px; font-weight: 700; color: #58a6ff; }
+    h2 { font-size: 18px; font-weight: 600; color: #ffa657; margin-bottom: 4px; }
+    h3 { font-size: 13.5px; font-weight: 600; color: #ffa657; margin-bottom: 3px; }
+
+    .title-slide {
+      justify-content: center; align-items: center; text-align: center;
+      background: radial-gradient(ellipse at 50% 0%, #001830 0%, #0d1117 70%);
+    }
+    .title-slide h1 { font-size: 44px; margin-bottom: 10px; color: #58a6ff; }
+    .title-slide .subtitle { font-size: 15.5px; color: #8b949e; max-width: 740px; line-height: 1.7; }
+    .logo { font-size: 62px; margin-bottom: 14px; }
+    .topic-chips { display: flex; flex-wrap: wrap; gap: 7px; justify-content: center; margin-top: 18px; }
+    .chip { background: #161b22; border: 1px solid #30363d; border-radius: 20px; padding: 5px 13px; font-size: 12px; color: #8b949e; }
+    .chip.hot { border-color: #1f6feb; color: #58a6ff; background: #0d2040; }
+
+    .content { flex: 1; display: flex; flex-direction: column; gap: 13px; }
+    .two-col   { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+    .four-col  { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; }
+
+    .card { background: #161b22; border: 1px solid #30363d; border-radius: 9px; padding: 13px 15px; }
+    .card.accent-red    { border-left: 4px solid #f85149; }
+    .card.accent-blue   { border-left: 4px solid #1f6feb; }
+    .card.accent-green  { border-left: 4px solid #3fb950; }
+    .card.accent-orange { border-left: 4px solid #f97316; }
+    .card.accent-purple { border-left: 4px solid #d2a8ff; }
+    .card.accent-yellow { border-left: 4px solid #e3b341; }
+    .card.accent-cyan   { border-left: 4px solid #39d0d8; }
+    .card.accent-pink   { border-left: 4px solid #ff6eb4; }
+
+    p  { font-size: 13px; line-height: 1.75; color: #c9d1d9; }
+    li { font-size: 12.5px; line-height: 1.85; color: #c9d1d9; margin-left: 16px; }
+    ul { padding-left: 4px; }
+    strong { color: #f0f6fc; }
+    code { font-family: 'Consolas', monospace; font-size: 11.5px; background: #1c2128; color: #79c0ff; padding: 2px 6px; border-radius: 4px; }
+
+    .code-block { background: #1c2128; border: 1px solid #30363d; border-radius: 8px; padding: 13px 16px; overflow-x: auto; flex-shrink: 0; }
+    .code-block pre { font-family: 'Consolas', monospace; font-size: 12px; line-height: 1.7; color: #e6edf3; white-space: pre; margin: 0; }
+    .code-label { font-size: 10px; font-weight: 700; color: #8b949e; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
+    .kw  { color: #ff7b72; }
+    .fn  { color: #d2a8ff; }
+    .str { color: #a5d6ff; }
+    .num { color: #79c0ff; }
+    .cmt { color: #8b949e; font-style: italic; }
+    .var { color: #ffa657; }
+    .dec { color: #ff6b6b; }
+    .cls { color: #f0c674; }
+    .typ { color: #56d364; }
+    .op  { color: #7ee787; }
+    .at  { color: #d2a8ff; }
+    .tpl { color: #a5d6ff; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    th { background: #161b22; color: #d2a8ff; text-align: left; padding: 7px 11px; border-bottom: 2px solid #30363d; font-weight: 600; }
+    td { padding: 6px 11px; border-bottom: 1px solid #21262d; color: #c9d1d9; vertical-align: top; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #161b22; }
+
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 11px; font-size: 10.5px; font-weight: 700; white-space: nowrap; }
+    .badge-red    { background: #3a1818; color: #f85149; }
+    .badge-green  { background: #1a3c1a; color: #3fb950; }
+    .badge-blue   { background: #0d2340; color: #58a6ff; }
+    .badge-orange { background: #3a1800; color: #f97316; }
+    .badge-purple { background: #2a1a3e; color: #d2a8ff; }
+    .badge-yellow { background: #2e2200; color: #e3b341; }
+    .badge-cyan   { background: #0a2e2e; color: #39d0d8; }
+    .badge-pink   { background: #2e0a1e; color: #ff6eb4; }
+
+    .flow { display: flex; align-items: center; gap: 0; overflow-x: auto; padding: 8px 0; flex-wrap: wrap; row-gap: 8px; }
+    .fb { display: flex; flex-direction: column; align-items: center; background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 7px 13px; font-size: 11px; white-space: nowrap; flex-shrink: 0; gap: 2px; }
+    .fb .fn2 { font-weight: 700; font-size: 12px; }
+    .fb .fs  { font-size: 10px; color: #8b949e; }
+    .fb.c1 { border-color: #1f6feb; color: #79c0ff; }
+    .fb.c2 { border-color: #f97316; color: #ffa657; }
+    .fb.c3 { border-color: #3fb950; color: #56d364; }
+    .fb.c4 { border-color: #d2a8ff; color: #d2a8ff; }
+    .fb.c5 { border-color: #39d0d8; color: #39d0d8; }
+    .fb.c6 { border-color: #e3b341; color: #e3b341; }
+    .fb.c7 { border-color: #f85149; color: #f85149; }
+    .fa { color: #484f58; font-size: 20px; padding: 0 6px; flex-shrink: 0; }
+
+    .tip-box  { background: #1c2a1c; border: 1px solid #3fb950; border-left: 4px solid #3fb950; border-radius: 8px; padding: 9px 13px; }
+    .tip-box  .tip-hdr  { font-size: 10.5px; font-weight: 700; color: #3fb950; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }
+    .warn-box { background: #2a1a00; border: 1px solid #e3b341; border-left: 4px solid #e3b341; border-radius: 8px; padding: 9px 13px; }
+    .warn-box .warn-hdr { font-size: 10.5px; font-weight: 700; color: #e3b341; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }
+    .new-box  { background: #0d2340; border: 1px solid #58a6ff; border-left: 4px solid #58a6ff; border-radius: 8px; padding: 9px 13px; }
+    .new-box  .new-hdr  { font-size: 10.5px; font-weight: 700; color: #58a6ff; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }
+    .err-box  { background: #2a0d0d; border: 1px solid #f85149; border-left: 4px solid #f85149; border-radius: 8px; padding: 9px 13px; }
+    .err-box  .err-hdr  { font-size: 10.5px; font-weight: 700; color: #f85149; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }
+    .mem-box  { background: #1e1a2e; border: 1px solid #d2a8ff; border-left: 4px solid #d2a8ff; border-radius: 8px; padding: 9px 13px; }
+    .mem-box  .mem-hdr  { font-size: 10.5px; font-weight: 700; color: #d2a8ff; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }
+
+    .tip-box p,  .tip-box li  { font-size: 12px; color: #c9d1d9; }
+    .warn-box p, .warn-box li { font-size: 12px; color: #c9d1d9; }
+    .new-box p,  .new-box li  { font-size: 12px; color: #c9d1d9; }
+    .err-box p,  .err-box li  { font-size: 12px; color: #c9d1d9; }
+    .mem-box p,  .mem-box li  { font-size: 12px; color: #c9d1d9; }
+
+    .iq-item { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 11px 14px; margin-bottom: 6px; }
+    .iq-q { font-size: 13px; font-weight: 600; color: #f0f6fc; margin-bottom: 5px; }
+    .iq-a { font-size: 12px; color: #c9d1d9; line-height: 1.72; }
+    .iq-level { font-size: 10px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; margin-left: 8px; }
+
+    .version-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .vbadge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; border: 1px solid; }
+    .vbadge.v16  { border-color: #f97316; color: #ffa657; background: #1e0d00; }
+    .vbadge.v17  { border-color: #d2a8ff; color: #d2a8ff; background: #1a0a2e; }
+    .vbadge.v18  { border-color: #58a6ff; color: #79c0ff; background: #051530; }
+    .vbadge.v19  { border-color: #3fb950; color: #56d364; background: #0a1e0a; }
+    .vbadge.v20  { border-color: #39d0d8; color: #39d0d8; background: #051a1a; }
+    .vbadge.v22  { border-color: #ff6eb4; color: #ff6eb4; background: #1e0515; }
+
+    .metric-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .metric-card { background: #161b22; border: 1px solid #30363d; border-radius: 9px; padding: 14px; text-align: center; }
+    .metric-num  { font-size: 30px; font-weight: 800; line-height: 1; margin-bottom: 4px; }
+    .metric-lbl  { font-size: 11px; color: #8b949e; }
+    .metric-sub  { font-size: 10px; color: #484f58; margin-top: 3px; }
+
+    .diff-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .diff-bad  { background: #2a0d0d; border: 1px solid #f85149; border-radius: 8px; padding: 11px 14px; }
+    .diff-good { background: #0a1e0a; border: 1px solid #3fb950; border-radius: 8px; padding: 11px 14px; }
+    .diff-bad  h3 { color: #f85149; }
+    .diff-good h3 { color: #3fb950; }
+
+    .trigger-table td:first-child { color: #79c0ff; font-family: 'Consolas', monospace; font-size: 11.5px; }
+    .trigger-table td:nth-child(2) { color: #8b949e; font-size: 11.5px; }
+    .trigger-table td:last-child { color: #3fb950; font-size: 11.5px; }
+
+    #nav {
+      position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+      display: flex; align-items: center; gap: 16px;
+      background: #161b22cc; backdrop-filter: blur(8px);
+      border: 1px solid #30363d; border-radius: 40px; padding: 9px 22px; z-index: 1000;
+    }
+    #nav button { background: none; border: none; color: #8b949e; cursor: pointer; font-size: 20px; padding: 4px 8px; border-radius: 6px; transition: color .2s, background .2s; }
+    #nav button:hover:not(:disabled) { color: #e6edf3; background: #21262d; }
+    #nav button:disabled { opacity: 0.3; cursor: default; }
+    #counter { font-size: 13px; color: #8b949e; min-width: 64px; text-align: center; }
+    #progress-bar { position: fixed; top: 0; left: 0; height: 3px; background: #1f6feb; transition: width .3s ease; z-index: 999; }
+    #hint { position: fixed; bottom: 20px; right: 24px; font-size: 11px; color: #484f58; }
+    .slide::-webkit-scrollbar { width: 6px; }
+    .slide::-webkit-scrollbar-track { background: transparent; }
+    .slide::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
+  </style>
+</head>
+<body>
+<div id="progress-bar"></div>
+<div id="deck">
+
+<!-- ══════════════════════════════════════════════════════════
+     SLIDE 0 — TITLE
+═══════════════════════════════════════════════════════════════ -->
+<div class="slide title-slide active" id="s0">
+  <div class="logo">💧</div>
+  <h1>Angular Hydration</h1>
+  <p class="subtitle">
+    Complete deep-dive: Full App Hydration, Event Replay, Incremental Hydration,
+    <code>ngSkipHydration</code>, Constraints, Debugging, and Senior-Level Interview Q&amp;A.
+    <br/><br/>Based on Angular v17–v22 official docs · <strong>angular.dev/guide/hydration</strong>
+  </p>
+  <div class="topic-chips">
+    <span class="chip hot">What is Hydration</span>
+    <span class="chip hot">provideClientHydration</span>
+    <span class="chip hot">Event Replay</span>
+    <span class="chip hot">Incremental Hydration</span>
+    <span class="chip">@defer + hydrate triggers</span>
+    <span class="chip">ngSkipHydration</span>
+    <span class="chip">Core Web Vitals</span>
+    <span class="chip">DOM Mismatch Errors</span>
+    <span class="chip">App Stability</span>
+    <span class="chip">i18n Support</span>
+    <span class="chip">Interview Q&amp;A (10 yrs)</span>
+  </div>
+  <div class="version-row" style="justify-content:center; margin-top:20px;">
+    <span class="vbadge v16">v16 Preview</span>
+    <span class="vbadge v17">v17 Stable</span>
+    <span class="vbadge v18">v18 Event Replay</span>
+    <span class="vbadge v19">v19 Incremental</span>
+    <span class="vbadge v22">v22 Default ON</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     SLIDE 1 — WHAT IS HYDRATION
+═══════════════════════════════════════════════════════════════ -->
+<div class="slide" id="s1">
+  <div class="slide-header">
+    <span class="topic-badge">Fundamentals</span>
+    <h1>What is Hydration?</h1>
+  </div>
+  <div class="content">
+    <div class="new-box">
+      <div class="new-hdr">Official Definition — angular.dev/guide/hydration</div>
+      <p><strong>Hydration</strong> is the process that <em>restores</em> a server-side rendered application on the client. It includes: reusing server-rendered DOM structures, persisting application state, transferring data already retrieved by the server, and attaching event listeners to existing DOM nodes.</p>
+    </div>
+
+    <div class="two-col">
+      <div class="card accent-red">
+        <h3>❌ Without Hydration (CSR Takeover)</h3>
+        <ul>
+          <li>Server sends fully rendered HTML string</li>
+          <li>Angular bootstraps on the client</li>
+          <li>Angular <strong>destroys all server-rendered DOM</strong></li>
+          <li>Angular re-creates the entire component tree from scratch</li>
+          <li>Visible <strong>UI flicker</strong> as content is wiped and redrawn</li>
+          <li>All data fetched again on client (double fetch)</li>
+          <li>Hurts LCP, CLS — bad for Core Web Vitals</li>
+        </ul>
+      </div>
+      <div class="card accent-green">
+        <h3>✅ With Hydration</h3>
+        <ul>
+          <li>Server sends fully rendered HTML string</li>
+          <li>Angular bootstraps on the client</li>
+          <li>Angular <strong>walks the existing DOM</strong> and matches component nodes</li>
+          <li><strong>Reuses DOM nodes</strong> — no destroy &amp; recreate</li>
+          <li>No visible flicker — content is stable from first paint</li>
+          <li>Server-fetched data transferred via <strong>TransferState</strong></li>
+          <li>Dramatically improves LCP, FID, CLS</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="flow">
+      <div class="fb c1"><span class="fn2">Server</span><span class="fs">Renders HTML</span></div>
+      <span class="fa">→</span>
+      <div class="fb c2"><span class="fn2">Browser</span><span class="fs">Displays HTML instantly</span></div>
+      <span class="fa">→</span>
+      <div class="fb c3"><span class="fn2">Angular JS</span><span class="fs">Downloads &amp; boots</span></div>
+      <span class="fa">→</span>
+      <div class="fb c4"><span class="fn2">Hydration</span><span class="fs">Matches DOM nodes</span></div>
+      <span class="fa">→</span>
+      <div class="fb c5"><span class="fn2">Interactive</span><span class="fs">Events attached</span></div>
+    </div>
+
+    <div class="tip-box">
+      <div class="tip-hdr">Key Insight</div>
+      <p>Hydration bridges the gap between the fast initial paint (SSR) and full interactivity (client bootstrap). Without it, you pay the SSR cost with none of the benefit — users see a flash of empty content as Angular destroys and re-renders.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     SLIDE 2 — WHY IT MATTERS: CORE WEB VITALS
+═══════════════════════════════════════════════════════════════ -->
+<div class="slide" id="s2">
+  <div class="slide-header">
+    <span class="topic-badge green">Performance</span>
+    <h1>Why Hydration Matters — Core Web Vitals</h1>
+  </div>
+  <div class="content">
+    <div class="metric-grid">
+      <div class="metric-card">
+        <div class="metric-num" style="color:#3fb950;">LCP</div>
+        <div class="metric-lbl">Largest Contentful Paint</div>
+        <div class="metric-sub">Hydration prevents DOM re-creation → content stays visible → better LCP score</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-num" style="color:#58a6ff;">FID</div>
+        <div class="metric-lbl">First Input Delay</div>
+        <div class="metric-sub">Event Replay captures pre-hydration clicks → no lost interactions → better FID</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-num" style="color:#ffa657;">CLS</div>
+        <div class="metric-lbl">Cumulative Layout Shift</div>
+        <div class="metric-sub">DOM reuse means no layout shift. Re-render causes shift as nodes move around</div>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div>
+        <h2>Without Hydration — Timeline</h2>
+        <div class="flow" style="flex-direction:column; align-items:flex-start; gap:6px; padding:0;">
+          <div style="display:flex; gap:8px; align-items:center;">
+            <span class="badge badge-blue">0ms</span>
+            <span style="font-size:12px; color:#c9d1d9;">Server HTML arrives → User sees content</span>
+          </div>
+          <div style="display:flex; gap:8px; align-items:center;">
+            <span class="badge badge-orange">300ms</span>
+            <span style="font-size:12px; color:#c9d1d9;">JS bundle downloads</span>
+          </div>
+          <div style="display:flex; gap:8px; align-items:center;">
+            <span class="badge badge-red">450ms</span>
+            <span style="font-size:12px; color:#f85149;"><strong>Angular wipes DOM → FLICKER</strong></span>
+          </div>
+          <div style="display:flex; gap:8px; align-items:center;">
+            <span class="badge badge-orange">600ms</span>
+            <span style="font-size:12px; color:#c9d1d9;">Re-render completes</span>
+          </div>
+          <div style="display:flex; gap:8px; align-items:center;">
+            <span class="badge badge-yellow">600ms+</span>
+            <span style="font-size:12px; color:#c9d1d9;">Second data fetch starts</span>
+          </div>
+        </div>
+      </div>
+      <div>
+        <h2>With Hydration — Timeline</h2>
+        <div class="flow" style="flex-direction:column; align-items:flex-start; gap:6px; padding:0;">
+          <div style="display:flex; gap:8px; align-items:center;">
+            <span class="badge badge-blue">0ms</span>
+            <span style="font-size:12px; color:#c9d1d9;">Server HTML arrives → User sees content</span>
+          </div>
+          <div style="display:flex; gap:8px; align-items:center;">
+            <span class="badge badge-orange">300ms</span>
+            <span style="font-size:12px; color:#c9d1d9;">JS bundle downloads</span>
+          </div>
+          <div style="display:flex; gap:8px; align-items:center;">
+            <span class="badge badge-green">350ms</span>
+            <span style="font-size:12px; color:#3fb950;"><strong>Angular walks &amp; matches DOM — no flicker</strong></span>
+          </div>
+          <div style="display:flex; gap:8px; align-items:center;">
+            <span class="badge badge-green">400ms</span>
+            <span style="font-size:12px; color:#3fb950;"><strong>Fully interactive</strong> — data from TransferState</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="warn-box">
+      <div class="warn-hdr">SEO Impact</div>
+      <p>Layout shifts (high CLS) directly penalize Google Search rankings. Hydration eliminates the re-render shift, improving both user experience and SEO. The combination of SSR + Hydration is the <strong>gold standard</strong> for Angular performance on the web.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     SLIDE 3 — ENABLING HYDRATION
+═══════════════════════════════════════════════════════════════ -->
+<div class="slide" id="s3">
+  <div class="slide-header">
+    <span class="topic-badge">Setup</span>
+    <h1>Enabling Hydration</h1>
+  </div>
+  <div class="content">
+    <div class="warn-box">
+      <div class="warn-hdr">Prerequisite</div>
+      <p>Hydration works <strong>only with SSR</strong>. You must enable server-side rendering first via <code>ng add @angular/ssr</code> or configure it manually. Hydration is a client-side process that needs server-rendered HTML to reuse.</p>
+    </div>
+
+    <div class="two-col">
+      <div>
+        <h2>Method 1 — Angular CLI (Recommended)</h2>
+        <div class="code-label">Generate new project with SSR</div>
+        <div class="code-block"><pre><span class="fn">ng new</span> my-app <span class="str">--ssr</span>
+
+<span class="cmt"># Or add SSR to existing project</span>
+<span class="fn">ng add</span> @angular/ssr</pre></div>
+        <div class="tip-box" style="margin-top:8px;">
+          <div class="tip-hdr">Auto-configured</div>
+          <p>The CLI automatically adds <code>provideClientHydration()</code> to your app config. No manual step needed.</p>
+        </div>
+      </div>
+      <div>
+        <h2>Method 2 — Manual (Standalone)</h2>
+        <div class="code-label">app.config.ts</div>
+        <div class="code-block"><pre><span class="kw">import</span> {
+  <span class="fn">bootstrapApplication</span>,
+  <span class="fn">provideClientHydration</span>
+} <span class="kw">from</span> <span class="str">'@angular/platform-browser'</span>;
+<span class="kw">import</span> { <span class="cls">AppComponent</span> } <span class="kw">from</span> <span class="str">'./app/app.component'</span>;
+
+<span class="fn">bootstrapApplication</span>(<span class="cls">AppComponent</span>, {
+  providers: [
+    <span class="fn">provideClientHydration</span>()
+  ]
+});</pre></div>
+      </div>
+    </div>
+
+    <div class="card accent-purple">
+      <h2>Method 3 — NgModule-based Apps</h2>
+      <div class="code-label">app.module.ts</div>
+      <div class="code-block"><pre><span class="kw">import</span> { <span class="fn">provideClientHydration</span> } <span class="kw">from</span> <span class="str">'@angular/platform-browser'</span>;
+<span class="kw">import</span> { <span class="cls">NgModule</span> } <span class="kw">from</span> <span class="str">'@angular/core'</span>;
+
+<span class="at">@NgModule</span>({
+  declarations: [<span class="cls">AppComponent</span>],
+  bootstrap:    [<span class="cls">AppComponent</span>],
+  providers:    [<span class="fn">provideClientHydration</span>()],  <span class="cmt">// ← Add this</span>
+})
+<span class="kw">export class</span> <span class="cls">AppModule</span> {}
+
+<span class="cmt">// ⚠ Also ensure provideClientHydration() is in your SERVER bootstrap providers</span></pre></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     SLIDE 4 — VERIFYING HYDRATION
+═══════════════════════════════════════════════════════════════ -->
+<div class="slide" id="s4">
+  <div class="slide-header">
+    <span class="topic-badge cyan">Verification</span>
+    <h1>Verifying Hydration is Working</h1>
+  </div>
+  <div class="content">
+    <div class="two-col">
+      <div>
+        <h2>Dev Mode Console Output</h2>
+        <div class="code-block"><pre><span class="cmt">// In browser DevTools console (dev mode only)</span>
+Angular hydrated <span class="num">14</span> component(s) and
+reused <span class="num">121</span> out of <span class="num">121</span> existing DOM node(s).
+
+<span class="cmt">// Includes 3rd party library components too</span></pre></div>
+        <div class="tip-box" style="margin-top:8px;">
+          <div class="tip-hdr">What the numbers mean</div>
+          <p><strong>Hydrated N component(s)</strong> — Angular components that were successfully matched to server DOM.<br/>
+          <strong>Reused X/Y DOM nodes</strong> — Higher ratio = better. 100% means no DOM was wasted.</p>
+        </div>
+      </div>
+      <div>
+        <h2>Angular DevTools Extension</h2>
+        <div class="card accent-blue">
+          <ul>
+            <li>Install <strong>Angular DevTools</strong> from Chrome Web Store</li>
+            <li>Open DevTools → Angular panel</li>
+            <li>Each component shows its <strong>hydration status</strong> — hydrated, skipped, or errored</li>
+            <li>Enable the <strong>overlay mode</strong> to visually see hydrated regions on the page</li>
+            <li>Mismatch errors are highlighted on the exact component that caused them</li>
+          </ul>
+        </div>
+
+        <h2 style="margin-top:12px;">Check HTML Source</h2>
+        <div class="code-block"><pre><span class="cmt">&lt;!-- Angular adds special comments for hydration --&gt;</span>
+<span class="tpl">&lt;!--ngh=0--&gt;</span>
+<span class="tpl">&lt;app-root&gt;</span>
+  <span class="tpl">&lt;!--ngh=1--&gt;</span>
+  <span class="tpl">&lt;app-header&gt;...&lt;/app-header&gt;</span>
+<span class="tpl">&lt;/app-root&gt;</span>
+<span class="cmt">&lt;!-- These ngh comments are hydration markers --&gt;</span></pre></div>
+      </div>
+    </div>
+
+    <div class="warn-box">
+      <div class="warn-hdr">Common Gotcha Before Verifying</div>
+      <p>If you have components that do <strong>direct DOM manipulation</strong> (using native APIs like <code>document.querySelector</code>, <code>appendChild</code>, <code>innerHTML</code>), hydration will likely fail or throw errors. Fix these first or use <code>ngSkipHydration</code> as a temporary workaround.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     SLIDE 5 — HOW HYDRATION WORKS INTERNALLY
+═══════════════════════════════════════════════════════════════ -->
+<div class="slide" id="s5">
+  <div class="slide-header">
+    <span class="topic-badge purple">Internals</span>
+    <h1>How Hydration Works Internally</h1>
+  </div>
+  <div class="content">
+    <div class="card accent-blue">
+      <h2>The DOM Reconciliation Algorithm</h2>
+      <p>Angular's hydration algorithm walks the server-rendered DOM tree in parallel with the component tree it expects from the component templates. For each component, it tries to <em>claim</em> the matching DOM nodes rather than creating new ones.</p>
+    </div>
+
+    <div class="three-col">
+      <div class="card accent-orange">
+        <h3>Phase 1: Serialization (Server)</h3>
+        <ul>
+          <li>Angular renders the app on the server</li>
+          <li>Serializes component tree structure as <strong>hydration annotation comments</strong> (<code>&lt;!--ngh=N--&gt;</code>)</li>
+          <li>Serializes <strong>TransferState</strong> as a JSON blob in a <code>&lt;script&gt;</code> tag</li>
+          <li>Sends fully rendered HTML to browser</li>
+        </ul>
+      </div>
+      <div class="card accent-blue">
+        <h3>Phase 2: Node Claiming (Client)</h3>
+        <ul>
+          <li>Angular bootstraps on the client</li>
+          <li>Instead of creating DOM nodes, it reads hydration markers</li>
+          <li><strong>Claims</strong> existing server-rendered nodes</li>
+          <li>Tracks unclaimed nodes for cleanup</li>
+          <li>Verifies DOM structure matches expected template</li>
+        </ul>
+      </div>
+      <div class="card accent-green">
+        <h3>Phase 3: Cleanup &amp; Attach</h3>
+        <ul>
+          <li>Attaches event listeners to claimed nodes</li>
+          <li>Rehydrates <strong>TransferState</strong> into HTTP cache</li>
+          <li>Removes any unused server-only DOM nodes</li>
+          <li>Fires lifecycle hooks: <code>AfterViewInit</code>, etc.</li>
+          <li>App is now fully interactive</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-label">TransferState — Preventing Double HTTP Requests</div>
+      <pre><span class="cmt">// Server fetches data and serializes to HTML</span>
+<span class="cmt">// The data is embedded as JSON in a script tag:</span>
+<span class="tpl">&lt;script id="ng-state" type="application/json"&gt;</span>
+  {<span class="str">"products"</span>: [{<span class="str">"id"</span>: <span class="num">1</span>, <span class="str">"name"</span>: <span class="str">"..."</span>}]}
+<span class="tpl">&lt;/script&gt;</span>
+
+<span class="cmt">// On client, Angular's HttpClient reads from TransferState FIRST</span>
+<span class="cmt">// — no actual HTTP call is made if data is already there</span>
+<span class="at">@Injectable</span>()
+<span class="kw">class</span> <span class="cls">ProductService</span> {
+  <span class="fn">constructor</span>(<span class="kw">private</span> <span class="var">http</span>: <span class="typ">HttpClient</span>) {}
+
+  <span class="fn">getProducts</span>(): <span class="typ">Observable</span>&lt;<span class="typ">Product[]</span>&gt; {
+    <span class="cmt">// Angular's HttpClient + TransferState does this automatically</span>
+    <span class="kw">return</span> <span class="kw">this</span>.<span class="var">http</span>.<span class="fn">get</span>&lt;<span class="typ">Product[]</span>&gt;(<span class="str">'/api/products'</span>);
+  }
+}</pre>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     SLIDE 6 — EVENT REPLAY
+═══════════════════════════════════════════════════════════════ -->
+<div class="slide" id="s6">
+  <div class="slide-header">
+    <span class="topic-badge orange">v18+ Feature</span>
+    <h1>Event Replay — withEventReplay()</h1>
+  </div>
+  <div class="content">
+    <div class="new-box">
+      <div class="new-hdr">Introduced in Angular v18 · Powered by JSAction</div>
+      <p>The server HTML is visible immediately, but Angular JS isn't ready yet. Users who click buttons during this window expect their actions to work. <strong>Event Replay</strong> captures those early interactions and replays them once Angular has fully bootstrapped.</p>
+    </div>
+
+    <div class="three-col">
+      <div class="card accent-blue">
+        <h3>Phase 1 — Capture</h3>
+        <p>Before Angular boots, a lightweight inline script (JSAction) attaches to the <code>document</code> root and captures <strong>all native browser events</strong>: <code>click</code>, <code>mouseover</code>, <code>focusin</code>, <code>keydown</code>, etc.</p>
+      </div>
+      <div class="card accent-orange">
+        <h3>Phase 2 — Store</h3>
+        <p>The <strong>Event Contract</strong> keeps all captured interactions in memory. Nothing is lost. Events are queued in order, preserving sequence.</p>
+      </div>
+      <div class="card accent-green">
+        <h3>Phase 3 — Replay</h3>
+        <p>Once Angular hydration completes and event listeners are attached, Angular re-dispatches all queued events in the correct order. Users' actions are honoured.</p>
+      </div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-label">Enabling Event Replay — app.config.ts</div>
+      <pre><span class="kw">import</span> {
+  <span class="fn">provideClientHydration</span>,
+  <span class="fn">withEventReplay</span>
+} <span class="kw">from</span> <span class="str">'@angular/platform-browser'</span>;
+
+<span class="fn">bootstrapApplication</span>(<span class="cls">AppComponent</span>, {
+  providers: [
+    <span class="fn">provideClientHydration</span>(
+      <span class="fn">withEventReplay</span>()  <span class="cmt">// ← v18+: Captures events before hydration</span>
+    )
+  ]
+});</pre>
+    </div>
+
+    <div class="two-col">
+      <div class="tip-box">
+        <div class="tip-hdr">Auto-enabled with Incremental Hydration</div>
+        <p>If you use incremental hydration (<code>provideClientHydration()</code> default in v19+), <strong>event replay is automatically enabled</strong>. You don't need to add <code>withEventReplay()</code> separately.</p>
+      </div>
+      <div class="warn-box">
+        <div class="warn-hdr">What events are supported</div>
+        <p>All <strong>native browser events</strong> are supported: <code>click</code>, <code>mouseover</code>, <code>focusin</code>, etc. Angular custom events (<code>EventEmitter</code>) triggered before hydration are not replayed, as they have no DOM counterpart.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     SLIDE 7 — INCREMENTAL HYDRATION INTRO
+═══════════════════════════════════════════════════════════════ -->
+<div class="slide" id="s7">
+  <div class="slide-header">
+    <span class="topic-badge green">v19+ Feature</span>
+    <h1>Incremental Hydration — The Next Level</h1>
+  </div>
+  <div class="content">
+    <div class="new-box">
+      <div class="new-hdr">Angular v19+ · Default-on in v22 via provideClientHydration()</div>
+      <p>Incremental hydration is an <strong>advanced form of hydration</strong> that leaves sections of your app <em>dehydrated</em> and lazily triggers hydration of those sections as needed. It builds on top of full app hydration + deferrable views (<code>@defer</code>) + event replay.</p>
+    </div>
+
+    <div class="two-col">
+      <div>
+        <h2>The Problem It Solves</h2>
+        <div class="card accent-red">
+          <p>Full app hydration loads and hydrates <strong>everything</strong> at once. For large pages, this means downloading and executing JavaScript for components that may be:</p>
+          <ul>
+            <li>Below the fold (never seen)</li>
+            <li>Rarely interacted with</li>
+            <li>Heavy third-party components</li>
+          </ul>
+          <p style="margin-top:6px;">This wastes time, bandwidth, and CPU on mobile.</p>
+        </div>
+      </div>
+      <div>
+        <h2>The Solution</h2>
+        <div class="card accent-green">
+          <p>Incremental hydration lets you mark sections with <strong>hydrate triggers</strong> on <code>@defer</code> blocks. Those sections:</p>
+          <ul>
+            <li>Are rendered by the server (no placeholder flash)</li>
+            <li>Remain <em>dehydrated</em> on the client initially</li>
+            <li>Download their JS bundles <strong>on demand</strong> (viewport entry, interaction, hover, idle, timer)</li>
+            <li>Hydrate instantly when triggered</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="metric-grid">
+      <div class="metric-card">
+        <div class="metric-num" style="color:#3fb950;">📦</div>
+        <div class="metric-lbl">Smaller Initial Bundle</div>
+        <div class="metric-sub">Only above-fold critical code loads initially</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-num" style="color:#58a6ff;">⚡</div>
+        <div class="metric-lbl">Faster TTI</div>
+        <div class="metric-sub">Time to Interactive drops dramatically</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-num" style="color:#ffa657;">0</div>
+        <div class="metric-lbl">Layout Shifts</div>
+        <div class="metric-sub">Server-rendered HTML stays intact — no placeholder flicker</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     SLIDE 8 — INCREMENTAL HYDRATION: SETUP & HOW IT WORKS
+═══════════════════════════════════════════════════════════════ -->
+<div class="slide" id="s8">
+  <div class="slide-header">
+    <span class="topic-badge green">v19+</span>
+    <h1>Incremental Hydration — Setup &amp; Mechanics</h1>
+  </div>
+  <div class="content">
+    <div class="two-col">
+      <div>
+        <h2>Enabling (v19–v21)</h2>
+        <div class="code-block"><pre><span class="cmt">// v19 – v21: explicit opt-in</span>
+<span class="kw">import</span> {
+  <span class="fn">provideClientHydration</span>,
+  <span class="fn">withIncrementalHydration</span>
+} <span class="kw">from</span> <span class="str">'@angular/platform-browser'</span>;
+
+<span class="fn">bootstrapApplication</span>(<span class="cls">AppComponent</span>, {
+  providers: [
+    <span class="fn">provideClientHydration</span>(
+      <span class="fn">withIncrementalHydration</span>()
+    )
+  ]
+});</pre></div>
+
+        <div class="code-block" style="margin-top:8px;"><pre><span class="cmt">// v22+: enabled BY DEFAULT with provideClientHydration()</span>
+<span class="fn">provideClientHydration</span>()  <span class="cmt">// incremental hydration is ON</span>
+
+<span class="cmt">// Opt OUT if you need to:</span>
+<span class="fn">provideClientHydration</span>(<span class="fn">withNoIncrementalHydration</span>())</pre></div>
+      </div>
+      <div>
+        <h2>How It Works Mechanically</h2>
+        <div class="card accent-purple">
+          <ul>
+            <li><strong>SSR phase:</strong> Angular renders the <code>@defer</code> block's <em>main template</em> (not the placeholder) because it has a <code>hydrate</code> trigger</li>
+            <li><strong>Client phase:</strong> Dependencies are <em>not</em> loaded. The block is "dehydrated" — rendered HTML is present but no JS attached</li>
+            <li><strong>Trigger fires:</strong> Browser triggers the condition (scroll, hover, etc.)</li>
+            <li><strong>Lazy load:</strong> Angular fetches the chunk for that block's dependencies</li>
+            <li><strong>Hydrate:</strong> Angular hydrates that section of the DOM</li>
+            <li><strong>Event replay:</strong> Any interactions before hydration are replayed</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="warn-box">
+      <div class="warn-hdr">Important: Parent-First Hydration</div>
+      <p>Angular's component tree is hierarchical. <strong>Hydrating a child requires the parent to be hydrated first</strong>. If a user triggers a deeply nested <code>@defer</code> block, Angular walks up the tree and hydrates parent blocks first, in top-down order.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     SLIDE 9 — HYDRATE TRIGGERS REFERENCE
+═══════════════════════════════════════════════════════════════ -->
+<div class="slide" id="s9">
+  <div class="slide-header">
+    <span class="topic-badge green">Incremental Hydration</span>
+    <h1>Hydrate Triggers — Complete Reference</h1>
+  </div>
+  <div class="content">
+    <table class="trigger-table">
+      <thead>
+        <tr>
+          <th>Trigger</th>
+          <th>When it fires</th>
+          <th>Best Use Case</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>hydrate on idle</td>
+          <td>Browser enters idle state via <code>requestIdleCallback</code>. Optional timeout: <code>hydrate on idle(500)</code></td>
+          <td>Non-critical widgets (chat, analytics, footers) that should hydrate when browser isn't busy</td>
+        </tr>
+        <tr>
+          <td>hydrate on viewport</td>
+          <td>Content enters the viewport (Intersection Observer API)</td>
+          <td>Below-the-fold sections: product grids, comment sections, related articles</td>
+        </tr>
+        <tr>
+          <td>hydrate on interaction</td>
+          <td>User clicks or presses a key on the element</td>
+          <td>Modals, dropdowns, accordions — hydrate on first interaction</td>
+        </tr>
+        <tr>
+          <td>hydrate on hover</td>
+          <td><code>mouseover</code> or <code>focusin</code> on the element</td>
+          <td>Tooltips, mega-menus — hydrate slightly before click</td>
+        </tr>
+        <tr>
+          <td>hydrate on immediate</td>
+          <td>Immediately after all non-deferred content has rendered</td>
+          <td>Important but slightly secondary content — hydrate ASAP after critical path</td>
+        </tr>
+        <tr>
+          <td>hydrate on timer(Xms)</td>
+          <td>After a fixed duration (ms or s)</td>
+          <td>Ads, banners — delay hydration by a set time</td>
+        </tr>
+        <tr>
+          <td>hydrate when condition</td>
+          <td>When a custom boolean expression becomes <code>true</code></td>
+          <td>User-state-driven (logged in, feature flag enabled, route param set)</td>
+        </tr>
+        <tr>
+          <td>hydrate never</td>
+          <td>Never hydrates on initial load — stays as static HTML forever</td>
+          <td>Pure display components: static banners, marketing copy, server-only rendered blocks</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="code-block">
+      <div class="code-label">Trigger Examples in Templates</div>
+      <pre><span class="cmt">&lt;!-- Hydrate when user scrolls this into view --&gt;</span>
+<span class="at">@defer</span> (hydrate on viewport) {
+  <span class="tpl">&lt;app-product-grid /&gt;</span>
+} @placeholder { <span class="tpl">&lt;div&gt;</span>Loading products...<span class="tpl">&lt;/div&gt;</span> }
+
+<span class="cmt">&lt;!-- Hydrate after 2 seconds --&gt;</span>
+<span class="at">@defer</span> (hydrate on timer(2s)) {
+  <span class="tpl">&lt;app-chat-widget /&gt;</span>
+} @placeholder { <span class="tpl">&lt;div&gt;</span>Chat loading...<span class="tpl">&lt;/div&gt;</span> }
+
+<span class="cmt">&lt;!-- Hydrate when user is authenticated --&gt;</span>
+<span class="at">@defer</span> (hydrate when isLoggedIn()) {
+  <span class="tpl">&lt;app-user-dashboard /&gt;</span>
+} @placeholder { <span class="tpl">&lt;div&gt;</span>Please log in<span class="tpl">&lt;/div&gt;</span> }
+
+<span class="cmt">&lt;!-- Static marketing block — never hydrates --&gt;</span>
+<span class="at">@defer</span> (on viewport; hydrate never) {
+  <span class="tpl">&lt;app-hero-banner /&gt;</span>
+} @placeholder { <span class="tpl">&lt;div&gt;</span>...<span class="tpl">&lt;/div&gt;</span> }</pre>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     SLIDE 10 — DEFER + HYDRATE TRIGGERS TOGETHER
+═══════════════════════════════════════════════════════════════ -->
+<div class="slide" id="s10">
+  <div class="slide-header">
+    <span class="topic-badge green">Incremental Hydration</span>
+    <h1>@defer Triggers vs Hydrate Triggers</h1>
+  </div>
+  <div class="content">
+    <div class="new-box">
+      <div class="new-hdr">Two Separate Trigger Systems Working Together</div>
+      <p>A <code>@defer</code> block can have <strong>both a regular trigger</strong> (for client-side render navigation) <strong>and a hydrate trigger</strong> (for initial SSR load). They serve different rendering paths and don't conflict.</p>
+    </div>
+
+    <div class="code-block">
+      <div class="code-label">Dual Triggers Example</div>
+      <pre><span class="at">@defer</span> (on idle; hydrate on interaction) {
+  <span class="tpl">&lt;app-comments-section /&gt;</span>
+} @placeholder {
+  <span class="tpl">&lt;div&gt;</span>Comments loading...<span class="tpl">&lt;/div&gt;</span>
+}
+
+<span class="cmt">
+┌─────────────────────────────────────────────────────────────────┐
+│  INITIAL LOAD (SSR + Hydration path):                           │
+│    "hydrate on interaction" applies                             │
+│    Server renders the main template (no placeholder)           │
+│    Client dehydrates the block, waits for user to click         │
+│    On click → lazy load JS chunk → hydrate the section         │
+├─────────────────────────────────────────────────────────────────┤
+│  SUBSEQUENT CLIENT-SIDE NAVIGATION (CSR path):                 │
+│    "on idle" applies                                            │
+│    No SSR, so regular @defer logic kicks in                    │
+│    Shows placeholder → loads chunk on browser idle             │
+│    → renders main template                                      │
+└─────────────────────────────────────────────────────────────────┘
+</span></pre>
+    </div>
+
+    <div class="two-col">
+      <div class="card accent-cyan">
+        <h3>Nested @defer Hydration Order</h3>
+        <div class="code-block"><pre><span class="at">@defer</span> (hydrate on interaction) {
+  <span class="tpl">&lt;parent-cmp /&gt;</span>
+  <span class="at">@defer</span> (hydrate on hover) {
+    <span class="tpl">&lt;child-cmp /&gt;</span>   <span class="cmt">← hover here</span>
+  }
+}
+<span class="cmt">
+Hover on child triggers:
+1. Parent hydrates first
+2. Then child hydrates
+(Always top-down)
+</span></pre></div>
+      </div>
+      <div class="card accent-yellow">
+        <h3>@placeholder Still Required</h3>
+        <div class="tip-box">
+          <div class="tip-hdr">Why placeholder is still needed</div>
+          <p>Even with incremental hydration, the <code>@placeholder</code> block is needed for <strong>client-side navigation</strong> paths. If the user navigates to a route fresh on the client (not SSR initial load), the <code>@defer</code> block behaves normally and shows the placeholder while loading.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     SLIDE 11 — ngSkipHydration
+═══════════════════════════════════════════════════════════════ -->
+<div class="slide" id="s11">
+  <div class="slide-header">
+    <span class="topic-badge red">Escape Hatch</span>
+    <h1>ngSkipHydration — Opting Out Per Component</h1>
+  </div>
+  <div class="content">
+    <div class="warn-box">
+      <div class="warn-hdr">Use as a Last Resort Only</div>
+      <p><code>ngSkipHydration</code> is an escape hatch for components that can't be made hydration-compatible (e.g., using heavy direct DOM manipulation or 3rd-party libraries). Using it means those components lose ALL hydration benefits and behave as if hydration isn't enabled.</p>
+    </div>
+
+    <div class="two-col">
+      <div>
+        <h2>Usage — Template Attribute</h2>
+        <div class="code-block"><pre><span class="cmt">&lt;!-- On the component's tag in parent template --&gt;</span>
+<span class="tpl">&lt;app-d3-chart</span> <span class="at">ngSkipHydration</span> <span class="tpl">/&gt;</span>
+
+<span class="cmt">&lt;!-- Works with property binding syntax too --&gt;</span>
+<span class="tpl">&lt;app-d3-chart</span> [ngSkipHydration]="<span class="str">true</span>" <span class="tpl">/&gt;</span></pre></div>
+
+        <h2 style="margin-top:12px;">Usage — Host Binding</h2>
+        <div class="code-block"><pre><span class="at">@Component</span>({
+  selector: <span class="str">'app-d3-chart'</span>,
+  template: `<span class="tpl">&lt;div #chartHost&gt;&lt;/div&gt;</span>`,
+  host: { ngSkipHydration: <span class="str">'true'</span> }  <span class="cmt">// ← host binding</span>
+})
+<span class="kw">export class</span> <span class="cls">D3ChartComponent</span> {
+  <span class="at">@ViewChild</span>(<span class="str">'chartHost'</span>) chartEl!: <span class="typ">ElementRef</span>;
+
+  <span class="fn">ngAfterViewInit</span>() {
+    <span class="cmt">// D3 DOM manipulation — safe here because of ngSkipHydration</span>
+    d3.select(<span class="kw">this</span>.chartEl.nativeElement).<span class="fn">append</span>(<span class="str">'svg'</span>)...;
+  }
+}</pre></div>
+      </div>
+      <div>
+        <h2>What ngSkipHydration Does</h2>
+        <div class="card accent-orange">
+          <ul>
+            <li>Angular <strong>destroys</strong> the server-rendered DOM for that component</li>
+            <li><strong>Re-renders</strong> the component from scratch on the client</li>
+            <li>All <strong>children</strong> are also skipped — it's an entire subtree skip</li>
+            <li>The component will cause a <strong>layout shift</strong> (content wipes and redraws)</li>
+            <li>Data is fetched again (no TransferState benefit for that component)</li>
+          </ul>
+        </div>
+
+        <div class="err-box" style="margin-top:10px;">
+          <div class="err-hdr">Critical Warning</div>
+          <p>Adding <code>ngSkipHydration</code> to your <strong>root <code>AppComponent</code></strong> effectively disables hydration for the <strong>entire application</strong>. Always apply it as narrowly as possible to the specific component that needs it.</p>
+        </div>
+
+        <div class="tip-box" style="margin-top:10px;">
+          <div class="tip-hdr">When to use it</div>
+          <ul>
+            <li>3rd-party D3 / Chart.js / Leaflet components</li>
+            <li>Legacy Angular components that do direct DOM manipulation</li>
+            <li>Components using <code>innerHTML</code> / <code>outerHTML</code> heavily</li>
+            <li>While you're iterating on fixing the root cause</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     SLIDE 12 — CONSTRAINTS
+═══════════════════════════════════════════════════════════════ -->
+<div class="slide" id="s12">
+  <div class="slide-header">
+    <span class="topic-badge red">Constraints</span>
+    <h1>Hydration Constraints — What You Must Know</h1>
+  </div>
+  <div class="content">
+    <div class="err-box">
+      <div class="err-hdr">The Core Rule</div>
+      <p>The HTML produced by server-side rendering <strong>must NOT be altered</strong> between the server and when Angular runs on the client. The DOM tree must have the <strong>same structure</strong> — including whitespace and comment nodes — in both environments.</p>
+    </div>
+
+    <div class="three-col">
+      <div class="card accent-red">
+        <h3>❌ Direct DOM Manipulation</h3>
+        <ul>
+          <li>Using <code>document.querySelector</code></li>
+          <li>Using <code>appendChild</code> / <code>removeChild</code></li>
+          <li>Using <code>innerHTML</code> / <code>outerHTML</code></li>
+          <li>Detaching and moving DOM nodes</li>
+          <li>Using <code>ElementRef.nativeElement</code> to modify structure</li>
+        </ul>
+        <p style="margin-top:6px; color:#f85149; font-size:11px;"><strong>Fix:</strong> Use Angular APIs (<code>@if</code>, <code>@for</code>, <code>Renderer2</code>, structural directives)</p>
+      </div>
+      <div class="card accent-yellow">
+        <h3>⚠️ Invalid HTML Structure</h3>
+        <ul>
+          <li><code>&lt;table&gt;</code> without explicit <code>&lt;tbody&gt;</code> — browser auto-inserts <code>&lt;tbody&gt;</code>, Angular expects it too</li>
+          <li><code>&lt;div&gt;</code> directly inside <code>&lt;p&gt;</code> — browsers auto-close the <code>&lt;p&gt;</code></li>
+          <li>Nested <code>&lt;a&gt;</code> tags — invalid, causes parse differences</li>
+          <li><code>&lt;li&gt;</code> outside of <code>&lt;ul&gt;</code>/<code>&lt;ol&gt;</code></li>
+        </ul>
+        <p style="margin-top:6px; color:#e3b341; font-size:11px;"><strong>Fix:</strong> Validate templates at <code>validator.w3.org</code></p>
+      </div>
+      <div class="card accent-orange">
+        <h3>⚠️ Other Constraints</h3>
+        <ul>
+          <li><strong>preserveWhitespaces: true</strong> in tsconfig — risky; set consistently in both client and server tsconfigs</li>
+          <li><strong>Custom/Noop Zone.js</strong> — may cause hydration to trigger too early/late. Not fully supported</li>
+          <li><strong>Conditional renders</strong> based on <code>isPlatformBrowser</code> — causes client/server DOM mismatch</li>
+          <li><strong>Third-party scripts</strong> that modify DOM before hydration (ads, analytics)</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="diff-row">
+      <div class="diff-bad">
+        <h3>❌ Bad — Platform-conditional render</h3>
+        <div class="code-block"><pre><span class="at">@if</span> (isPlatformBrowser(platformId)) {
+  <span class="tpl">&lt;app-chart /&gt;</span>
+}
+<span class="cmt">// Server renders nothing, client renders chart
+// ← DOM MISMATCH ERROR</span></pre></div>
+      </div>
+      <div class="diff-good">
+        <h3>✅ Good — AfterNextRender for browser-only</h3>
+        <div class="code-block"><pre><span class="cmt">// Use AfterNextRender to run browser-only code
+// AFTER hydration, not during rendering</span>
+<span class="fn">afterNextRender</span>(() => {
+  <span class="cmt">// safely run browser-only code here</span>
+});</pre></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     SLIDE 13 — COMMON ERRORS & HOW TO FIX THEM
+═══════════════════════════════════════════════════════════════ -->
+<div class="slide" id="s13">
+  <div class="slide-header">
+    <span class="topic-badge red">Errors</span>
+    <h1>Common Hydration Errors &amp; Fixes</h1>
+  </div>
+  <div class="content">
+    <div class="two-col">
+      <div>
+        <div class="iq-item">
+          <div class="iq-q">NG0500: Hydration Node Mismatch</div>
+          <div class="iq-a">
+            <strong>Cause:</strong> Angular expected a specific DOM node (e.g. a <code>&lt;div&gt;</code>) but found something different (e.g. a <code>&lt;p&gt;</code>) because the DOM was mutated between server and client.<br/>
+            <strong>Fix:</strong> Check for direct DOM manipulation, invalid HTML, or platform-conditional rendering. Use <code>ngSkipHydration</code> as a temporary fix.
+          </div>
+        </div>
+        <div class="iq-item">
+          <div class="iq-q">NG0501: Hydration Missing Siblings</div>
+          <div class="iq-a">
+            <strong>Cause:</strong> Angular expected sibling nodes after a component but found none. Usually caused by DOM mutation that removed elements.<br/>
+            <strong>Fix:</strong> Stop removing nodes before hydration. Use <code>@if</code>/<code>@for</code> instead of manually removing DOM.
+          </div>
+        </div>
+        <div class="iq-item">
+          <div class="iq-q">NG0502: Hydration Missing Node</div>
+          <div class="iq-a">
+            <strong>Cause:</strong> A DOM node present on the server is missing on the client — possibly stripped by a CDN HTML minifier or a 3rd party script.<br/>
+            <strong>Fix:</strong> Ensure your CDN/proxy doesn't modify Angular's HTML. Check for aggressive HTML minification that removes comment nodes.
+          </div>
+        </div>
+        <div class="iq-item">
+          <div class="iq-q">NG0506: Application Remains Unstable</div>
+          <div class="iq-a">
+            <strong>Cause:</strong> App hasn't reached a stable state after 10 seconds. Often caused by unresolved timers (<code>setInterval</code>), pending promises, infinite observables, or uncleared macrotasks in Zone.js.<br/>
+            <strong>Fix:</strong> Use <code>provideStabilityDebugging()</code> to identify what's keeping the app unstable.
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="iq-item">
+          <div class="iq-q">NG0507: Skip Hydration on Invalid Host</div>
+          <div class="iq-a">
+            <strong>Cause:</strong> <code>ngSkipHydration</code> was applied to a non-component node (e.g. an <code>&lt;ng-container&gt;</code> or a plain DOM element).<br/>
+            <strong>Fix:</strong> <code>ngSkipHydration</code> can only be placed on a component's host element, not on directives or plain DOM.
+          </div>
+        </div>
+        <div class="code-block" style="margin-top:8px;">
+          <div class="code-label">Using provideStabilityDebugging()</div>
+          <pre><span class="kw">import</span> { <span class="fn">provideStabilityDebugging</span> } <span class="kw">from</span> <span class="str">'@angular/core'</span>;
+<span class="kw">import</span> <span class="str">'zone.js/plugins/task-tracking'</span>;
+
+<span class="fn">bootstrapApplication</span>(<span class="cls">AppComponent</span>, {
+  providers: [
+    <span class="fn">provideClientHydration</span>(),
+    <span class="fn">provideStabilityDebugging</span>()  <span class="cmt">// dev only!</span>
+  ]
+});
+<span class="cmt">
+// Console will log pending tasks:
+// [Zone.js] Macro task: setInterval (src/app.ts:42)
+// This tells you EXACTLY what is preventing stability
+</span></pre>
+        </div>
+        <div class="warn-box" style="margin-top:8px;">
+          <div class="warn-hdr">Remove from production</div>
+          <p><code>provideStabilityDebugging()</code> is NOT tree-shaken. Do not leave it in production builds — it adds overhead and exposes internals.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     SLIDE 14 — APPLICATION STABILITY & TIMING
+═══════════════════════════════════════════════════════════════ -->
+<div class="slide" id="s14">
+  <div class="slide-header">
+    <span class="topic-badge yellow">Stability</span>
+    <h1>Application Stability &amp; Hydration Timing</h1>
+  </div>
+  <div class="content">
+    <div class="mem-box">
+      <div class="mem-hdr">Critical Concept</div>
+      <p>Hydration and all post-hydration processes <strong>only start once the application reports stability</strong>. Zone.js tracks pending async work (HTTP, timers, promises). When the Zone becomes idle, Angular considers the app "stable" and begins or completes hydration processes.</p>
+    </div>
+
+    <div class="two-col">
+      <div>
+        <h2>What Prevents Stability</h2>
+        <div class="card accent-red">
+          <ul>
+            <li><strong>setInterval / setInterval</strong> running indefinitely</li>
+            <li><strong>Unresolved Promises</strong> that never resolve or reject</li>
+            <li><strong>Pending microtasks</strong> in the Zone.js queue</li>
+            <li><strong>Infinite RxJS observables</strong> not properly unsubscribed</li>
+            <li><strong>Router guards</strong> that never complete</li>
+            <li><strong>Pending HTTP requests</strong> that timeout silently</li>
+          </ul>
+        </div>
+
+        <div class="code-block" style="margin-top:10px;">
+          <div class="code-label">Common Mistake — Uncleared Interval</div>
+          <pre><span class="kw">export class</span> <span class="cls">AppComponent</span> <span class="kw">implements</span> <span class="typ">OnInit</span> {
+  <span class="fn">ngOnInit</span>() {
+    <span class="cmt">// ❌ This prevents app stability FOREVER</span>
+    <span class="fn">setInterval</span>(() => {}, <span class="num">1000</span>);
+  }
+}
+
+<span class="cmt">// ✅ Fix: Run outside Zone.js</span>
+<span class="kw">constructor</span>(<span class="kw">private</span> <span class="var">ngZone</span>: <span class="typ">NgZone</span>) {}
+<span class="fn">ngOnInit</span>() {
+  <span class="kw">this</span>.<span class="var">ngZone</span>.<span class="fn">runOutsideAngular</span>(() => {
+    <span class="fn">setInterval</span>(() => {}, <span class="num">1000</span>);
+  });
+}</pre>
+        </div>
+      </div>
+      <div>
+        <h2>The 10-Second Rule</h2>
+        <div class="warn-box">
+          <div class="warn-hdr">NG0506 Threshold</div>
+          <p>If your app hasn't stabilized within <strong>10 seconds</strong> of bootstrapping, Angular throws <code>NG0506: Application remains unstable</code> error. This is a hard timeout meant to surface bugs early.</p>
+        </div>
+
+        <h2 style="margin-top:12px;">Stability Debugging Workflow</h2>
+        <div class="flow" style="flex-direction:column; align-items:flex-start; gap:8px; padding:0;">
+          <div style="display:flex; gap:8px; align-items:center;">
+            <span class="badge badge-blue">1</span>
+            <span style="font-size:12px; color:#c9d1d9;">Add <code>provideStabilityDebugging()</code> to providers</span>
+          </div>
+          <div style="display:flex; gap:8px; align-items:center;">
+            <span class="badge badge-blue">2</span>
+            <span style="font-size:12px; color:#c9d1d9;">Add <code>import 'zone.js/plugins/task-tracking'</code></span>
+          </div>
+          <div style="display:flex; gap:8px; align-items:center;">
+            <span class="badge badge-blue">3</span>
+            <span style="font-size:12px; color:#c9d1d9;">Check console — see pending task names + stack traces</span>
+          </div>
+          <div style="display:flex; gap:8px; align-items:center;">
+            <span class="badge badge-blue">4</span>
+            <span style="font-size:12px; color:#c9d1d9;">Fix each source: clear timers, complete observables</span>
+          </div>
+          <div style="display:flex; gap:8px; align-items:center;">
+            <span class="badge badge-green">5</span>
+            <span style="font-size:12px; color:#3fb950;">Remove debug provider before deploying</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     SLIDE 15 — i18n AND THIRD PARTY LIBRARIES
+═══════════════════════════════════════════════════════════════ -->
+<div class="slide" id="s15">
+  <div class="slide-header">
+    <span class="topic-badge cyan">i18n &amp; Libraries</span>
+    <h1>i18n Support &amp; Third-Party Libraries</h1>
+  </div>
+  <div class="content">
+    <div class="two-col">
+      <div>
+        <h2>i18n — International Support</h2>
+        <div class="warn-box">
+          <div class="warn-hdr">Default Behaviour</div>
+          <p>By default, Angular <strong>skips hydration for components that use <code>i18n</code> blocks</strong> — they re-render from scratch on the client. This avoids complex locale-based DOM mismatches.</p>
+        </div>
+        <div class="code-block" style="margin-top:10px;">
+          <div class="code-label">Enabling i18n Hydration Support</div>
+          <pre><span class="kw">import</span> {
+  <span class="fn">provideClientHydration</span>,
+  <span class="fn">withI18nSupport</span>
+} <span class="kw">from</span> <span class="str">'@angular/platform-browser'</span>;
+
+<span class="fn">bootstrapApplication</span>(<span class="cls">AppComponent</span>, {
+  providers: [
+    <span class="fn">provideClientHydration</span>(
+      <span class="fn">withI18nSupport</span>()  <span class="cmt">// ← Opt-in for i18n hydration</span>
+    )
+  ]
+});</pre>
+        </div>
+        <div class="tip-box" style="margin-top:8px;">
+          <div class="tip-hdr">Consistency is key</div>
+          <p>Ensure your server and client use the <strong>same locale</strong>. Locale mismatch = DOM mismatch = hydration error.</p>
+        </div>
+      </div>
+      <div>
+        <h2>Third-Party Libraries</h2>
+        <div class="card accent-orange">
+          <h3>Libraries with DOM Manipulation</h3>
+          <p>Many libraries (D3.js, Chart.js, Leaflet, ag-Grid) rely on direct DOM manipulation. This causes hydration mismatches.</p>
+          <br/>
+          <p><strong>Solution:</strong> Apply <code>ngSkipHydration</code> to the wrapper component until the library is updated or you can isolate its DOM work.</p>
+        </div>
+        <div class="card accent-red" style="margin-top:10px;">
+          <h3>Third-Party Scripts (Analytics, Ads)</h3>
+          <p>Scripts like Google Analytics, ad trackers, or A/B testing scripts modify DOM <em>before</em> Angular hydrates. This causes hydration errors.</p>
+          <br/>
+          <p><strong>Solution:</strong> Use <code>afterNextRender()</code> to defer script injection until after hydration completes.</p>
+        </div>
+        <div class="code-block" style="margin-top:10px;">
+          <div class="code-label">Defer 3rd Party Script Until Post-Hydration</div>
+          <pre><span class="kw">import</span> { <span class="fn">afterNextRender</span>, <span class="cls">Component</span> } <span class="kw">from</span> <span class="str">'@angular/core'</span>;
+
+<span class="at">@Component</span>({...})
+<span class="kw">export class</span> <span class="cls">AppComponent</span> {
+  <span class="fn">constructor</span>() {
+    <span class="fn">afterNextRender</span>(() => {
+      <span class="cmt">// Load analytics ONLY after hydration</span>
+      <span class="fn">loadGoogleAnalytics</span>();
+    });
+  }
+}</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     SLIDE 16 — BEST PRACTICES
+═══════════════════════════════════════════════════════════════ -->
+<div class="slide" id="s16">
+  <div class="slide-header">
+    <span class="topic-badge purple">Best Practices</span>
+    <h1>Hydration Best Practices for Production</h1>
+  </div>
+  <div class="content">
+    <div class="three-col">
+      <div class="card accent-green">
+        <h3>✅ Always Use Angular APIs for DOM</h3>
+        <ul>
+          <li>Use <code>@if</code>, <code>@for</code>, <code>@switch</code> for conditional/loop rendering</li>
+          <li>Use <code>Renderer2</code> for programmatic DOM changes</li>
+          <li>Use <code>@ViewChild</code> + <code>ElementRef</code> for reading, not for structural changes</li>
+          <li>Use <code>afterNextRender()</code> or <code>afterRender()</code> for browser-only DOM work</li>
+        </ul>
+      </div>
+      <div class="card accent-blue">
+        <h3>✅ Consistent Server + Client Rendering</h3>
+        <ul>
+          <li>Avoid <code>isPlatformBrowser()</code> in templates to conditionally render different content</li>
+          <li>Use the same locale for i18n on server and client</li>
+          <li>Use the same <code>preserveWhitespaces</code> setting in both <code>tsconfig.app.json</code> and <code>tsconfig.server.json</code></li>
+          <li>Avoid random data (dates, UUIDs) in templates without seeding</li>
+        </ul>
+      </div>
+      <div class="card accent-orange">
+        <h3>✅ Use TransferState for Data</h3>
+        <ul>
+          <li>Let Angular's <code>HttpClient</code> + <code>TransferState</code> handle data transfer automatically</li>
+          <li>Services using <code>HttpClient</code> get transfer state for free in Angular 15+</li>
+          <li>Avoid re-fetching data inside <code>ngOnInit</code> if the data was already loaded on the server</li>
+          <li>Use <code>makeStateKey</code> for custom non-HTTP data</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="three-col" style="margin-top:4px;">
+      <div class="card accent-purple">
+        <h3>✅ Incremental Hydration for Performance</h3>
+        <ul>
+          <li>Use <code>hydrate on viewport</code> for below-the-fold heavy components</li>
+          <li>Use <code>hydrate on idle</code> for non-critical secondary widgets</li>
+          <li>Use <code>hydrate never</code> for purely static server-rendered blocks</li>
+          <li>Measure bundle impact with Angular CLI <code>--stats-json</code></li>
+        </ul>
+      </div>
+      <div class="card accent-cyan">
+        <h3>✅ Validate HTML Templates</h3>
+        <ul>
+          <li>Always declare <code>&lt;tbody&gt;</code> in tables explicitly</li>
+          <li>Run templates through <code>validator.w3.org</code></li>
+          <li>Avoid nesting block-level elements inside inline elements</li>
+          <li>Never nest <code>&lt;a&gt;</code> inside <code>&lt;a&gt;</code></li>
+        </ul>
+      </div>
+      <div class="card accent-yellow">
+        <h3>✅ Maintain App Stability</h3>
+        <ul>
+          <li>Run timers/intervals outside Zone.js with <code>ngZone.runOutsideAngular()</code></li>
+          <li>Complete all RxJS subscriptions properly</li>
+          <li>Use <code>takeUntilDestroyed()</code> or <code>DestroyRef</code> for cleanup</li>
+          <li>Test stability with <code>provideStabilityDebugging()</code> before release</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="tip-box">
+      <div class="tip-hdr">The Golden Rule</div>
+      <p>Your application's server-rendered HTML is a <strong>contract</strong>. Angular hydration trusts that contract completely. Any deviation — whether from DOM manipulation, scripts, CDN transforms, or conditional rendering — breaks that contract and causes errors. Treat the server-rendered DOM as immutable until Angular has fully bootstrapped.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     SLIDE 17 — VERSION TIMELINE
+═══════════════════════════════════════════════════════════════ -->
+<div class="slide" id="s17">
+  <div class="slide-header">
+    <span class="topic-badge">Version History</span>
+    <h1>Angular Hydration — Version Evolution</h1>
+  </div>
+  <div class="content">
+    <table>
+      <thead>
+        <tr>
+          <th>Version</th>
+          <th>Feature</th>
+          <th>Status</th>
+          <th>Key API</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="vbadge v16" style="display:inline-flex;">v16</span></td>
+          <td>Full App Hydration — initial release</td>
+          <td><span class="badge badge-yellow">Developer Preview</span></td>
+          <td><code>provideClientHydration()</code></td>
+        </tr>
+        <tr>
+          <td><span class="vbadge v17" style="display:inline-flex;">v17</span></td>
+          <td>Full App Hydration — stable, new project default</td>
+          <td><span class="badge badge-green">Stable</span></td>
+          <td><code>provideClientHydration()</code></td>
+        </tr>
+        <tr>
+          <td><span class="vbadge v18" style="display:inline-flex;">v18</span></td>
+          <td>Event Replay — capture pre-hydration events via JSAction</td>
+          <td><span class="badge badge-blue">Stable (opt-in)</span></td>
+          <td><code>withEventReplay()</code></td>
+        </tr>
+        <tr>
+          <td><span class="vbadge v19" style="display:inline-flex;">v19</span></td>
+          <td>Incremental Hydration — @defer + hydrate triggers</td>
+          <td><span class="badge badge-yellow">Developer Preview</span></td>
+          <td><code>withIncrementalHydration()</code></td>
+        </tr>
+        <tr>
+          <td><span class="vbadge v19" style="display:inline-flex;">v19</span></td>
+          <td>Event Replay enabled by default with Incremental Hydration</td>
+          <td><span class="badge badge-green">Auto-on</span></td>
+          <td>Automatic</td>
+        </tr>
+        <tr>
+          <td><span class="vbadge v20" style="display:inline-flex;">v20</span></td>
+          <td>Incremental Hydration stabilizes; provideStabilityDebugging default in dev mode</td>
+          <td><span class="badge badge-green">Stable</span></td>
+          <td><code>provideStabilityDebugging()</code></td>
+        </tr>
+        <tr>
+          <td><span class="vbadge v22" style="display:inline-flex;">v22</span></td>
+          <td>Incremental Hydration is ON by default with <code>provideClientHydration()</code></td>
+          <td><span class="badge badge-green">Default ON</span></td>
+          <td><code>withNoIncrementalHydration()</code> to opt-out</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="two-col" style="margin-top:4px;">
+      <div class="tip-box">
+        <div class="tip-hdr">Migration Path</div>
+        <p>Upgrading from v16 to v22 is straightforward for hydration. The key change is v22 enables incremental hydration by default. If you have <code>@defer</code> blocks without <code>hydrate</code> triggers, add <code>withNoIncrementalHydration()</code> temporarily while you migrate, or add hydrate triggers one section at a time.</p>
+      </div>
+      <div class="new-box">
+        <div class="new-hdr">Angular v22 Current State</div>
+        <p>As of v22 (<strong>latest as of July 2026</strong>), <code>provideClientHydration()</code> gives you: full app hydration + incremental hydration + event replay — all in one call, all defaults. The only API you need to know for a new project is <code>provideClientHydration()</code>.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     SLIDE 18 — INTERVIEW QUESTIONS PART 1
+═══════════════════════════════════════════════════════════════ -->
+<div class="slide" id="s18">
+  <div class="slide-header">
+    <span class="topic-badge pink">Interview Q&A</span>
+    <h1>Interview Questions — Part 1: Fundamentals</h1>
+  </div>
+  <div class="content">
+
+    <div class="iq-item">
+      <div class="iq-q">Q1. What is Angular Hydration and why was it introduced? <span class="iq-level badge badge-blue">Senior</span></div>
+      <div class="iq-a">
+        Hydration is the process of restoring an SSR-rendered Angular application on the client by <strong>reusing existing server-rendered DOM nodes</strong> instead of destroying and recreating them. It was introduced because without hydration, SSR apps suffered from a double-render problem: the server rendered HTML for a fast first paint, but Angular's client bootstrap destroyed that DOM and re-rendered it from scratch, causing a visible flicker, layout shift, and a second round of data fetching. Hydration eliminates this waste by making Angular "claim" existing nodes, dramatically improving LCP, FID, and CLS Core Web Vitals.
+      </div>
+    </div>
+
+    <div class="iq-item">
+      <div class="iq-q">Q2. How does Angular hydration differ from React's hydration? <span class="iq-level badge badge-orange">Expert</span></div>
+      <div class="iq-a">
+        Both React and Angular's hydration walk the server-rendered DOM to attach client-side logic without rebuilding the DOM. The key difference is Angular's <strong>Incremental Hydration</strong> (v19+) which uses <code>@defer</code> block annotations to leave portions of the tree dehydrated and load them lazily on demand — React achieves something similar with Selective Hydration / Suspense. Angular's implementation is unique because the hydration boundaries are defined via template syntax (<code>hydrate on viewport</code>, <code>hydrate on interaction</code>) rather than code boundaries, making it more declarative. Angular also automatically handles <strong>TransferState</strong> for HTTP cache transfer, while React requires manual implementation.
+      </div>
+    </div>
+
+    <div class="iq-item">
+      <div class="iq-q">Q3. What is a DOM mismatch error in Angular Hydration and what are the top causes? <span class="iq-level badge badge-blue">Senior</span></div>
+      <div class="iq-a">
+        A DOM mismatch (NG0500) occurs when Angular's expected component DOM tree doesn't match the actual DOM it finds in the browser. Top causes: <strong>(1)</strong> Direct DOM manipulation via native APIs before hydration (<code>appendChild</code>, <code>innerHTML</code>); <strong>(2)</strong> Invalid HTML structure where browsers auto-correct (e.g., missing <code>&lt;tbody&gt;</code>); <strong>(3)</strong> Platform-conditional rendering using <code>isPlatformBrowser()</code> causing server/client to render different templates; <strong>(4)</strong> Third-party scripts (ads, analytics) that modify DOM before Angular hydrates; <strong>(5)</strong> CDN HTML minifiers that strip Angular's hydration comment markers.
+      </div>
+    </div>
+
+    <div class="iq-item">
+      <div class="iq-q">Q4. What is the minimum setup required to enable hydration in a new Angular project? <span class="iq-level badge badge-green">Mid-Senior</span></div>
+      <div class="iq-a">
+        SSR must be enabled first (<code>ng add @angular/ssr</code>). Then add <code>provideClientHydration()</code> to the app's bootstrap providers (in <code>app.config.ts</code> or <code>AppModule</code>). The CLI does both steps automatically when you use <code>ng new my-app --ssr</code>. Crucially, <code>provideClientHydration()</code> must be present in <strong>both the client bootstrap config AND the server bootstrap config</strong> — missing it from the server config is a common mistake.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     SLIDE 19 — INTERVIEW QUESTIONS PART 2
+═══════════════════════════════════════════════════════════════ -->
+<div class="slide" id="s19">
+  <div class="slide-header">
+    <span class="topic-badge pink">Interview Q&A</span>
+    <h1>Interview Questions — Part 2: Advanced</h1>
+  </div>
+  <div class="content">
+
+    <div class="iq-item">
+      <div class="iq-q">Q5. Explain Event Replay. Why is it needed and how does it work? <span class="iq-level badge badge-blue">Senior</span></div>
+      <div class="iq-a">
+        Event Replay solves the "zombie click" problem: the server HTML is visible and looks interactive, but Angular's JS hasn't bootstrapped yet. Without event replay, any user clicks during this window are <strong>silently discarded</strong>. With <code>withEventReplay()</code> (v18+), a lightweight JSAction library attaches to the document root via an inline script (runs before Angular) and captures all native browser events (click, keydown, focusin, etc.) into a queue. Once Angular finishes hydration and attaches real event listeners, it replays those queued events in order. This ensures not a single user interaction is lost during the bootstrap window.
+      </div>
+    </div>
+
+    <div class="iq-item">
+      <div class="iq-q">Q6. What is Incremental Hydration and how does it integrate with @defer? <span class="iq-level badge badge-orange">Expert</span></div>
+      <div class="iq-a">
+        Incremental Hydration extends <code>@defer</code> blocks with additional <code>hydrate</code> triggers. During SSR, if a <code>@defer</code> block has a hydrate trigger, Angular renders its <em>main template</em> (not the placeholder), so the server HTML is complete. On the client, the block's JS dependencies are <strong>not loaded initially</strong> — the block remains "dehydrated" (HTML present, no JS attached). When the specified trigger fires (e.g., <code>hydrate on viewport</code>), Angular lazily downloads that block's chunk, then hydrates that section. This produces smaller initial JS bundles while avoiding layout shifts — a combination previously impossible because using <code>@defer</code> above-the-fold always showed a placeholder flash.
+      </div>
+    </div>
+
+    <div class="iq-item">
+      <div class="iq-q">Q7. When would you use ngSkipHydration and what are its trade-offs? <span class="iq-level badge badge-blue">Senior</span></div>
+      <div class="iq-a">
+        <code>ngSkipHydration</code> is used when a component fundamentally can't be made hydration-compatible — typically wrapper components around 3rd-party libraries (D3, Leaflet, ag-Grid) that imperatively build their own DOM structures. Trade-offs: the component and its <em>entire child subtree</em> lose all hydration benefits — Angular destroys the server-rendered DOM for that subtree and re-renders from scratch, causing a layout shift and potentially a second data fetch. It should be a <strong>temporary workaround</strong>, not a permanent solution. The root component must never have <code>ngSkipHydration</code> as it disables hydration for the entire app.
+      </div>
+    </div>
+
+    <div class="iq-item">
+      <div class="iq-q">Q8. What is Application Stability in the context of hydration and how do you debug it? <span class="iq-level badge badge-orange">Expert</span></div>
+      <div class="iq-a">
+        Angular's hydration and post-hydration cleanup only execute after Zone.js reports the application as "stable" — meaning no pending macrotasks, microtasks, or promises. Common stability blockers: <code>setInterval</code> running without being cleared or moved outside the Zone, pending HTTP requests, infinite RxJS streams not unsubscribed. If unstable for 10 seconds, Angular throws NG0506. Debug using <code>provideStabilityDebugging()</code> + <code>import 'zone.js/plugins/task-tracking'</code> which logs each pending task with its creation stack trace. Fix by: moving timers outside Zone with <code>ngZone.runOutsideAngular()</code>, using <code>takeUntilDestroyed()</code> for subscriptions, and completing all async operations properly.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     SLIDE 20 — INTERVIEW QUESTIONS PART 3
+═══════════════════════════════════════════════════════════════ -->
+<div class="slide" id="s20">
+  <div class="slide-header">
+    <span class="topic-badge pink">Interview Q&A</span>
+    <h1>Interview Questions — Part 3: Expert Level</h1>
+  </div>
+  <div class="content">
+
+    <div class="iq-item">
+      <div class="iq-q">Q9. How does TransferState work with hydration to prevent double data fetching? <span class="iq-level badge badge-orange">Expert</span></div>
+      <div class="iq-a">
+        During SSR, Angular's <code>HttpClient</code> intercepts HTTP responses and stores them in a <code>TransferState</code> store keyed by URL. This store is serialized as a JSON blob in a <code>&lt;script id="ng-state"&gt;</code> tag embedded in the server HTML. On the client, before making any HTTP request, Angular's built-in <code>TransferStateInterceptor</code> checks this store first. If the data is present, it returns it synchronously as a completed observable — <strong>no actual HTTP request is made</strong>. This means the app displays data instantly on client bootstrap without waiting for another round-trip. The state is cleared from memory after the first read. For custom non-HTTP data, use <code>makeStateKey&lt;T&gt;()</code> + <code>TransferState</code> service directly.
+      </div>
+    </div>
+
+    <div class="iq-item">
+      <div class="iq-q">Q10. How do hydrate triggers differ between an initial SSR load and subsequent client-side navigation? <span class="iq-level badge badge-orange">Expert</span></div>
+      <div class="iq-a">
+        A <code>@defer</code> block can have both a regular trigger and a hydrate trigger: <code>@defer (on idle; hydrate on interaction)</code>. These apply to <strong>different rendering scenarios</strong>. The <code>hydrate on interaction</code> trigger only applies to the <em>initial SSR page load</em> — it controls when the already-server-rendered dehydrated block gets hydrated. The <code>on idle</code> trigger applies to <em>subsequent client-side navigation</em> (e.g., via RouterLink) where the page is rendered freshly on the client with no SSR. In that case, the regular <code>@defer</code> behavior applies: show placeholder → load on idle → render main content. This dual-trigger design lets you optimize both the initial load experience and the SPA navigation experience independently.
+      </div>
+    </div>
+
+    <div class="iq-item">
+      <div class="iq-q">Q11. What are the implications of preserveWhitespaces on hydration and how do you safely configure it? <span class="iq-level badge badge-blue">Senior</span></div>
+      <div class="iq-a">
+        <code>preserveWhitespaces: true</code> in <code>tsconfig</code> makes Angular preserve whitespace text nodes between HTML elements. The problem: if this setting is <strong>inconsistent between server and client tsconfigs</strong> (<code>tsconfig.server.json</code> vs <code>tsconfig.app.json</code>), the server renders a different DOM structure (with extra text nodes) than the client expects. Angular hydration then sees DOM mismatches everywhere. The safe approach: set it only in <code>tsconfig.app.json</code> (which <code>tsconfig.server.json</code> inherits from), use the default value of <code>false</code>, and never override it in <code>tsconfig.server.json</code> independently.
+      </div>
+    </div>
+
+    <div class="iq-item">
+      <div class="iq-q">Q12. How would you architect a large e-commerce page using incremental hydration for maximum performance? <span class="iq-level badge badge-orange">Expert</span></div>
+      <div class="iq-a">
+        <strong>Above the fold (critical path):</strong> Hero section, navigation — no <code>@defer</code>, hydrates as part of full app hydration immediately. <strong>Primary product grid (below fold):</strong> <code>@defer (on viewport; hydrate on viewport)</code> — hydrates when user scrolls to it. <strong>Product detail tooltips:</strong> <code>@defer (hydrate on hover)</code> — loads only when user hovers, very cheap. <strong>Reviews section:</strong> <code>@defer (hydrate on idle)</code> — loads in background when browser is free. <strong>Ad/recommendation widgets:</strong> <code>@defer (hydrate on timer(3s))</code> — delay to not compete with critical hydration. <strong>Footer/SEO content:</strong> <code>@defer (hydrate never)</code> — purely static, never needs to hydrate. This architecture produces a tiny initial JS bundle covering only above-the-fold code, with progressive loading of everything else.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     SLIDE 21 — INTERVIEW QUESTIONS PART 4
+═══════════════════════════════════════════════════════════════ -->
+<div class="slide" id="s21">
+  <div class="slide-header">
+    <span class="topic-badge pink">Interview Q&A</span>
+    <h1>Interview Questions — Part 4: Scenario-Based</h1>
+  </div>
+  <div class="content">
+
+    <div class="iq-item">
+      <div class="iq-q">Q13. A team reports hydration errors after adding a D3 chart component. Walk through your debugging and resolution approach. <span class="iq-level badge badge-orange">Expert</span></div>
+      <div class="iq-a">
+        <strong>Step 1 — Confirm the error:</strong> Open Angular DevTools, enable the hydration overlay. The D3 component will be highlighted as the error source. <strong>Step 2 — Quick fix:</strong> Add <code>ngSkipHydration</code> to the D3 component's host binding to unblock the team while a proper fix is developed. <strong>Step 3 — Proper fix options:</strong> (a) Wrap the D3 logic in <code>afterNextRender()</code> so it runs after hydration, keeping the server-rendered SVG intact; (b) If D3 must control the SVG from scratch, use <code>@defer (on immediate; hydrate never)</code> to make it truly server-static — D3 takes over as static display, interaction added client-side; (c) Refactor to use Angular-native SVG bindings with <code>[attr.d]</code> etc. so Angular, not D3, controls the DOM structure. <strong>Step 4 — Remove ngSkipHydration</strong> once the fix is validated.
+      </div>
+    </div>
+
+    <div class="iq-item">
+      <div class="iq-q">Q14. Your SSR Angular app has great LCP but users report that clicks in the first 2 seconds do nothing. What is the issue and how do you fix it? <span class="iq-level badge badge-blue">Senior</span></div>
+      <div class="iq-a">
+        This is the classic <strong>hydration gap</strong> problem. The server HTML is visible (fast LCP), but Angular's JS bootstrap takes ~1-2 seconds. During this window, the DOM has no event listeners attached, so clicks are silently lost. The fix is <code>withEventReplay()</code> (Angular v18+): <code>provideClientHydration(withEventReplay())</code>. This injects a lightweight JSAction script that runs before Angular, captures all user events into a queue, and replays them once hydration completes. In v19+ with incremental hydration enabled, event replay is already on automatically. Also worth checking if the JS bundle can be split further to reduce bootstrap time itself.
+      </div>
+    </div>
+
+    <div class="iq-item">
+      <div class="iq-q">Q15. Explain hydrate never — what is it really good for and what are its limitations? <span class="iq-level badge badge-blue">Senior</span></div>
+      <div class="iq-a">
+        <code>hydrate never</code> marks a <code>@defer</code> block to remain permanently dehydrated — it renders its server HTML and stays as static DOM, never downloading its JS or attaching any event listeners. It's ideal for <strong>purely presentational, non-interactive blocks</strong>: marketing copy, static banners, footer links, SEO metadata sections. The key limitation: <strong>it only applies to the initial SSR load</strong>. If the user navigates to this route via client-side routing (a RouterLink click), Angular renders the page fresh on the client without SSR — in that case, the regular <code>@defer</code> triggers apply normally (<code>on viewport</code>, etc.). Also, <code>hydrate never</code> on a block prevents any nested <code>@defer</code> blocks inside it from ever hydrating on the initial load too — it's a subtree-wide freeze.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     SLIDE 22 — COMPLETE EXAMPLE: E-COMMERCE PAGE
+═══════════════════════════════════════════════════════════════ -->
+<div class="slide" id="s22">
+  <div class="slide-header">
+    <span class="topic-badge cyan">Full Example</span>
+    <h1>Complete Example — E-Commerce Page with Incremental Hydration</h1>
+  </div>
+  <div class="content">
+    <div class="two-col">
+      <div>
+        <div class="code-label">app.config.ts</div>
+        <div class="code-block"><pre><span class="kw">import</span> {
+  <span class="fn">provideClientHydration</span>   <span class="cmt">// v22: incremental + event replay ON by default</span>
+} <span class="kw">from</span> <span class="str">'@angular/platform-browser'</span>;
+<span class="kw">import</span> { <span class="fn">provideHttpClient</span>, <span class="fn">withFetch</span> } <span class="kw">from</span> <span class="str">'@angular/common/http'</span>;
+<span class="kw">import</span> { <span class="fn">provideRouter</span> } <span class="kw">from</span> <span class="str">'@angular/router'</span>;
+
+<span class="kw">export const</span> appConfig: <span class="typ">ApplicationConfig</span> = {
+  providers: [
+    <span class="fn">provideRouter</span>(routes),
+    <span class="fn">provideHttpClient</span>(<span class="fn">withFetch</span>()),  <span class="cmt">// fetch works well with SSR</span>
+    <span class="fn">provideClientHydration</span>(),         <span class="cmt">// full + incremental + event replay</span>
+  ]
+};</pre></div>
+      </div>
+      <div>
+        <div class="code-label">product-page.component.ts</div>
+        <div class="code-block"><pre><span class="at">@Component</span>({
+  template: `
+    <span class="cmt">&lt;!-- ✅ Critical: no @defer, hydrates immediately --&gt;</span>
+    <span class="tpl">&lt;app-hero-banner /&gt;</span>
+    <span class="tpl">&lt;app-nav /&gt;</span>
+    <span class="tpl">&lt;app-product-detail /&gt;</span>
+
+    <span class="cmt">&lt;!-- ✅ Viewport: hydrates when user scrolls down --&gt;</span>
+    <span class="at">@defer</span>(hydrate on viewport) {
+      <span class="tpl">&lt;app-similar-products /&gt;</span>
+    } @placeholder { <span class="tpl">&lt;div class="skeleton"&gt;&lt;/div&gt;</span> }
+
+    <span class="cmt">&lt;!-- ✅ Idle: low priority, hydrates when browser free --&gt;</span>
+    <span class="at">@defer</span>(hydrate on idle) {
+      <span class="tpl">&lt;app-customer-reviews /&gt;</span>
+    } @placeholder { <span class="tpl">&lt;div class="skeleton"&gt;&lt;/div&gt;</span> }
+
+    <span class="cmt">&lt;!-- ✅ Never: purely static footer --&gt;</span>
+    <span class="at">@defer</span>(on viewport; hydrate never) {
+      <span class="tpl">&lt;app-footer /&gt;</span>
+    } @placeholder { <span class="tpl">&lt;div&gt;&lt;/div&gt;</span> }
+  `
+})
+<span class="kw">export class</span> <span class="cls">ProductPageComponent</span> {}</pre></div>
+      </div>
+    </div>
+
+    <div class="tip-box">
+      <div class="tip-hdr">Result of This Architecture</div>
+      <p><strong>Initial JS bundle:</strong> Contains only hero, nav, and product detail code. <strong>On scroll:</strong> Similar products chunk loads lazily. <strong>While idle:</strong> Reviews chunk loads silently. <strong>Footer:</strong> Never loads JS — pure static HTML forever. <strong>User clicks:</strong> Never lost thanks to event replay. This is the ideal production setup for Angular v22+.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     SLIDE 23 — QUICK REFERENCE CHEAT SHEET
+═══════════════════════════════════════════════════════════════ -->
+<div class="slide" id="s23">
+  <div class="slide-header">
+    <span class="topic-badge">Cheat Sheet</span>
+    <h1>Angular Hydration — Quick Reference</h1>
+  </div>
+  <div class="content">
+    <div class="two-col">
+      <div>
+        <h2>Key APIs</h2>
+        <table>
+          <thead><tr><th>API</th><th>Purpose</th><th>Since</th></tr></thead>
+          <tbody>
+            <tr><td><code>provideClientHydration()</code></td><td>Enable full app hydration (+ incremental in v22)</td><td>v16</td></tr>
+            <tr><td><code>withEventReplay()</code></td><td>Capture pre-hydration events and replay them</td><td>v18</td></tr>
+            <tr><td><code>withIncrementalHydration()</code></td><td>Enable incremental hydration (v19–v21)</td><td>v19</td></tr>
+            <tr><td><code>withNoIncrementalHydration()</code></td><td>Opt out of incremental hydration in v22+</td><td>v22</td></tr>
+            <tr><td><code>withI18nSupport()</code></td><td>Enable hydration for i18n blocks</td><td>v17</td></tr>
+            <tr><td><code>ngSkipHydration</code></td><td>Skip hydration for a component subtree</td><td>v16</td></tr>
+            <tr><td><code>provideStabilityDebugging()</code></td><td>Log what prevents app stability</td><td>v17</td></tr>
+            <tr><td><code>afterNextRender()</code></td><td>Run browser-only code after hydration</td><td>v17</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div>
+        <h2>Hydrate Trigger Cheatsheet</h2>
+        <table>
+          <thead><tr><th>Trigger</th><th>When</th></tr></thead>
+          <tbody>
+            <tr><td><code>hydrate on idle</code></td><td>requestIdleCallback (browser idle)</td></tr>
+            <tr><td><code>hydrate on viewport</code></td><td>IntersectionObserver enters view</td></tr>
+            <tr><td><code>hydrate on interaction</code></td><td>click or keydown</td></tr>
+            <tr><td><code>hydrate on hover</code></td><td>mouseover or focusin</td></tr>
+            <tr><td><code>hydrate on immediate</code></td><td>After non-deferred content renders</td></tr>
+            <tr><td><code>hydrate on timer(Xms)</code></td><td>After fixed duration</td></tr>
+            <tr><td><code>hydrate when expr</code></td><td>Custom condition becomes true</td></tr>
+            <tr><td><code>hydrate never</code></td><td>Never (stay as static HTML)</td></tr>
+          </tbody>
+        </table>
+        <div class="err-box" style="margin-top:8px;">
+          <div class="err-hdr">Common Error Codes</div>
+          <p><code>NG0500</code> Node mismatch &nbsp;·&nbsp; <code>NG0501</code> Missing siblings &nbsp;·&nbsp; <code>NG0502</code> Missing node &nbsp;·&nbsp; <code>NG0506</code> App unstable &nbsp;·&nbsp; <code>NG0507</code> Invalid ngSkipHydration host</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="three-col" style="margin-top:4px;">
+      <div class="tip-box">
+        <div class="tip-hdr">Always Do</div>
+        <ul>
+          <li>Use Angular APIs for DOM changes</li>
+          <li>Declare <code>&lt;tbody&gt;</code> in tables</li>
+          <li>Use <code>afterNextRender()</code> for browser code</li>
+          <li>Run timers outside Zone.js</li>
+        </ul>
+      </div>
+      <div class="err-box">
+        <div class="err-hdr">Never Do</div>
+        <ul>
+          <li>Direct DOM manipulation in templates</li>
+          <li>Platform-conditional rendering</li>
+          <li><code>ngSkipHydration</code> on root component</li>
+          <li>Leave stability debugging in prod</li>
+        </ul>
+      </div>
+      <div class="new-box">
+        <div class="new-hdr">Official Docs</div>
+        <p><strong>angular.dev/guide/hydration</strong><br/>
+        <strong>angular.dev/guide/incremental-hydration</strong><br/>
+        <strong>angular.dev/errors</strong> (NG0500–NG0507)<br/>
+        <strong>angular.dev/api/platform-browser/provideClientHydration</strong></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- end #deck -->
+
+<!-- ══ NAV ══ -->
+<div id="nav">
+  <button id="btnFirst" title="First slide">⏮</button>
+  <button id="btnPrev"  title="Previous">◀</button>
+  <span   id="counter">1 / 24</span>
+  <button id="btnNext"  title="Next">▶</button>
+  <button id="btnLast"  title="Last slide">⏭</button>
+</div>
+<div id="hint">← → arrow keys to navigate</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const total  = slides.length;
+  let cur = 0;
+
+  const bar     = document.getElementById('progress-bar');
+  const counter = document.getElementById('counter');
+  const btnPrev  = document.getElementById('btnPrev');
+  const btnNext  = document.getElementById('btnNext');
+  const btnFirst = document.getElementById('btnFirst');
+  const btnLast  = document.getElementById('btnLast');
+
+  function goTo(n) {
+    slides[cur].classList.remove('active');
+    cur = Math.max(0, Math.min(n, total - 1));
+    slides[cur].classList.add('active');
+    slides[cur].scrollTop = 0;
+    counter.textContent = (cur + 1) + ' / ' + total;
+    bar.style.width = ((cur / (total - 1)) * 100) + '%';
+    btnPrev.disabled  = cur === 0;
+    btnFirst.disabled = cur === 0;
+    btnNext.disabled  = cur === total - 1;
+    btnLast.disabled  = cur === total - 1;
+  }
+
+  btnNext.addEventListener ('click', () => goTo(cur + 1));
+  btnPrev.addEventListener ('click', () => goTo(cur - 1));
+  btnFirst.addEventListener('click', () => goTo(0));
+  btnLast.addEventListener ('click', () => goTo(total - 1));
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown')  goTo(cur + 1);
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')    goTo(cur - 1);
+    if (e.key === 'Home')  goTo(0);
+    if (e.key === 'End')   goTo(total - 1);
+  });
+
+  goTo(0);
+</script>
+</body>
+</html>
