@@ -1814,6 +1814,143 @@ Hover on child triggers:
 </div>
 
 <!-- ══════════════════════════════════════════════════════════
+     SLIDE 22b — HANDS-ON DEMO SETUP
+═══════════════════════════════════════════════════════════════ -->
+<div class="slide" id="s22b">
+  <div class="slide-header">
+    <span class="topic-badge cyan">Hands-On Demo</span>
+    <h1>Build &amp; Run Incremental Hydration — Step by Step</h1>
+  </div>
+  <div class="content">
+
+    <div class="two-col">
+      <!-- LEFT COLUMN -->
+      <div style="display:flex; flex-direction:column; gap:10px;">
+
+        <div class="card accent-blue">
+          <h3>Step 1 — Create Project with SSR</h3>
+          <div class="code-block"><pre><span class="cmt"># Create new Angular 22 project with SSR</span>
+<span class="fn">npx @angular/cli@latest new</span> hydration-demo \
+  <span class="str">--ssr --routing=true --style=css --defaults</span>
+<span class="fn">cd</span> hydration-demo</pre></div>
+        </div>
+
+        <div class="card accent-green">
+          <h3>Step 2 — app.config.ts (CLI does this automatically)</h3>
+          <div class="code-block"><pre><span class="kw">import</span> { <span class="fn">provideClientHydration</span> } <span class="kw">from</span> <span class="str">'@angular/platform-browser'</span>;
+<span class="kw">import</span> { <span class="fn">provideHttpClient</span>, <span class="fn">withFetch</span> } <span class="kw">from</span> <span class="str">'@angular/common/http'</span>;
+
+<span class="kw">export const</span> appConfig = {
+  providers: [
+    <span class="fn">provideHttpClient</span>(<span class="fn">withFetch</span>()),
+    <span class="fn">provideClientHydration</span>()  <span class="cmt">// v22: incremental + event replay ON</span>
+  ]
+};</pre></div>
+        </div>
+
+        <div class="card accent-purple">
+          <h3>Step 3 — App Component Template (key part)</h3>
+          <div class="code-block"><pre><span class="cmt">&lt;!-- HERO — hydrates immediately --&gt;</span>
+<span class="tpl">&lt;app-hero /&gt;</span>
+
+<span class="cmt">&lt;!-- PRODUCTS — hydrates when scrolled into view --&gt;</span>
+<span class="at">@defer</span> (hydrate on viewport) {
+  <span class="tpl">&lt;app-product-list /&gt;</span>
+} @placeholder { <span class="tpl">&lt;div&gt;</span>Loading...<span class="tpl">&lt;/div&gt;</span> }
+
+<span class="cmt">&lt;!-- REVIEWS — hydrates when browser is idle --&gt;</span>
+<span class="at">@defer</span> (hydrate on idle) {
+  <span class="tpl">&lt;app-reviews /&gt;</span>
+} @placeholder { <span class="tpl">&lt;div&gt;</span>Loading...<span class="tpl">&lt;/div&gt;</span> }
+
+<span class="cmt">&lt;!-- FOOTER — never hydrates, stays static forever --&gt;</span>
+<span class="at">@defer</span> (on viewport; hydrate never) {
+  <span class="tpl">&lt;app-footer /&gt;</span>
+} @placeholder { <span class="tpl">&lt;div&gt;&lt;/div&gt;</span> }</pre></div>
+        </div>
+
+        <div class="card accent-orange">
+          <h3>Step 4 — Build &amp; Run</h3>
+          <div class="code-block"><pre><span class="cmt"># Development mode with SSR</span>
+<span class="fn">ng serve</span> --ssr
+
+<span class="cmt"># Production build + serve</span>
+<span class="fn">npm run build</span>   <span class="cmt"># builds both server + client</span>
+<span class="fn">npm run serve</span>   <span class="cmt"># starts Express SSR server</span>
+
+<span class="cmt"># Open browser</span>
+<span class="str">http://localhost:4200</span></pre></div>
+        </div>
+
+      </div>
+
+      <!-- RIGHT COLUMN -->
+      <div style="display:flex; flex-direction:column; gap:10px;">
+
+        <h2>Step 5 — Verify Hydration is Working</h2>
+
+        <div class="card accent-green">
+          <h3>✅ DevTools Console</h3>
+          <div class="code-block"><pre><span class="cmt">// Open F12 → Console tab</span>
+<span class="typ">Angular hydrated 3 component(s) and</span>
+<span class="typ">reused 47 out of 47 existing DOM node(s).</span>
+<span class="cmt">
+47/47 = perfect ✅  DOM was never destroyed
+</span></pre></div>
+        </div>
+
+        <div class="card accent-blue">
+          <h3>✅ View Page Source — Ctrl + U</h3>
+          <div class="code-block"><pre><span class="cmt">&lt;!-- Server rendered FULL HTML with data --&gt;</span>
+<span class="tpl">&lt;div&gt;</span>iPhone 15...<span class="tpl">&lt;/div&gt;</span>  <span class="cmt">← data already here!</span>
+<span class="tpl">&lt;p&gt;</span>$999<span class="tpl">&lt;/p&gt;</span>
+
+<span class="cmt">&lt;!-- Hydration markers --&gt;</span>
+<span class="cmt">&lt;!--ngh=0--&gt;  &lt;!--ngh=1--&gt;</span>
+
+<span class="cmt">&lt;!-- TransferState — no double API call! --&gt;</span>
+<span class="tpl">&lt;script</span> id=<span class="str">"ng-state"</span> type=<span class="str">"application/json"</span><span class="tpl">&gt;</span>
+  {<span class="str">"products"</span>:[{<span class="str">"id"</span>:<span class="num">1</span>,<span class="str">"title"</span>:<span class="str">"..."</span>}]}
+<span class="tpl">&lt;/script&gt;</span></pre></div>
+        </div>
+
+        <div class="card accent-purple">
+          <h3>✅ Network Tab — No Double Fetch</h3>
+          <div class="code-block"><pre><span class="cmt">F12 → Network → XHR/Fetch tab</span>
+
+<span class="typ">First load  →  /api/products  ← server fetches</span>
+<span class="op">Reload page →  NO /api/products call ✅</span>
+<span class="cmt">
+Client reads from &lt;script id="ng-state"&gt;
+Instead of making a real HTTP request
+</span></pre></div>
+        </div>
+
+        <div class="card accent-cyan">
+          <h3>✅ See Incremental Hydration Live</h3>
+          <ul>
+            <li>Install <strong>Angular DevTools</strong> Chrome extension</li>
+            <li>Open DevTools → <strong>Angular</strong> tab</li>
+            <li>Click <strong>🎯 Enable Hydration Overlay</strong></li>
+            <li><span style="color:#3fb950;">■</span> <strong>Blue/Green</strong> = hydrated sections</li>
+            <li><span style="color:#484f58;">■</span> <strong>Grey/dim</strong> = still dehydrated</li>
+            <li>Scroll down → products section <strong>lights up</strong> as it hydrates</li>
+            <li>Browser idle → reviews section lights up</li>
+            <li>Footer stays grey forever (<code>hydrate never</code>)</li>
+          </ul>
+        </div>
+
+        <div class="warn-box">
+          <div class="warn-hdr">See the Difference — Toggle Hydration OFF</div>
+          <p>Comment out <code>provideClientHydration()</code> in <code>app.config.ts</code> → reload → notice the <strong>flash/flicker</strong> as Angular destroys the server HTML and rebuilds everything from scratch.</p>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
      SLIDE 23 — QUICK REFERENCE CHEAT SHEET
 ═══════════════════════════════════════════════════════════════ -->
 <div class="slide" id="s23">
@@ -1897,7 +2034,7 @@ Hover on child triggers:
 <div id="nav">
   <button id="btnFirst" title="First slide">⏮</button>
   <button id="btnPrev"  title="Previous">◀</button>
-  <span   id="counter">1 / 27</span>
+  <span   id="counter">1 / 28</span>
   <button id="btnNext"  title="Next">▶</button>
   <button id="btnLast"  title="Last slide">⏭</button>
 </div>
