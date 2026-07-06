@@ -1,60 +1,42 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Angular Forms — Easy Learning Guide | Angular v22</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { height: 100%; overflow: hidden; }
-    body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0d1117; color: #e6edf3; font-size: 15px; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0d1117; color: #e6edf3; }
 
-    #deck { width: 100vw; height: 100vh; position: relative; }
-    .slide {
-      display: none; flex-direction: column;
-      padding: 30px 48px 80px; width: 100%; height: 100%;
-      overflow-y: auto; gap: 16px; animation: fadeIn .3s ease;
-    }
+    #deck { width: 100vw; height: 100vh; }
+    .slide { display: none; flex-direction: column; padding: 26px 44px 76px; width: 100%; height: 100%; overflow-y: auto; gap: 14px; animation: fadeIn .3s ease; }
     .slide.active { display: flex; }
     @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+    .slide::-webkit-scrollbar { width: 5px; }
+    .slide::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
 
     /* ── Header ── */
-    .slide-header {
-      display: flex; align-items: center; gap: 12px;
-      border-bottom: 2px solid #21262d; padding-bottom: 12px; flex-shrink: 0;
-    }
-    .num-badge {
-      background: #DD0031; color: #fff; font-size: 12px; font-weight: 800;
-      padding: 4px 12px; border-radius: 20px; white-space: nowrap;
-    }
-    h1 { font-size: 24px; font-weight: 700; color: #ff7b72; }
-    h2 { font-size: 15px; font-weight: 700; color: #ffa657; margin-bottom: 5px; }
-    h3 { font-size: 12px; font-weight: 700; color: #8b949e; text-transform: uppercase; letter-spacing: .8px; margin-bottom: 4px; }
-    p  { font-size: 13.5px; line-height: 1.8; color: #c9d1d9; }
-    li { font-size: 13.5px; line-height: 1.95; color: #c9d1d9; margin-left: 18px; }
+    .slide-header { display: flex; align-items: center; gap: 12px; border-bottom: 2px solid #21262d; padding-bottom: 10px; flex-shrink: 0; }
+    .num-badge { background: #DD0031; color: #fff; font-size: 12px; font-weight: 800; padding: 4px 12px; border-radius: 20px; }
+    h1 { font-size: 22px; font-weight: 700; color: #ff7b72; }
+    h2 { font-size: 14px; font-weight: 700; color: #ffa657; margin-bottom: 4px; }
+    p  { font-size: 13px; line-height: 1.75; color: #c9d1d9; }
+    li { font-size: 13px; line-height: 1.9; color: #c9d1d9; margin-left: 16px; }
     ul { padding-left: 4px; }
     strong { color: #f0f6fc; }
-    em { color: #79c0ff; font-style: normal; font-weight: 600; }
 
     /* ── Title Slide ── */
-    .title-slide {
-      justify-content: center; align-items: center; text-align: center;
-      background: radial-gradient(ellipse at 50% 0%, #1a0005 0%, #0d1117 65%);
-    }
-    .title-slide h1 { font-size: 38px; margin-bottom: 10px; }
-    .title-slide .sub { font-size: 15px; color: #8b949e; max-width: 640px; line-height: 1.7; margin-bottom: 24px; }
-    .chips { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
-    .chip { background: #161b22; border: 1px solid #30363d; border-radius: 20px; padding: 5px 14px; font-size: 13px; color: #8b949e; }
+    .title-slide { justify-content: center; align-items: center; text-align: center; background: radial-gradient(ellipse at 50% 0%, #1a0005 0%, #0d1117 65%); }
+    .title-slide h1 { font-size: 36px; margin-bottom: 10px; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 18px; }
+    .chip { background: #161b22; border: 1px solid #30363d; border-radius: 20px; padding: 5px 14px; font-size: 12.5px; color: #8b949e; }
     .chip.red { border-color: #f8514960; color: #ff7b72; background: #1a0808; }
 
-    /* ── Layout Grid ── */
-    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-    .col-6-4  { display: grid; grid-template-columns: 60% 40%; gap: 16px; }
+    /* ── Two column ── */
+    .two-col  { display: grid; grid-template-columns: 42% 58%; gap: 14px; }
 
     /* ── Cards ── */
-    .card {
-      background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 14px 16px;
-    }
+    .card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 12px 14px; }
     .card.red    { border-left: 4px solid #f85149; }
     .card.blue   { border-left: 4px solid #1f6feb; }
     .card.green  { border-left: 4px solid #3fb950; }
@@ -63,671 +45,843 @@
     .card.cyan   { border-left: 4px solid #39d0d8; }
     .card.yellow { border-left: 4px solid #e3b341; }
 
-    /* ── Special Boxes ── */
-    .analogy-box {
-      background: #0d1f0d; border: 1px solid #3fb950; border-left: 4px solid #3fb950;
-      border-radius: 10px; padding: 12px 16px;
-    }
-    .analogy-box .lbl { font-size: 10px; font-weight: 800; color: #3fb950; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 5px; }
-    .analogy-box p, .analogy-box li { font-size: 13.5px; color: #c9d1d9; }
-
-    .memory-box {
-      background: #1a0d2e; border: 1px solid #d2a8ff; border-left: 4px solid #d2a8ff;
-      border-radius: 10px; padding: 12px 16px;
-    }
-    .memory-box .lbl { font-size: 10px; font-weight: 800; color: #d2a8ff; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 5px; }
-    .memory-box p, .memory-box li { font-size: 13.5px; color: #c9d1d9; }
-
-    .warn-box {
-      background: #2a1a00; border: 1px solid #e3b341; border-left: 4px solid #e3b341;
-      border-radius: 10px; padding: 12px 16px;
-    }
-    .warn-box .lbl { font-size: 10px; font-weight: 800; color: #e3b341; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 5px; }
-    .warn-box p, .warn-box li { font-size: 13.5px; color: #c9d1d9; }
-
-    .step-box {
-      background: #0a1620; border: 1px solid #1f6feb; border-left: 4px solid #1f6feb;
-      border-radius: 10px; padding: 12px 16px;
-    }
-    .step-box .lbl { font-size: 10px; font-weight: 800; color: #58a6ff; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 5px; }
-    .step-box p, .step-box li { font-size: 13.5px; color: #c9d1d9; }
-
-    /* ── Code Block ── */
-    .code-wrap {
-      background: #0d1117; border: 1px solid #30363d; border-radius: 10px; overflow: hidden;
-    }
-    .code-hdr {
-      background: #161b22; border-bottom: 1px solid #30363d; padding: 7px 14px;
-      display: flex; align-items: center; gap: 8px; font-size: 12px; color: #8b949e;
-    }
-    .dot { width: 10px; height: 10px; border-radius: 50%; }
-    .dot-r { background: #f85149; } .dot-y { background: #e3b341; } .dot-g { background: #3fb950; }
-    .code-wrap pre {
-      font-family: 'Consolas', monospace; font-size: 12.5px; line-height: 1.7;
-      color: #e6edf3; white-space: pre; margin: 0; padding: 14px 16px; overflow-x: auto;
-    }
-
-    /* ── Console Output Block ── */
-    .console-wrap {
-      background: #010409; border: 1px solid #30363d; border-radius: 10px; overflow: hidden;
-    }
-    .console-hdr {
-      background: #161b22; border-bottom: 1px solid #30363d; padding: 7px 14px;
-      display: flex; align-items: center; gap: 8px; font-size: 12px; color: #8b949e;
-    }
-    .console-wrap pre {
-      font-family: 'Consolas', monospace; font-size: 12.5px; line-height: 1.75;
-      color: #e6edf3; white-space: pre; margin: 0; padding: 14px 16px;
-    }
-    .c-green  { color: #3fb950; }
-    .c-red    { color: #f85149; }
-    .c-blue   { color: #79c0ff; }
-    .c-yellow { color: #e3b341; }
-    .c-gray   { color: #6e7681; }
-    .c-cyan   { color: #39d0d8; }
-    .c-purple { color: #d2a8ff; }
-    .c-orange { color: #ffa657; }
-
-    /* ── Syntax Highlights ── */
-    .kw  { color: #ff7b72; }
-    .fn  { color: #d2a8ff; }
-    .str { color: #a5d6ff; }
-    .num { color: #79c0ff; }
-    .cmt { color: #6e7681; font-style: italic; }
-    .var { color: #ffa657; }
-    .dec { color: #ff6b6b; }
-    .cls { color: #f0c674; }
-    .typ { color: #56d364; }
+    /* ── Info boxes ── */
+    .analogy-box { background: #0d1f0d; border: 1px solid #3fb950; border-left: 4px solid #3fb950; border-radius: 10px; padding: 10px 14px; }
+    .analogy-box .lbl { font-size: 10px; font-weight: 800; color: #3fb950; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }
+    .memory-box { background: #1a0d2e; border: 1px solid #d2a8ff; border-left: 4px solid #d2a8ff; border-radius: 10px; padding: 10px 14px; }
+    .memory-box .lbl { font-size: 10px; font-weight: 800; color: #d2a8ff; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }
+    .step-box { background: #0a1620; border: 1px solid #1f6feb; border-left: 4px solid #1f6feb; border-radius: 10px; padding: 10px 14px; }
+    .step-box .lbl { font-size: 10px; font-weight: 800; color: #58a6ff; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }
 
     /* ── Steps ── */
-    .steps { display: flex; flex-direction: column; gap: 6px; }
-    .step {
-      display: flex; align-items: flex-start; gap: 12px;
-      background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 10px 14px;
-    }
-    .step-num {
-      background: #DD0031; color: #fff; font-size: 12px; font-weight: 800;
-      width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center;
-      justify-content: center; flex-shrink: 0;
-    }
-    .step p { margin: 0; font-size: 13px; }
+    .steps { display: flex; flex-direction: column; gap: 5px; }
+    .step { display: flex; align-items: flex-start; gap: 10px; background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 8px 12px; }
+    .step-num { background: #DD0031; color: #fff; font-size: 11px; font-weight: 800; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .step p { margin: 0; font-size: 12.5px; }
     .step strong { color: #ffa657; }
 
     /* ── Arrow Flow ── */
-    .arrow-flow { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; padding: 6px 0; }
-    .af-box {
-      background: #161b22; border: 1px solid #30363d; border-radius: 6px;
-      padding: 6px 12px; font-size: 12.5px; color: #e6edf3; white-space: nowrap;
-    }
-    .af-box.red    { border-color: #f85149; color: #ff7b72; background: #1a0808; }
+    .arrow-flow { display: flex; align-items: center; flex-wrap: wrap; gap: 5px; }
+    .af-box { background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 5px 10px; font-size: 12px; color: #e6edf3; white-space: nowrap; }
     .af-box.green  { border-color: #3fb950; color: #56d364; background: #0a1a0a; }
     .af-box.blue   { border-color: #1f6feb; color: #79c0ff; background: #080d1a; }
     .af-box.purple { border-color: #d2a8ff; color: #d2a8ff; background: #120d1a; }
     .af-box.yellow { border-color: #e3b341; color: #e3b341; background: #1a1500; }
     .af-box.cyan   { border-color: #39d0d8; color: #39d0d8; background: #08181a; }
     .af-box.orange { border-color: #ffa657; color: #ffa657; background: #1a1008; }
-    .af-arr { color: #484f58; font-size: 18px; }
+    .af-box.red    { border-color: #f85149; color: #ff7b72; background: #1a0808; }
+    .af-arr { color: #484f58; font-size: 16px; }
 
     /* ── Table ── */
-    table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    th { background: #161b22; color: #d2a8ff; text-align: left; padding: 9px 12px; border-bottom: 2px solid #30363d; }
-    td { padding: 8px 12px; border-bottom: 1px solid #21262d; color: #c9d1d9; vertical-align: top; }
+    table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+    th { background: #161b22; color: #d2a8ff; text-align: left; padding: 8px 10px; border-bottom: 2px solid #30363d; }
+    td { padding: 7px 10px; border-bottom: 1px solid #21262d; color: #c9d1d9; vertical-align: top; }
     tr:hover td { background: #161b22; }
     .t-yes { color: #3fb950; font-weight: 700; }
     .t-no  { color: #f85149; font-weight: 700; }
 
+    /* ══════════════════════════════════
+       TAB SYSTEM
+    ══════════════════════════════════ */
+    .tab-area { display: flex; flex-direction: column; }
+    .tab-bar { display: flex; gap: 3px; }
+    .tab-btn {
+      background: #21262d; border: 1px solid #30363d; border-bottom: none;
+      color: #8b949e; padding: 7px 14px; border-radius: 7px 7px 0 0;
+      cursor: pointer; font-size: 12px; font-weight: 600; transition: all .15s;
+      white-space: nowrap;
+    }
+    .tab-btn.active { background: #0d1117; color: #f0f6fc; border-color: #30363d; border-bottom-color: #0d1117; }
+    .tab-btn:hover:not(.active) { color: #e6edf3; background: #2d333b; }
+    .tab-panel { border: 1px solid #30363d; border-radius: 0 10px 10px 10px; background: #0d1117; overflow: hidden; }
+    .tab-pane { display: none; flex-direction: column; gap: 0; }
+    .tab-pane.active { display: flex; }
+
+    /* ══════════════════════════════════
+       CODE BLOCKS
+    ══════════════════════════════════ */
+    .code-wrap { background: #0d1117; overflow: hidden; }
+    .code-hdr  { background: #161b22; border-bottom: 1px solid #30363d; padding: 7px 14px; display: flex; align-items: center; gap: 7px; font-size: 11.5px; color: #8b949e; }
+    .dot { width: 9px; height: 9px; border-radius: 50%; }
+    .dot-r { background: #f85149; } .dot-y { background: #e3b341; } .dot-g { background: #3fb950; }
+    .code-wrap pre { font-family: 'Consolas', monospace; font-size: 12px; line-height: 1.65; color: #e6edf3; white-space: pre; margin: 0; padding: 12px 14px; overflow-x: auto; }
+
+    /* Syntax Highlighting */
+    .kw  { color: #ff7b72; } .fn  { color: #d2a8ff; } .str { color: #a5d6ff; }
+    .num { color: #79c0ff; } .cmt { color: #6e7681; font-style: italic; }
+    .var { color: #ffa657; } .dec { color: #ff6b6b; } .cls { color: #f0c674; }
+    .typ { color: #56d364; } .tag { color: #7ee787; } .atr { color: #79c0ff; }
+    .ang { color: #ffa657; }   /* Angular bindings */
+    .exp { color: #d2a8ff; }   /* Template expressions {{ }} */
+
+    /* ══════════════════════════════════
+       CONSOLE OUTPUT
+    ══════════════════════════════════ */
+    .console-wrap { background: #010409; border-top: 1px solid #30363d; }
+    .console-hdr  { background: #161b22; border-bottom: 1px solid #30363d; padding: 6px 14px; font-size: 11.5px; color: #8b949e; display: flex; align-items: center; gap: 7px; }
+    .console-wrap pre { font-family: 'Consolas', monospace; font-size: 12px; line-height: 1.7; color: #e6edf3; white-space: pre; margin: 0; padding: 12px 14px; }
+    .c-g { color: #3fb950; } .c-r { color: #f85149; } .c-b { color: #79c0ff; }
+    .c-y { color: #e3b341; } .c-x { color: #6e7681; } .c-p { color: #d2a8ff; }
+    .c-o { color: #ffa657; } .c-c { color: #39d0d8; }
+
+    /* ══════════════════════════════════
+       BROWSER MOCK (Light Theme)
+    ══════════════════════════════════ */
+    .browser-frame { background: #fff; overflow: hidden; border-bottom: 1px solid #30363d; }
+    .browser-chrome { background: #f0f0f0; border-bottom: 1px solid #d8d8d8; padding: 7px 12px; display: flex; align-items: center; gap: 8px; }
+    .b-dots { display: flex; gap: 5px; }
+    .b-dot  { width: 11px; height: 11px; border-radius: 50%; }
+    .b-dot-r { background: #ff5f57; } .b-dot-y { background: #febc2e; } .b-dot-g { background: #28c840; }
+    .browser-url { background: #fff; border: 1px solid #ccc; border-radius: 4px; padding: 3px 10px; font-size: 11px; color: #555; flex: 1; font-family: monospace; }
+    .browser-body { padding: 16px 20px; }
+    .browser-label { font-size: 10px; font-weight: 800; color: #DD0031; letter-spacing: 1px; text-transform: uppercase; background: #161b22; padding: 5px 14px; border-bottom: 1px solid #30363d; }
+
+    /* Form mock elements */
+    .mf { display: flex; flex-direction: column; gap: 10px; }
+    .mfield { display: flex; flex-direction: column; gap: 3px; }
+    .mlabel { font-size: 12px; font-weight: 600; color: #374151; }
+    .minput {
+      border: 1.5px solid #d1d5db; border-radius: 6px; padding: 7px 10px;
+      font-size: 12.5px; color: #111827; background: #fff; width: 100%;
+      font-family: 'Segoe UI', sans-serif;
+    }
+    .minput.valid    { border-color: #22c55e; background: #f0fdf4; }
+    .minput.invalid  { border-color: #ef4444; background: #fef2f2; }
+    .minput.pending  { border-color: #a78bfa; background: #f5f3ff; }
+    .minput.disabled { background: #f3f4f6; color: #9ca3af; border-style: dashed; }
+    .merror   { font-size: 11px; color: #ef4444; }
+    .msuccess { font-size: 11px; color: #16a34a; }
+    .mpending-msg { font-size: 11px; color: #7c3aed; }
+    .mbtn     { background: #2563eb; color: #fff; border: none; border-radius: 6px; padding: 8px 20px; font-size: 13px; font-weight: 600; cursor: pointer; }
+    .mbtn.disabled-btn { background: #9ca3af; cursor: not-allowed; }
+    .mbtn.green-btn { background: #16a34a; }
+    .mstate { display: flex; gap: 10px; margin-top: 4px; flex-wrap: wrap; }
+    .mstate-item { font-size: 11px; background: #f3f4f6; border-radius: 4px; padding: 2px 8px; color: #374151; }
+    .mstate-item.ok   { background: #dcfce7; color: #16a34a; }
+    .mstate-item.err  { background: #fee2e2; color: #ef4444; }
+    .mstate-item.pend { background: #ede9fe; color: #7c3aed; }
+
+    /* Tag chip mock */
+    .mchip-wrap { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; border: 1.5px solid #d1d5db; border-radius: 6px; padding: 6px 8px; background: #fff; min-height: 38px; }
+    .mchip { background: #dbeafe; color: #1e40af; border-radius: 12px; padding: 3px 10px; font-size: 12px; display: flex; align-items: center; gap: 4px; }
+    .mchip-x { background: none; border: none; color: #1e40af; font-size: 14px; cursor: pointer; line-height: 1; padding: 0; }
+    .mchip-inp { border: none; outline: none; font-size: 12px; color: #374151; background: transparent; min-width: 90px; }
+
+    /* Results mock */
+    .mresult-item { display: flex; justify-content: space-between; padding: 7px 10px; border-bottom: 1px solid #f3f4f6; font-size: 12.5px; }
+    .mresult-item strong { color: #111827; }
+    .mresult-item span   { color: #6b7280; }
+    .mpagination { display: flex; align-items: center; gap: 10px; margin-top: 8px; justify-content: center; }
+    .mpbtn { background: #f3f4f6; border: 1px solid #d1d5db; border-radius: 5px; padding: 4px 12px; font-size: 12px; cursor: pointer; color: #374151; }
+    .mpnum { font-size: 13px; font-weight: 600; color: #374151; }
+
     /* ── Nav ── */
-    #nav {
-      position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%);
-      display: flex; align-items: center; gap: 16px;
-      background: #161b22cc; backdrop-filter: blur(8px);
-      border: 1px solid #30363d; border-radius: 40px; padding: 9px 22px; z-index: 1000;
-    }
-    #nav button {
-      background: none; border: none; color: #8b949e; cursor: pointer;
-      font-size: 20px; padding: 4px 8px; border-radius: 6px; transition: color .2s, background .2s;
-    }
+    #nav { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 14px; background: #161b22cc; backdrop-filter: blur(8px); border: 1px solid #30363d; border-radius: 40px; padding: 8px 20px; z-index: 1000; }
+    #nav button { background: none; border: none; color: #8b949e; cursor: pointer; font-size: 18px; padding: 4px 8px; border-radius: 6px; transition: color .2s, background .2s; }
     #nav button:hover:not(:disabled) { color: #e6edf3; background: #21262d; }
     #nav button:disabled { opacity: .3; cursor: default; }
     #counter { font-size: 13px; color: #8b949e; min-width: 60px; text-align: center; }
     #progress-bar { position: fixed; top: 0; left: 0; height: 3px; background: #DD0031; transition: width .3s; z-index: 999; }
-    #hint { position: fixed; bottom: 18px; right: 22px; font-size: 11px; color: #484f58; }
+    #hint { position: fixed; bottom: 16px; right: 20px; font-size: 11px; color: #484f58; }
 
-    .slide::-webkit-scrollbar { width: 5px; }
-    .slide::-webkit-scrollbar-track { background: transparent; }
-    .slide::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
+    /* Revision slide table */
+    .rev-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
   </style>
 </head>
 <body>
 <div id="progress-bar"></div>
 <div id="deck">
 
-<!-- ══════════════════════════════════════════
+<!-- ══════════════════════════════════
      SLIDE 0 — TITLE
-══════════════════════════════════════════ -->
+══════════════════════════════════ -->
 <div class="slide title-slide active" id="s0">
-  <div style="font-size:60px;margin-bottom:12px;">🅰️</div>
+  <div style="font-size:56px;margin-bottom:10px;">🅰️</div>
   <h1>Angular Forms — Made Simple</h1>
-  <p class="sub">Angular v22 · Easy explanations · Real code · Console output on every slide · Memory tricks to help you remember</p>
+  <p style="color:#8b949e;font-size:14px;margin-top:6px;max-width:660px;text-align:center;line-height:1.7;">
+    Angular v22 · Plain English explanations · TypeScript + HTML template on every slide ·
+    Live Browser Output mocks · Console logs · Memory tricks
+  </p>
   <div class="chips">
-    <span class="chip red">5 Core Topics</span>
-    <span class="chip red">Real Output Shown</span>
-    <span class="chip red">Memory Tricks</span>
+    <span class="chip red">TypeScript Code</span>
+    <span class="chip red">HTML Template</span>
+    <span class="chip red">Browser Output</span>
+    <span class="chip red">Console Logs</span>
     <span class="chip">Typed Forms</span>
     <span class="chip">Async Validation</span>
     <span class="chip">Signals + Forms</span>
     <span class="chip">Custom Controls (CVA)</span>
     <span class="chip">Dynamic Forms</span>
   </div>
-  <p style="margin-top:28px; font-size:13px; color:#484f58;">Use ← → arrow keys or buttons below to navigate</p>
+  <p style="margin-top:22px;font-size:12px;color:#484f58;">Click a tab on each slide to switch between TypeScript → HTML → Output</p>
 </div>
 
-<!-- ══════════════════════════════════════════
-     SLIDE 1 — STRICTLY TYPED FORMS
-══════════════════════════════════════════ -->
+<!-- ══════════════════════════════════
+     SLIDE 1 — TYPED FORMS
+══════════════════════════════════ -->
 <div class="slide" id="s1">
   <div class="slide-header">
-    <span class="num-badge">Topic 1 / 5</span>
+    <span class="num-badge">1 / 5</span>
     <h1>Strictly Typed Forms</h1>
   </div>
 
   <div class="analogy-box">
-    <div class="lbl">🌍 Real World Analogy</div>
-    <p>
-      Think of a regular form like a <strong>plain box</strong> — you can put anything in it and TypeScript won't stop you.
-      A <strong>Typed Form</strong> is like a <strong>labelled storage box</strong> — every compartment has a name and a type.
-      If you try to put a number where a string goes, TypeScript shows an error <em>before</em> you even run the app.
-    </p>
+    <div class="lbl">🌍 Analogy</div>
+    <p>A regular form = <strong>plain cardboard box</strong> (anything fits). A Typed Form = <strong>labelled storage compartment</strong> — each slot has a name &amp; type. TypeScript shows errors <em>before</em> you run the app if you put the wrong thing in.</p>
   </div>
 
   <div class="two-col">
-    <div style="display:flex;flex-direction:column;gap:10px;">
-
+    <!-- LEFT -->
+    <div style="display:flex;flex-direction:column;gap:9px;">
       <div class="card green">
-        <h2>What are the 4 Typed Form Classes?</h2>
+        <h2>4 Typed Form Classes</h2>
         <div class="steps">
-          <div class="step"><div class="step-num">1</div><p><strong>FormControl&lt;T&gt;</strong> — a single field. <code>FormControl&lt;string&gt;</code> means this field holds a string.</p></div>
-          <div class="step"><div class="step-num">2</div><p><strong>FormGroup&lt;T&gt;</strong> — a group of related fields. Like a "Personal Info" section.</p></div>
-          <div class="step"><div class="step-num">3</div><p><strong>FormArray&lt;T&gt;</strong> — a list of fields. Like multiple phone numbers.</p></div>
-          <div class="step"><div class="step-num">4</div><p><strong>FormRecord&lt;T&gt;</strong> — a map where keys are added at runtime. Like user-defined custom fields.</p></div>
+          <div class="step"><div class="step-num">1</div><p><strong>FormControl&lt;T&gt;</strong> — single field. <code style="color:#79c0ff">FormControl&lt;string&gt;</code> = always a string.</p></div>
+          <div class="step"><div class="step-num">2</div><p><strong>FormGroup&lt;T&gt;</strong> — group of related fields (e.g. "Personal Info" section).</p></div>
+          <div class="step"><div class="step-num">3</div><p><strong>FormArray&lt;T&gt;</strong> — a list of fields (e.g. multiple phone numbers).</p></div>
+          <div class="step"><div class="step-num">4</div><p><strong>FormRecord&lt;T&gt;</strong> — map with runtime keys (e.g. user-defined custom fields).</p></div>
         </div>
       </div>
-
       <div class="card orange">
-        <h2>The Most Important Difference: <code>.value</code> vs <code>.getRawValue()</code></h2>
+        <h2><code>.value</code> vs <code>.getRawValue()</code></h2>
         <table>
-          <tr><th>Property</th><th>What it returns</th><th>Disabled fields?</th></tr>
-          <tr><td><code>.value</code></td><td>Partial object — some fields may be <strong>missing</strong></td><td class="t-no">❌ Excluded</td></tr>
-          <tr><td><code>.getRawValue()</code></td><td>Complete object — ALL fields present</td><td class="t-yes">✅ Included</td></tr>
+          <tr><th>Property</th><th>Returns</th><th>Disabled fields?</th></tr>
+          <tr><td><code>.value</code></td><td>Partial — fields may be <strong>missing</strong></td><td class="t-no">❌ Excluded</td></tr>
+          <tr><td><code>.getRawValue()</code></td><td>Complete — ALL fields present</td><td class="t-yes">✅ Included</td></tr>
         </table>
-        <p style="margin-top:8px;font-size:12.5px;color:#8b949e;">⚠️ Always use <code>getRawValue()</code> when submitting a form!</p>
+        <p style="margin-top:7px;font-size:12px;color:#8b949e;">⚠️ Always use <code>getRawValue()</code> when submitting!</p>
       </div>
-
       <div class="memory-box">
-        <div class="lbl">🧠 How to Remember</div>
-        <p>
-          <strong>NNFB = "Never Null Form Builder"</strong> — inject <code>NonNullableFormBuilder</code> and every
-          <code>.control()</code> call gives you a non-null type by default. Only use <code>new FormControl&lt;string|null&gt;(null)</code>
-          when the field genuinely needs to be empty/null.
-        </p>
-        <p style="margin-top:6px;"><strong>Rule of thumb:</strong> Use NNFB for required fields. Use <code>new FormControl&lt;T|null&gt;(null)</code> for optional fields.</p>
+        <div class="lbl">🧠 Memory Trick</div>
+        <p><strong>NNFB = "Never Null Form Builder"</strong> — Use <code>NonNullableFormBuilder</code> for required fields. Use <code>new FormControl&lt;T|null&gt;(null)</code> only for optional/nullable fields.</p>
       </div>
     </div>
 
-    <div style="display:flex;flex-direction:column;gap:10px;">
-      <div class="code-wrap">
-        <div class="code-hdr"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span><span style="margin-left:6px;">typed-form.ts — Simple Example</span></div>
-        <pre>
-<span class="cmt">// Define what each control holds (the "shape")</span>
+    <!-- RIGHT: TABS -->
+    <div class="tab-area">
+      <div class="tab-bar">
+        <button class="tab-btn active" onclick="swTab(this,'ts1')">📝 TypeScript</button>
+        <button class="tab-btn" onclick="swTab(this,'html1')">🔷 HTML Template</button>
+        <button class="tab-btn" onclick="swTab(this,'out1')">▶ Browser Output</button>
+      </div>
+      <div class="tab-panel">
+
+        <!-- TypeScript -->
+        <div id="ts1" class="tab-pane active">
+          <div class="code-wrap">
+            <div class="code-hdr"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span><span style="margin-left:5px;">login.component.ts</span></div>
+            <pre>
+<span class="cmt">// 1. Define the control shape (what TYPE each field holds)</span>
 <span class="kw">interface</span> <span class="cls">LoginControls</span> {
-  <span class="var">email</span>:    <span class="cls">FormControl</span>&lt;<span class="typ">string</span>&gt;;       <span class="cmt">// NEVER null</span>
+  <span class="var">email</span>:    <span class="cls">FormControl</span>&lt;<span class="typ">string</span>&gt;;       <span class="cmt">// NEVER null (NonNullable)</span>
   <span class="var">password</span>: <span class="cls">FormControl</span>&lt;<span class="typ">string</span>&gt;;       <span class="cmt">// NEVER null</span>
-  <span class="var">age</span>:      <span class="cls">FormControl</span>&lt;<span class="typ">number | null</span>&gt;; <span class="cmt">// CAN be null</span>
+  <span class="var">age</span>:      <span class="cls">FormControl</span>&lt;<span class="typ">number | null</span>&gt;; <span class="cmt">// CAN be null (optional)</span>
 }
 
-<span class="dec">@Component</span>({ <span class="var">standalone</span>: <span class="kw">true</span>, ... })
+<span class="dec">@Component</span>({ <span class="var">standalone</span>: <span class="kw">true</span>, <span class="var">imports</span>: [<span class="cls">ReactiveFormsModule</span>], ... })
 <span class="kw">export class</span> <span class="cls">LoginComponent</span> {
-  <span class="cmt">// inject NonNullableFormBuilder (NNFB)</span>
-  <span class="kw">private</span> <span class="var">fb</span> = <span class="fn">inject</span>(<span class="cls">NonNullableFormBuilder</span>);
+  <span class="kw">private</span> <span class="var">fb</span> = <span class="fn">inject</span>(<span class="cls">NonNullableFormBuilder</span>); <span class="cmt">// NNFB</span>
 
   <span class="var">form</span>: <span class="cls">FormGroup</span>&lt;<span class="cls">LoginControls</span>&gt; = <span class="kw">this</span>.<span class="var">fb</span>.<span class="fn">group</span>({
-
-    <span class="cmt">// fb.control() = NonNullable by default</span>
-    <span class="var">email</span>:    <span class="kw">this</span>.<span class="var">fb</span>.<span class="fn">control</span>(<span class="str">''</span>, <span class="cls">Validators</span>.<span class="var">required</span>),
-    <span class="var">password</span>: <span class="kw">this</span>.<span class="var">fb</span>.<span class="fn">control</span>(<span class="str">''</span>, <span class="cls">Validators</span>.<span class="var">required</span>),
+    <span class="cmt">// fb.control() = nonNullable by default (string, not string|null)</span>
+    <span class="var">email</span>:    <span class="kw">this</span>.<span class="var">fb</span>.<span class="fn">control</span>(<span class="str">''</span>, [<span class="cls">Validators</span>.<span class="var">required</span>, <span class="cls">Validators</span>.<span class="var">email</span>]),
+    <span class="var">password</span>: <span class="kw">this</span>.<span class="var">fb</span>.<span class="fn">control</span>(<span class="str">''</span>,  <span class="cls">Validators</span>.<span class="var">required</span>),
 
     <span class="cmt">// new FormControl = explicitly nullable</span>
     <span class="var">age</span>: <span class="kw">new</span> <span class="cls">FormControl</span>&lt;<span class="typ">number | null</span>&gt;(<span class="kw">null</span>),
   });
 
-  <span class="fn">onSubmit</span>() {
-    <span class="cmt">// ✅ CORRECT — always use getRawValue()</span>
+  <span class="fn">onSubmit</span>(): <span class="typ">void</span> {
+    <span class="kw">if</span> (<span class="kw">this</span>.<span class="var">form</span>.<span class="var">invalid</span>) <span class="kw">return</span>;
+
+    <span class="cmt">// ✅ getRawValue() → ALL fields, correct types</span>
     <span class="kw">const</span> <span class="var">data</span> = <span class="kw">this</span>.<span class="var">form</span>.<span class="fn">getRawValue</span>();
-    <span class="fn">console</span>.<span class="fn">log</span>(<span class="str">'Submit:'</span>, <span class="var">data</span>);
+    <span class="cmt">// data.email: string        ← not string|null</span>
+    <span class="cmt">// data.age:   number | null  ← correctly typed</span>
+    <span class="fn">console</span>.<span class="fn">log</span>(<span class="str">'✅ Submit payload:'</span>, <span class="var">data</span>);
 
-    <span class="cmt">// ❌ RISKY — .value might have undefined fields!</span>
-    <span class="kw">const</span> <span class="var">partial</span> = <span class="kw">this</span>.<span class="var">form</span>.<span class="var">value</span>;
-    <span class="fn">console</span>.<span class="fn">log</span>(<span class="str">'Partial:'</span>, <span class="var">partial</span>);
+    <span class="cmt">// ❌ .value → Partial, disabled fields MISSING</span>
+    <span class="fn">console</span>.<span class="fn">log</span>(<span class="str">'⚠️ Partial value:'</span>, <span class="kw">this</span>.<span class="var">form</span>.<span class="var">value</span>);
   }
+
+  <span class="cmt">// TypeScript compiler blocks wrong types at write time:</span>
+  <span class="cmt">// form.controls.email.setValue(123) ← ❌ ERROR: number ≠ string</span>
+  <span class="cmt">// form.controls.email.setValue("ok") ← ✅ fine</span>
 }</pre>
-      </div>
-
-      <div class="console-wrap">
-        <div class="console-hdr">
-          <span style="color:#3fb950;">▶</span>
-          <span>Console Output — What you actually see</span>
+          </div>
         </div>
-        <pre>
-<span class="c-gray">// User fills: email="test@test.com", password="1234"
-// age field is DISABLED (read-only scenario)</span>
 
-<span class="c-cyan">console.log('Submit:', form.getRawValue())</span>
-<span class="c-green">▶ Submit:</span> {
-    <span class="c-orange">email</span>:    <span class="c-blue">"test@test.com"</span>,  <span class="c-gray">// always present</span>
-    <span class="c-orange">password</span>: <span class="c-blue">"1234"</span>,          <span class="c-gray">// always present</span>
-    <span class="c-orange">age</span>:      <span class="c-blue">null</span>             <span class="c-gray">// included even when disabled!</span>
-  }
+        <!-- HTML Template -->
+        <div id="html1" class="tab-pane">
+          <div class="code-wrap">
+            <div class="code-hdr"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span><span style="margin-left:5px;">login.component.html</span></div>
+            <pre>
+<span class="cmt">&lt;!-- [formGroup] binds the FormGroup to the &lt;form&gt; --&gt;</span>
+<span class="tag">&lt;form</span> <span class="ang">[formGroup]</span>=<span class="str">"form"</span> <span class="ang">(ngSubmit)</span>=<span class="str">"onSubmit()"</span><span class="tag">&gt;</span>
 
-<span class="c-cyan">console.log('Partial:', form.value)</span>
-<span class="c-yellow">▶ Partial:</span> {
-    <span class="c-orange">email</span>:    <span class="c-blue">"test@test.com"</span>,
-    <span class="c-orange">password</span>: <span class="c-blue">"1234"</span>
-    <span class="c-gray">// age is MISSING because it was disabled!</span>
-  }
+  <span class="cmt">&lt;!-- Email field --&gt;</span>
+  <span class="tag">&lt;div</span> <span class="atr">class</span>=<span class="str">"field"</span><span class="tag">&gt;</span>
+    <span class="tag">&lt;label&gt;</span>Email *<span class="tag">&lt;/label&gt;</span>
+    <span class="cmt">&lt;!-- formControlName links input to the FormControl --&gt;</span>
+    <span class="tag">&lt;input</span> <span class="ang">formControlName</span>=<span class="str">"email"</span> <span class="atr">type</span>=<span class="str">"email"</span> <span class="tag">/&gt;</span>
 
-<span class="c-gray">// TypeScript catches wrong types at COMPILE TIME:</span>
-<span class="c-red">❌ form.controls.email.setValue(123)</span>
-<span class="c-red">   Error: number is not assignable to string</span>
-<span class="c-green">✅ form.controls.email.setValue("hello@test.com") // fine!</span></pre>
-      </div>
-    </div>
-  </div>
+    <span class="cmt">&lt;!-- Show error only when touched + invalid --&gt;</span>
+    <span class="ang">@if</span> (<span class="exp">form.controls.email.errors?.['required'] &amp;&amp; form.controls.email.touched</span>) {
+      <span class="tag">&lt;p</span> <span class="atr">class</span>=<span class="str">"error"</span><span class="tag">&gt;</span>Email is required<span class="tag">&lt;/p&gt;</span>
+    }
+    <span class="ang">@if</span> (<span class="exp">form.controls.email.errors?.['email'] &amp;&amp; form.controls.email.touched</span>) {
+      <span class="tag">&lt;p</span> <span class="atr">class</span>=<span class="str">"error"</span><span class="tag">&gt;</span>Enter a valid email address<span class="tag">&lt;/p&gt;</span>
+    }
+  <span class="tag">&lt;/div&gt;</span>
+
+  <span class="cmt">&lt;!-- Password field --&gt;</span>
+  <span class="tag">&lt;div</span> <span class="atr">class</span>=<span class="str">"field"</span><span class="tag">&gt;</span>
+    <span class="tag">&lt;label&gt;</span>Password *<span class="tag">&lt;/label&gt;</span>
+    <span class="tag">&lt;input</span> <span class="ang">formControlName</span>=<span class="str">"password"</span> <span class="atr">type</span>=<span class="str">"password"</span> <span class="tag">/&gt;</span>
+  <span class="tag">&lt;/div&gt;</span>
+
+  <span class="cmt">&lt;!-- Age field (nullable — FormControl&lt;number|null&gt;) --&gt;</span>
+  <span class="tag">&lt;div</span> <span class="atr">class</span>=<span class="str">"field"</span><span class="tag">&gt;</span>
+    <span class="tag">&lt;label&gt;</span>Age (optional)<span class="tag">&lt;/label&gt;</span>
+    <span class="tag">&lt;input</span> <span class="ang">formControlName</span>=<span class="str">"age"</span> <span class="atr">type</span>=<span class="str">"number"</span> <span class="tag">/&gt;</span>
+  <span class="tag">&lt;/div&gt;</span>
+
+  <span class="cmt">&lt;!-- Button disabled until form is VALID --&gt;</span>
+  <span class="tag">&lt;button</span> <span class="atr">type</span>=<span class="str">"submit"</span> <span class="ang">[disabled]</span>=<span class="str">"form.invalid"</span><span class="tag">&gt;</span>
+    Submit
+  <span class="tag">&lt;/button&gt;</span>
+
+  <span class="cmt">&lt;!-- Show form values live (for debugging) --&gt;</span>
+  <span class="tag">&lt;pre&gt;</span>Raw:     <span class="exp">{{ form.getRawValue() | json }}</span><span class="tag">&lt;/pre&gt;</span>
+  <span class="tag">&lt;pre&gt;</span>Partial: <span class="exp">{{ form.value | json }}</span><span class="tag">&lt;/pre&gt;</span>
+
+<span class="tag">&lt;/form&gt;</span></pre>
+          </div>
+        </div>
+
+        <!-- Browser Output -->
+        <div id="out1" class="tab-pane">
+          <div class="browser-label">▶ Browser — Rendered Form (3 States)</div>
+          <div class="browser-frame">
+            <div class="browser-chrome">
+              <div class="b-dots"><div class="b-dot b-dot-r"></div><div class="b-dot b-dot-y"></div><div class="b-dot b-dot-g"></div></div>
+              <div class="browser-url">localhost:4200/login</div>
+            </div>
+            <div class="browser-body" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
+              <!-- State 1: Empty/Invalid -->
+              <div>
+                <p style="font-size:11px;font-weight:700;color:#ef4444;margin-bottom:8px;">State 1 — Untouched (Empty)</p>
+                <div class="mf">
+                  <div class="mfield"><div class="mlabel">Email *</div><input class="minput" type="text" placeholder="Enter email" readonly /></div>
+                  <div class="mfield"><div class="mlabel">Password *</div><input class="minput" type="password" placeholder="Password" readonly /></div>
+                  <div class="mfield"><div class="mlabel">Age (optional)</div><input class="minput" type="number" placeholder="" readonly /></div>
+                  <button class="mbtn disabled-btn" disabled>Submit</button>
+                  <div class="mstate"><span class="mstate-item err">form.valid = false</span></div>
+                </div>
+              </div>
+              <!-- State 2: Touched/Error -->
+              <div>
+                <p style="font-size:11px;font-weight:700;color:#ffa657;margin-bottom:8px;">State 2 — Touched, Invalid</p>
+                <div class="mf">
+                  <div class="mfield">
+                    <div class="mlabel">Email *</div>
+                    <input class="minput invalid" type="text" value="notvalid" readonly />
+                    <div class="merror">Enter a valid email address</div>
+                  </div>
+                  <div class="mfield"><div class="mlabel">Password *</div><input class="minput valid" type="password" value="••••••" readonly /></div>
+                  <div class="mfield"><div class="mlabel">Age (optional)</div><input class="minput" type="text" value="" readonly /></div>
+                  <button class="mbtn disabled-btn" disabled>Submit</button>
+                  <div class="mstate"><span class="mstate-item err">form.valid = false</span></div>
+                </div>
+              </div>
+              <!-- State 3: Valid -->
+              <div>
+                <p style="font-size:11px;font-weight:700;color:#22c55e;margin-bottom:8px;">State 3 — All Valid</p>
+                <div class="mf">
+                  <div class="mfield"><div class="mlabel">Email *</div><input class="minput valid" type="email" value="nitin@test.com" readonly /></div>
+                  <div class="mfield"><div class="mlabel">Password *</div><input class="minput valid" type="password" value="••••••••" readonly /></div>
+                  <div class="mfield"><div class="mlabel">Age (optional)</div><input class="minput" type="number" value="30" readonly /></div>
+                  <button class="mbtn green-btn">Submit ✓</button>
+                  <div class="mstate"><span class="mstate-item ok">form.valid = true</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="console-wrap">
+            <div class="console-hdr"><span style="color:#3fb950;">▶</span> Console — onSubmit() output</div>
+            <pre>
+<span class="c-x">// age field is DISABLED in State 3</span>
+<span class="c-c">✅ Submit payload:</span> { <span class="c-o">email</span>: <span class="c-b">"nitin@test.com"</span>, <span class="c-o">password</span>: <span class="c-b">"secret"</span>, <span class="c-o">age</span>: <span class="c-b">null</span> }
+<span class="c-x">                          ↑ age IS included in getRawValue() even when disabled</span>
+
+<span class="c-y">⚠️ Partial value:</span>  { <span class="c-o">email</span>: <span class="c-b">"nitin@test.com"</span>, <span class="c-o">password</span>: <span class="c-b">"secret"</span> }
+<span class="c-x">                          ↑ age is MISSING because it was disabled!</span>
+
+<span class="c-x">// TypeScript compile-time error:</span>
+<span class="c-r">❌ form.controls.email.setValue(999)</span>
+<span class="c-r">   TS Error: Argument of type 'number' is not assignable to type 'string'</span>
+<span class="c-g">✅ form.controls.email.setValue("ok@test.com")   // compiles fine</span></pre>
+          </div>
+        </div>
+
+      </div><!-- tab-panel -->
+    </div><!-- tab-area -->
+  </div><!-- two-col -->
 </div>
 
-<!-- ══════════════════════════════════════════
+<!-- ══════════════════════════════════
      SLIDE 2 — ASYNC VALIDATION
-══════════════════════════════════════════ -->
+══════════════════════════════════ -->
 <div class="slide" id="s2">
   <div class="slide-header">
-    <span class="num-badge">Topic 2 / 5</span>
+    <span class="num-badge">2 / 5</span>
     <h1>Async Validation &amp; Performance</h1>
   </div>
 
   <div class="analogy-box">
-    <div class="lbl">🌍 Real World Analogy</div>
-    <p>
-      Think of async validation like a <strong>hotel receptionist checking if a room is available</strong>.
-      You don't ask after every letter you type — you wait until you <em>finish typing the room number</em> (blur event).
-      The receptionist calls the system (API), and while waiting, shows a <strong>"Checking..."</strong> spinner.
-      Then either says <strong>"Available ✅"</strong> or <strong>"Already taken ❌"</strong>.
-    </p>
+    <div class="lbl">🌍 Analogy</div>
+    <p>Like a <strong>hotel receptionist</strong> checking room availability. You don't ask on every letter you type — you wait until you <em>finish typing</em> (blur). They show a <strong>"Checking…"</strong> spinner, then say <strong>✅ Available</strong> or <strong>❌ Taken</strong>.</p>
   </div>
 
   <div class="two-col">
-    <div style="display:flex;flex-direction:column;gap:10px;">
-
+    <div style="display:flex;flex-direction:column;gap:9px;">
       <div class="card blue">
-        <h2>How Async Validation Works — Step by Step</h2>
+        <h2>6-Step Lifecycle</h2>
         <div class="steps">
-          <div class="step"><div class="step-num">1</div><p>User types in the email field</p></div>
-          <div class="step"><div class="step-num">2</div><p>User clicks away (blur). <strong>Only NOW</strong> the validator fires. <em>(updateOn: 'blur')</em></p></div>
-          <div class="step"><div class="step-num">3</div><p>Control status changes to <strong style="color:#d2a8ff">PENDING</strong> — "checking in progress"</p></div>
-          <div class="step"><div class="step-num">4</div><p>After 400ms wait <em>(timer debounce)</em>, the HTTP call is made</p></div>
-          <div class="step"><div class="step-num">5</div><p>If user blurs again before 400ms → previous call is <strong>cancelled</strong> by <code>switchMap</code></p></div>
-          <div class="step"><div class="step-num">6</div><p>Response arrives → status becomes <strong style="color:#3fb950">VALID</strong> or <strong style="color:#f85149">INVALID</strong></p></div>
+          <div class="step"><div class="step-num">1</div><p>User types email</p></div>
+          <div class="step"><div class="step-num">2</div><p>User tabs away (blur) — <strong>only NOW</strong> validator fires <em>(updateOn:'blur')</em></p></div>
+          <div class="step"><div class="step-num">3</div><p>Control → <strong style="color:#d2a8ff">PENDING</strong> state</p></div>
+          <div class="step"><div class="step-num">4</div><p>After 400ms debounce via <code>timer()</code> → HTTP call fires</p></div>
+          <div class="step"><div class="step-num">5</div><p>If blurred again before 400ms → <code>switchMap</code> cancels old request</p></div>
+          <div class="step"><div class="step-num">6</div><p>Response arrives → <strong style="color:#3fb950">VALID</strong> or <strong style="color:#f85149">INVALID</strong></p></div>
         </div>
       </div>
-
       <div class="card orange">
-        <h2>3 RxJS Operators You Must Know</h2>
+        <h2>TSF Rule — 3 Operators</h2>
         <table>
-          <tr><th>Operator</th><th>What it does (plain English)</th></tr>
-          <tr><td><code>timer(400)</code></td><td>Waits 400ms before proceeding. Acts as a debounce.</td></tr>
-          <tr><td><code>switchMap()</code></td><td>"Cancel previous, start new" — if user blurs again, old HTTP call is discarded</td></tr>
-          <tr><td><code>first()</code></td><td>Tells Angular "we're done now" — WITHOUT this, control stays PENDING forever!</td></tr>
+          <tr><th>Operator</th><th>Plain English</th></tr>
+          <tr><td><strong style="color:#ff7b72">T</strong>imer(400)</td><td>Wait 400ms — debounce before HTTP call</td></tr>
+          <tr><td><strong style="color:#ff7b72">S</strong>witchMap()</td><td>Cancel previous, start fresh on new value</td></tr>
+          <tr><td><strong style="color:#ff7b72">F</strong>irst()</td><td>Complete stream — exits PENDING state ⚠️</td></tr>
         </table>
       </div>
-
       <div class="memory-box">
-        <div class="lbl">🧠 How to Remember — "TSF Rule"</div>
-        <ul>
-          <li><strong>T</strong>imer → debounce the call</li>
-          <li><strong>S</strong>witchMap → cancel the old, start the new</li>
-          <li><strong>F</strong>irst → complete the stream so Angular exits PENDING</li>
-        </ul>
-        <p style="margin-top:6px;">If you forget <strong>F (first)</strong>, your form will be stuck in 🔄 PENDING forever!</p>
+        <div class="lbl">🧠 Memory: TSF Rule</div>
+        <p><strong>T</strong>imer → <strong>S</strong>witchMap → <strong>F</strong>irst</p>
+        <p style="margin-top:5px;">Forget <strong>F</strong> = form stuck in PENDING forever! 🔄</p>
       </div>
     </div>
 
-    <div style="display:flex;flex-direction:column;gap:10px;">
-      <div class="code-wrap">
-        <div class="code-hdr"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span><span style="margin-left:6px;">async-validator.ts</span></div>
-        <pre>
-<span class="cmt">// Functional validator — gets HttpClient via inject()</span>
+    <!-- TABS -->
+    <div class="tab-area">
+      <div class="tab-bar">
+        <button class="tab-btn active" onclick="swTab(this,'ts2')">📝 TypeScript</button>
+        <button class="tab-btn" onclick="swTab(this,'html2')">🔷 HTML Template</button>
+        <button class="tab-btn" onclick="swTab(this,'out2')">▶ Browser Output</button>
+      </div>
+      <div class="tab-panel">
+
+        <div id="ts2" class="tab-pane active">
+          <div class="code-wrap">
+            <div class="code-hdr"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span><span style="margin-left:5px;">unique-email.validator.ts + register.component.ts</span></div>
+            <pre>
+<span class="cmt">// ── Functional async validator factory ──</span>
 <span class="kw">export function</span> <span class="fn">uniqueEmailValidator</span>(): <span class="cls">AsyncValidatorFn</span> {
-  <span class="kw">const</span> <span class="var">http</span> = <span class="fn">inject</span>(<span class="cls">HttpClient</span>);
+  <span class="kw">const</span> <span class="var">http</span> = <span class="fn">inject</span>(<span class="cls">HttpClient</span>); <span class="cmt">// inject inside component constructor</span>
 
   <span class="kw">return</span> (<span class="var">ctrl</span>: <span class="cls">AbstractControl</span>) => {
     <span class="kw">const</span> <span class="var">email</span> = <span class="var">ctrl</span>.<span class="var">value</span> <span class="kw">as</span> <span class="typ">string</span>;
-    <span class="kw">if</span> (!<span class="var">email</span>) <span class="kw">return</span> <span class="fn">of</span>(<span class="kw">null</span>);  <span class="cmt">// empty = no check needed</span>
+    <span class="kw">if</span> (!<span class="var">email</span>) <span class="kw">return</span> <span class="fn">of</span>(<span class="kw">null</span>);  <span class="cmt">// empty = skip check</span>
 
-    <span class="kw">return</span> <span class="fn">timer</span>(<span class="num">400</span>).<span class="fn">pipe</span>(     <span class="cmt">// T: wait 400ms</span>
-      <span class="fn">switchMap</span>(() =>            <span class="cmt">// S: cancel old, start new</span>
-        <span class="var">http</span>.<span class="fn">get</span>&lt;{ <span class="var">exists</span>: <span class="typ">boolean</span> }&gt;(
-          <span class="str">'/api/check-email'</span>,
-          { <span class="var">params</span>: { <span class="var">email</span> } }  <span class="cmt">// always use params object!</span>
-        )
+    <span class="kw">return</span> <span class="fn">timer</span>(<span class="num">400</span>).<span class="fn">pipe</span>(      <span class="cmt">// T — wait 400ms</span>
+      <span class="fn">switchMap</span>(() =>             <span class="cmt">// S — cancel old, start new</span>
+        <span class="var">http</span>.<span class="fn">get</span>&lt;{ <span class="var">exists</span>: <span class="typ">boolean</span> }&gt;(<span class="str">'/api/check-email'</span>, {
+          <span class="var">params</span>: { <span class="var">email</span> }        <span class="cmt">// always use params object!</span>
+        })
       ),
-      <span class="fn">map</span>(<span class="var">res</span> =>
-        <span class="var">res</span>.<span class="var">exists</span>
-          ? { <span class="var">emailTaken</span>: <span class="kw">true</span> }  <span class="cmt">// error → INVALID</span>
-          : <span class="kw">null</span>                    <span class="cmt">// no error → VALID</span>
-      ),
-      <span class="fn">catchError</span>(() => <span class="fn">of</span>(<span class="kw">null</span>)),  <span class="cmt">// API down? allow submit</span>
-      <span class="fn">first</span>()                       <span class="cmt">// F: complete stream!</span>
+      <span class="fn">map</span>(<span class="var">r</span> => <span class="var">r</span>.<span class="var">exists</span>
+        ? { <span class="var">emailTaken</span>: <span class="kw">true</span> }   <span class="cmt">// error → INVALID</span>
+        : <span class="kw">null</span>),                    <span class="cmt">// null → VALID</span>
+      <span class="fn">catchError</span>(() => <span class="fn">of</span>(<span class="kw">null</span>)), <span class="cmt">// API down? allow submit</span>
+      <span class="fn">first</span>()                      <span class="cmt">// F — complete stream!</span>
     );
   };
 }
 
-<span class="cmt">// Attach to a form control:</span>
-<span class="var">email</span>: <span class="kw">this</span>.<span class="var">fb</span>.<span class="fn">control</span>(<span class="str">''</span>, {
-  <span class="var">validators</span>:      [<span class="cls">Validators</span>.<span class="var">required</span>, <span class="cls">Validators</span>.<span class="var">email</span>],
-  <span class="var">asyncValidators</span>: [<span class="fn">uniqueEmailValidator</span>()],
-  <span class="var">updateOn</span>:        <span class="str">'blur'</span>  <span class="cmt">// fires only on blur, not keystroke</span>
-})</pre>
-      </div>
+<span class="dec">@Component</span>({ <span class="var">standalone</span>: <span class="kw">true</span>, ... })
+<span class="kw">export class</span> <span class="cls">RegisterComponent</span> {
+  <span class="kw">private</span> <span class="var">fb</span> = <span class="fn">inject</span>(<span class="cls">NonNullableFormBuilder</span>);
 
-      <div class="console-wrap">
-        <div class="console-hdr">
-          <span style="color:#3fb950;">▶</span>
-          <span>Console Output — Control Status Changes</span>
+  <span class="var">form</span> = <span class="kw">this</span>.<span class="var">fb</span>.<span class="fn">group</span>({
+    <span class="var">email</span>: <span class="kw">this</span>.<span class="var">fb</span>.<span class="fn">control</span>(<span class="str">''</span>, {
+      <span class="var">validators</span>:      [<span class="cls">Validators</span>.<span class="var">required</span>, <span class="cls">Validators</span>.<span class="var">email</span>],
+      <span class="var">asyncValidators</span>: [<span class="fn">uniqueEmailValidator</span>()],
+      <span class="var">updateOn</span>:        <span class="str">'blur'</span>  <span class="cmt">// fire only on blur, NOT on keystroke</span>
+    })
+  });
+
+  <span class="kw">get</span> <span class="fn">emailCtrl</span>() { <span class="kw">return this</span>.<span class="var">form</span>.<span class="var">controls</span>.<span class="var">email</span>; }
+}</pre>
+          </div>
         </div>
-        <pre>
-<span class="c-gray">// Subscribe to statusChanges to watch transitions:</span>
-<span class="c-cyan">emailCtrl.statusChanges.subscribe(s =&gt; console.log(s))</span>
 
-<span class="c-gray">// User types "test@test.com" then tabs away:</span>
-<span class="c-purple">PENDING</span>   <span class="c-gray">// status goes PENDING immediately on blur</span>
-<span class="c-gray">// 400ms pass... HTTP fires...</span>
-<span class="c-gray">// API response: { exists: false }</span>
-<span class="c-green">VALID</span>     <span class="c-gray">// email is available!</span>
+        <div id="html2" class="tab-pane">
+          <div class="code-wrap">
+            <div class="code-hdr"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span><span style="margin-left:5px;">register.component.html</span></div>
+            <pre>
+<span class="tag">&lt;form</span> <span class="ang">[formGroup]</span>=<span class="str">"form"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;div</span> <span class="atr">class</span>=<span class="str">"field"</span><span class="tag">&gt;</span>
+    <span class="tag">&lt;label&gt;</span>Email *<span class="tag">&lt;/label&gt;</span>
 
-<span class="c-gray">// User changes to "taken@gmail.com" then tabs away:</span>
-<span class="c-purple">PENDING</span>
-<span class="c-gray">// API response: { exists: true }</span>
-<span class="c-red">INVALID</span>   <span class="c-gray">// email is taken</span>
+    <span class="tag">&lt;input</span> <span class="ang">formControlName</span>=<span class="str">"email"</span> <span class="atr">type</span>=<span class="str">"email"</span>
+           <span class="atr">placeholder</span>=<span class="str">"Enter your email"</span> <span class="tag">/&gt;</span>
 
-<span class="c-gray">// Check what the error looks like:</span>
-<span class="c-cyan">console.log(emailCtrl.errors)</span>
-<span class="c-yellow">▶</span> { <span class="c-orange">emailTaken</span>: <span class="c-blue">true</span> }
+    <span class="cmt">&lt;!-- PENDING: API call in progress --&gt;</span>
+    <span class="ang">@if</span> (<span class="exp">emailCtrl.pending</span>) {
+      <span class="tag">&lt;p</span> <span class="atr">class</span>=<span class="str">"pending"</span><span class="tag">&gt;</span>⏳ Checking availability...<span class="tag">&lt;/p&gt;</span>
+    }
 
-<span class="c-gray">// Template displays error message:</span>
-<span class="c-cyan">@if (emailCtrl.errors?.['emailTaken']) {</span>
-<span class="c-blue">  "This email is already registered"</span>
-<span class="c-cyan">}</span></pre>
+    <span class="cmt">&lt;!-- INVALID: format error --&gt;</span>
+    <span class="ang">@if</span> (<span class="exp">emailCtrl.errors?.['email'] &amp;&amp; emailCtrl.touched</span>) {
+      <span class="tag">&lt;p</span> <span class="atr">class</span>=<span class="str">"error"</span><span class="tag">&gt;</span>Please enter a valid email<span class="tag">&lt;/p&gt;</span>
+    }
+
+    <span class="cmt">&lt;!-- INVALID: email taken (from async validator) --&gt;</span>
+    <span class="ang">@if</span> (<span class="exp">emailCtrl.errors?.['emailTaken']</span>) {
+      <span class="tag">&lt;p</span> <span class="atr">class</span>=<span class="str">"error"</span><span class="tag">&gt;</span>❌ This email is already registered<span class="tag">&lt;/p&gt;</span>
+    }
+
+    <span class="cmt">&lt;!-- VALID --&gt;</span>
+    <span class="ang">@if</span> (<span class="exp">emailCtrl.valid &amp;&amp; !emailCtrl.pending</span>) {
+      <span class="tag">&lt;p</span> <span class="atr">class</span>=<span class="str">"success"</span><span class="tag">&gt;</span>✅ Email is available!<span class="tag">&lt;/p&gt;</span>
+    }
+  <span class="tag">&lt;/div&gt;</span>
+<span class="tag">&lt;/form&gt;</span></pre>
+          </div>
+        </div>
+
+        <div id="out2" class="tab-pane">
+          <div class="browser-label">▶ Browser — 3 Validation States</div>
+          <div class="browser-frame">
+            <div class="browser-chrome">
+              <div class="b-dots"><div class="b-dot b-dot-r"></div><div class="b-dot b-dot-y"></div><div class="b-dot b-dot-g"></div></div>
+              <div class="browser-url">localhost:4200/register</div>
+            </div>
+            <div class="browser-body" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
+              <div>
+                <p style="font-size:11px;font-weight:700;color:#7c3aed;margin-bottom:8px;">State: PENDING</p>
+                <div class="mfield"><div class="mlabel">Email *</div><input class="minput pending" value="nitin@test.com" readonly /><div class="mpending-msg">⏳ Checking availability...</div></div>
+                <div class="mstate" style="margin-top:8px;"><span class="mstate-item pend">status = PENDING</span></div>
+              </div>
+              <div>
+                <p style="font-size:11px;font-weight:700;color:#ef4444;margin-bottom:8px;">State: INVALID (taken)</p>
+                <div class="mfield"><div class="mlabel">Email *</div><input class="minput invalid" value="taken@gmail.com" readonly /><div class="merror">❌ This email is already registered</div></div>
+                <div class="mstate" style="margin-top:8px;"><span class="mstate-item err">status = INVALID</span><span class="mstate-item err">errors: { emailTaken: true }</span></div>
+              </div>
+              <div>
+                <p style="font-size:11px;font-weight:700;color:#16a34a;margin-bottom:8px;">State: VALID</p>
+                <div class="mfield"><div class="mlabel">Email *</div><input class="minput valid" value="free@email.com" readonly /><div class="msuccess">✅ Email is available!</div></div>
+                <div class="mstate" style="margin-top:8px;"><span class="mstate-item ok">status = VALID</span><span class="mstate-item ok">errors = null</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="console-wrap">
+            <div class="console-hdr"><span style="color:#3fb950;">▶</span> Console — statusChanges stream</div>
+            <pre>
+<span class="c-x">// Subscribe: emailCtrl.statusChanges.subscribe(s =&gt; console.log(s))</span>
+
+<span class="c-x">// User types "nitin@test.com" then presses Tab:</span>
+<span class="c-p">PENDING</span>    <span class="c-x">← control immediately goes PENDING on blur</span>
+<span class="c-x">// 400ms timer fires → HTTP GET /api/check-email?email=nitin@test.com</span>
+<span class="c-x">// API returns: { exists: false }</span>
+<span class="c-g">VALID</span>      <span class="c-x">← email is available!</span>
+
+<span class="c-x">// User clears and types "taken@gmail.com" then presses Tab:</span>
+<span class="c-p">PENDING</span>
+<span class="c-x">// API returns: { exists: true }</span>
+<span class="c-r">INVALID</span>    <span class="c-x">← email taken!</span>
+
+<span class="c-x">// Check error object:</span>
+<span class="c-c">console.log(emailCtrl.errors)</span>
+<span class="c-y">▶</span> { <span class="c-o">emailTaken</span>: <span class="c-b">true</span> }</pre>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════
-     SLIDE 3 — SIGNALS + FORMS (v22)
-══════════════════════════════════════════ -->
+<!-- ══════════════════════════════════
+     SLIDE 3 — SIGNALS + FORMS
+══════════════════════════════════ -->
 <div class="slide" id="s3">
   <div class="slide-header">
-    <span class="num-badge">Topic 3 / 5</span>
+    <span class="num-badge">3 / 5</span>
     <h1>Angular Forms + Signals (v22)</h1>
   </div>
 
   <div class="analogy-box">
-    <div class="lbl">🌍 Real World Analogy — Think of Excel Cells</div>
-    <p>
-      A <strong>Signal</strong> is like an Excel cell. When cell A1 changes, every formula that uses A1 <em>automatically updates</em>.
-      <code>formValue</code> is cell A1 (the raw form data).
-      <code>isSearchActive</code> is a formula like <code>=IF(A1 &gt; 2 chars, TRUE, FALSE)</code> — it auto-recalculates.
-      <strong>No subscriptions. No manual updates. Just declare the relationships.</strong>
-    </p>
+    <div class="lbl">🌍 Analogy — Excel Cells</div>
+    <p>A <strong>Signal</strong> = an Excel cell. Change A1, every formula using A1 auto-updates. <code>formValue</code> = cell A1. <code>isActive</code> = a formula <code>=IF(LEN(A1)&gt;=2, TRUE)</code>. <strong>No subscriptions needed.</strong></p>
   </div>
 
   <div class="two-col">
-    <div style="display:flex;flex-direction:column;gap:10px;">
-
+    <div style="display:flex;flex-direction:column;gap:9px;">
       <div class="card purple">
-        <h2>The 4 Signal Primitives You Need</h2>
+        <h2>TCLR — 4 Signal Primitives</h2>
         <div class="steps">
-          <div class="step"><div class="step-num">1</div><p><strong>toSignal(observable)</strong> — converts RxJS Observable into a Signal. Now you can read it synchronously like a variable.</p></div>
-          <div class="step"><div class="step-num">2</div><p><strong>computed(() =&gt; ...)</strong> — derives a new Signal from other Signals. Auto-recalculates. Like an Excel formula.</p></div>
-          <div class="step"><div class="step-num">3</div><p><strong>linkedSignal(() =&gt; ...)</strong> — a writable Signal that resets itself when its source changes. E.g., page resets to 1 when search query changes.</p></div>
-          <div class="step"><div class="step-num">4</div><p><strong>resource()</strong> — like a Signal that does an async API call. Auto-re-fetches when its request Signals change. Auto-cancels old requests.</p></div>
+          <div class="step"><div class="step-num">T</div><p><strong>toSignal(obs)</strong> — convert RxJS Observable → Signal. Read synchronously like a variable.</p></div>
+          <div class="step"><div class="step-num">C</div><p><strong>computed()</strong> — derive a new signal. Auto-recalculates when dependencies change.</p></div>
+          <div class="step"><div class="step-num">L</div><p><strong>linkedSignal()</strong> — writable signal that resets when its source changes (e.g. page → 1 on new query).</p></div>
+          <div class="step"><div class="step-num">R</div><p><strong>resource()</strong> — reactive async fetch. Re-runs &amp; auto-aborts when request signals change.</p></div>
         </div>
       </div>
-
       <div class="card cyan">
-        <h2>RxJS vs Signals — Quick Comparison</h2>
+        <h2>RxJS vs Signals</h2>
         <table>
           <tr><th></th><th>RxJS Observable</th><th>Signal (v22)</th></tr>
-          <tr><td>Read value</td><td>Subscribe (async)</td><td>Call it: <code>mySignal()</code></td></tr>
-          <tr><td>Update UI</td><td>Needs Zone.js</td><td>Automatic — no zone needed</td></tr>
-          <tr><td>Derived state</td><td><code>pipe(map(...))</code></td><td><code>computed()</code></td></tr>
+          <tr><td>Read value</td><td>Subscribe (async)</td><td><code>mySignal()</code> (sync)</td></tr>
+          <tr><td>Update UI</td><td>Needs Zone.js</td><td>Automatic ✓</td></tr>
+          <tr><td>Derived state</td><td><code>pipe(map())</code></td><td><code>computed()</code></td></tr>
           <tr><td>Cleanup</td><td>Manual unsubscribe</td><td>Auto via DestroyRef</td></tr>
         </table>
       </div>
-
       <div class="memory-box">
-        <div class="lbl">🧠 How to Remember — "TCLR" Pattern</div>
-        <ul>
-          <li><strong>T</strong>oSignal — bridge form's valueChanges into Signal world</li>
-          <li><strong>C</strong>omputed — derive stuff from that Signal</li>
-          <li><strong>L</strong>inkedSignal — reset writable state when source changes</li>
-          <li><strong>R</strong>esource — fetch API data reactively, auto-abort on change</li>
-        </ul>
+        <div class="lbl">🧠 Memory: TCLR</div>
+        <p><strong>T</strong>oSignal · <strong>C</strong>omputed · <strong>L</strong>inkedSignal · <strong>R</strong>esource</p>
+        <p style="margin-top:5px;">Think: <em>"To Create Linked Results"</em></p>
       </div>
     </div>
 
-    <div style="display:flex;flex-direction:column;gap:10px;">
-      <div class="code-wrap">
-        <div class="code-hdr"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span><span style="margin-left:6px;">search-form.component.ts — Forms + Signals</span></div>
-        <pre>
-<span class="dec">@Component</span>({
-  <span class="var">standalone</span>: <span class="kw">true</span>,
-  <span class="var">changeDetection</span>: <span class="cls">ChangeDetectionStrategy</span>.<span class="var">OnPush</span>,
-  <span class="var">template</span>: <span class="str">`
-    &lt;input [formControl]="queryCtrl" /&gt;
-    @if (isActive()) {
-      &lt;p&gt;Searching for: {{ query() }}&lt;/p&gt;
-      &lt;p&gt;Page: {{ page() }}&lt;/p&gt;
-    }
-    @if (results.isLoading()) { &lt;span&gt;Loading...&lt;/span&gt; }
-    @for (item of results.value() ?? []; track item.id) {
-      &lt;div&gt;{{ item.name }}&lt;/div&gt;
-    }
-  `</span>
-})
+    <div class="tab-area">
+      <div class="tab-bar">
+        <button class="tab-btn active" onclick="swTab(this,'ts3')">📝 TypeScript</button>
+        <button class="tab-btn" onclick="swTab(this,'html3')">🔷 HTML Template</button>
+        <button class="tab-btn" onclick="swTab(this,'out3')">▶ Browser Output</button>
+      </div>
+      <div class="tab-panel">
+
+        <div id="ts3" class="tab-pane active">
+          <div class="code-wrap">
+            <div class="code-hdr"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span><span style="margin-left:5px;">search.component.ts</span></div>
+            <pre>
+<span class="dec">@Component</span>({ <span class="var">standalone</span>: <span class="kw">true</span>, <span class="var">changeDetection</span>: <span class="cls">ChangeDetectionStrategy</span>.<span class="var">OnPush</span> })
 <span class="kw">export class</span> <span class="cls">SearchComponent</span> {
   <span class="kw">private</span> <span class="var">fb</span> = <span class="fn">inject</span>(<span class="cls">NonNullableFormBuilder</span>);
 
   <span class="cmt">// Normal reactive form control</span>
   <span class="var">queryCtrl</span> = <span class="kw">this</span>.<span class="var">fb</span>.<span class="fn">control</span>(<span class="str">''</span>);
 
-  <span class="cmt">// STEP T: Bridge form → Signal via toSignal()</span>
+  <span class="cmt">// T — toSignal: bridge form valueChanges → Signal</span>
   <span class="kw">readonly</span> <span class="var">formValue</span> = <span class="fn">toSignal</span>(
     <span class="kw">this</span>.<span class="var">queryCtrl</span>.<span class="var">valueChanges</span>.<span class="fn">pipe</span>(<span class="fn">debounceTime</span>(<span class="num">300</span>)),
-    { <span class="var">initialValue</span>: <span class="str">''</span> }
+    { <span class="var">initialValue</span>: <span class="str">''</span> }   <span class="cmt">// prevents Signal&lt;string|undefined&gt;</span>
   );
 
-  <span class="cmt">// STEP C: Computed signals (like Excel formulas)</span>
+  <span class="cmt">// C — computed: like Excel formula, auto-updates</span>
   <span class="kw">readonly</span> <span class="var">query</span>    = <span class="fn">computed</span>(() => <span class="kw">this</span>.<span class="var">formValue</span>().<span class="fn">trim</span>());
   <span class="kw">readonly</span> <span class="var">isActive</span> = <span class="fn">computed</span>(() => <span class="kw">this</span>.<span class="var">query</span>().<span class="var">length</span> &gt;= <span class="num">2</span>);
 
-  <span class="cmt">// STEP L: linkedSignal resets page to 1 on new query</span>
+  <span class="cmt">// L — linkedSignal: page resets to 1 when query changes</span>
   <span class="kw">readonly</span> <span class="var">page</span> = <span class="fn">linkedSignal</span>(() => (<span class="kw">this</span>.<span class="var">query</span>(), <span class="num">1</span>));
 
-  <span class="cmt">// STEP R: resource() — reactive API call</span>
+  <span class="cmt">// R — resource: reactive API call, auto-aborts old requests</span>
   <span class="kw">readonly</span> <span class="var">results</span> = <span class="fn">resource</span>({
-    <span class="var">request</span>: () => ({
-      <span class="var">q</span>: <span class="kw">this</span>.<span class="var">query</span>(),
-      <span class="var">p</span>: <span class="kw">this</span>.<span class="var">page</span>()
-    }),
+    <span class="var">request</span>: () => ({ <span class="var">q</span>: <span class="kw">this</span>.<span class="var">query</span>(), <span class="var">p</span>: <span class="kw">this</span>.<span class="var">page</span>() }),
     <span class="var">loader</span>: <span class="kw">async</span> ({ <span class="var">request</span>, <span class="var">abortSignal</span> }) => {
       <span class="kw">if</span> (!<span class="var">request</span>.<span class="var">q</span>) <span class="kw">return</span> [];
       <span class="kw">const</span> <span class="var">r</span> = <span class="kw">await</span> <span class="fn">fetch</span>(
         <span class="str">`/api/search?q=<span class="var">${request.q}</span>&amp;p=<span class="var">${request.p}</span>`</span>,
-        { <span class="var">signal</span>: <span class="var">abortSignal</span> }  <span class="cmt">// auto-cancels stale requests</span>
+        { <span class="var">signal</span>: <span class="var">abortSignal</span> }  <span class="cmt">// cancels stale requests</span>
       );
       <span class="kw">return</span> <span class="var">r</span>.<span class="fn">json</span>();
     }
   });
 }</pre>
-      </div>
+          </div>
+        </div>
 
-      <div class="console-wrap">
-        <div class="console-hdr"><span style="color:#3fb950;">▶</span><span>Console Output — Signal Values Over Time</span></div>
-        <pre>
-<span class="c-gray">// User types "sh" (2 chars), waits 300ms</span>
-<span class="c-cyan">query()     =</span> <span class="c-blue">"sh"</span>
-<span class="c-cyan">isActive()  =</span> <span class="c-green">true</span>    <span class="c-gray">// template shows search UI</span>
-<span class="c-cyan">page()      =</span> <span class="c-blue">1</span>
-<span class="c-cyan">results.isLoading() =</span> <span class="c-green">true</span>  <span class="c-gray">// spinner shows</span>
+        <div id="html3" class="tab-pane">
+          <div class="code-wrap">
+            <div class="code-hdr"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span><span style="margin-left:5px;">search.component.html</span></div>
+            <pre>
+<span class="cmt">&lt;!-- Form: queryCtrl drives the Signal chain --&gt;</span>
+<span class="tag">&lt;input</span> <span class="ang">[formControl]</span>=<span class="str">"queryCtrl"</span>
+       <span class="atr">placeholder</span>=<span class="str">"Search products..."</span> <span class="tag">/&gt;</span>
 
-<span class="c-gray">// API returns results...</span>
-<span class="c-cyan">results.isLoading() =</span> <span class="c-red">false</span>
-<span class="c-cyan">results.value()     =</span> <span class="c-blue">[{ id:1, name:"Shoes" }, { id:2, name:"Shirt" }]</span>
+<span class="cmt">&lt;!-- computed() — only shows when query has &gt;= 2 chars --&gt;</span>
+<span class="ang">@if</span> (<span class="exp">isActive()</span>) {
+  <span class="tag">&lt;p&gt;</span>Results for: "<span class="exp">{{ query() }}</span>" — Page <span class="exp">{{ page() }}</span><span class="tag">&lt;/p&gt;</span>
+}
 
-<span class="c-gray">// User clicks "Next page" button</span>
-<span class="c-cyan">page()      =</span> <span class="c-blue">2</span>     <span class="c-gray">// page.set(2) called</span>
-<span class="c-gray">// resource() sees page changed → new API call</span>
-<span class="c-gray">// OLD request is aborted automatically!</span>
+<span class="cmt">&lt;!-- resource.isLoading() Signal --&gt;</span>
+<span class="ang">@if</span> (<span class="exp">results.isLoading()</span>) {
+  <span class="tag">&lt;div</span> <span class="atr">class</span>=<span class="str">"loader"</span><span class="tag">&gt;</span>🔄 Loading...<span class="tag">&lt;/div&gt;</span>
+}
 
-<span class="c-gray">// User clears input and types new query "tr"</span>
-<span class="c-cyan">query()     =</span> <span class="c-blue">"tr"</span>
-<span class="c-cyan">page()      =</span> <span class="c-blue">1</span>    <span class="c-gray">// linkedSignal AUTO-RESET page to 1!</span></pre>
+<span class="cmt">&lt;!-- resource.value() Signal — list of results --&gt;</span>
+<span class="tag">&lt;div</span> <span class="atr">class</span>=<span class="str">"results"</span><span class="tag">&gt;</span>
+  <span class="ang">@for</span> (<span class="exp">item of results.value() ?? []</span>; <span class="ang">track</span> <span class="exp">item.id</span>) {
+    <span class="tag">&lt;div</span> <span class="atr">class</span>=<span class="str">"item"</span><span class="tag">&gt;</span>
+      <span class="tag">&lt;strong&gt;</span><span class="exp">{{ item.name }}</span><span class="tag">&lt;/strong&gt;</span>
+      <span class="tag">&lt;span&gt;</span>$<span class="exp">{{ item.price }}</span><span class="tag">&lt;/span&gt;</span>
+    <span class="tag">&lt;/div&gt;</span>
+  }
+  <span class="ang">@empty</span> {
+    <span class="tag">&lt;p&gt;</span>No results found<span class="tag">&lt;/p&gt;</span>
+  }
+<span class="tag">&lt;/div&gt;</span>
+
+<span class="cmt">&lt;!-- Pagination — linkedSignal auto-resets page to 1 on new search --&gt;</span>
+<span class="tag">&lt;div</span> <span class="atr">class</span>=<span class="str">"pagination"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;button</span> <span class="ang">(click)</span>=<span class="str">"page.set(page() - 1)"</span>
+          <span class="ang">[disabled]</span>=<span class="str">"page() &lt;= 1"</span><span class="tag">&gt;</span>◀ Prev<span class="tag">&lt;/button&gt;</span>
+  <span class="tag">&lt;span&gt;</span>Page <span class="exp">{{ page() }}</span><span class="tag">&lt;/span&gt;</span>
+  <span class="tag">&lt;button</span> <span class="ang">(click)</span>=<span class="str">"page.set(page() + 1)"</span><span class="tag">&gt;</span>Next ▶<span class="tag">&lt;/button&gt;</span>
+<span class="tag">&lt;/div&gt;</span></pre>
+          </div>
+        </div>
+
+        <div id="out3" class="tab-pane">
+          <div class="browser-label">▶ Browser — Search + Pagination UI</div>
+          <div class="browser-frame">
+            <div class="browser-chrome">
+              <div class="b-dots"><div class="b-dot b-dot-r"></div><div class="b-dot b-dot-y"></div><div class="b-dot b-dot-g"></div></div>
+              <div class="browser-url">localhost:4200/search</div>
+            </div>
+            <div class="browser-body">
+              <div class="mfield" style="margin-bottom:10px;">
+                <input class="minput valid" type="text" value="sh" readonly placeholder="Search products..." />
+              </div>
+              <p style="font-size:12px;color:#374151;margin-bottom:8px;">Results for: <strong>"sh"</strong> — Page 2</p>
+              <div style="border:1px solid #e5e7eb;border-radius:6px;overflow:hidden;margin-bottom:10px;">
+                <div class="mresult-item"><strong>Shoes</strong><span>$49.99</span></div>
+                <div class="mresult-item"><strong>Shirt</strong><span>$29.99</span></div>
+                <div class="mresult-item"><strong>Shorts</strong><span>$34.99</span></div>
+              </div>
+              <div class="mpagination">
+                <button class="mpbtn">◀ Prev</button>
+                <span class="mpnum">Page 2</span>
+                <button class="mpbtn">Next ▶</button>
+              </div>
+              <div class="mstate" style="margin-top:10px;">
+                <span class="mstate-item ok">query() = "sh"</span>
+                <span class="mstate-item ok">isActive() = true</span>
+                <span class="mstate-item">page() = 2</span>
+              </div>
+            </div>
+          </div>
+          <div class="console-wrap">
+            <div class="console-hdr"><span style="color:#3fb950;">▶</span> Console — Signal values over time</div>
+            <pre>
+<span class="c-x">// User types "sh", waits 300ms</span>
+<span class="c-c">query()     =</span> <span class="c-b">"sh"</span>
+<span class="c-c">isActive()  =</span> <span class="c-g">true</span>      <span class="c-x">← template shows results section</span>
+<span class="c-c">page()      =</span> <span class="c-b">1</span>
+<span class="c-c">results.isLoading() =</span> <span class="c-g">true</span>  <span class="c-x">← spinner shows</span>
+<span class="c-x">// API responds...</span>
+<span class="c-c">results.value() =</span> <span class="c-b">[{name:"Shoes"}, {name:"Shirt"}, {name:"Shorts"}]</span>
+
+<span class="c-x">// User clicks "Next ▶"</span>
+<span class="c-c">page() =</span> <span class="c-b">2</span>   <span class="c-x">← resource() re-fetches, OLD request aborted</span>
+
+<span class="c-x">// User types new query "tr" (query signal changes)</span>
+<span class="c-c">query() =</span> <span class="c-b">"tr"</span>
+<span class="c-c">page()  =</span> <span class="c-b">1</span>    <span class="c-x">← linkedSignal AUTO-RESET to 1!</span></pre>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════
-     SLIDE 4 — CUSTOM FORM CONTROLS (CVA)
-══════════════════════════════════════════ -->
+<!-- ══════════════════════════════════
+     SLIDE 4 — CVA
+══════════════════════════════════ -->
 <div class="slide" id="s4">
   <div class="slide-header">
-    <span class="num-badge">Topic 4 / 5</span>
+    <span class="num-badge">4 / 5</span>
     <h1>Custom Form Controls — ControlValueAccessor</h1>
   </div>
 
   <div class="analogy-box">
-    <div class="lbl">🌍 Real World Analogy — Power Adapter</div>
-    <p>
-      Angular's form system speaks one language. Your custom UI (like a tag-input or star-rating) speaks another.
-      <strong>ControlValueAccessor (CVA)</strong> is the <strong>power adapter between them</strong>.
-      You implement 4 methods that tell Angular: "here's how to read my value, write my value, disable me, and know when I'm touched."
-    </p>
+    <div class="lbl">🌍 Analogy — Power Adapter</div>
+    <p>Angular's form system speaks one language. Your custom UI (tag chips, star-rating) speaks another. <strong>CVA is the adapter</strong>. Implement 4 methods and Angular treats your component exactly like a native <code>&lt;input&gt;</code>.</p>
   </div>
 
   <div class="two-col">
-    <div style="display:flex;flex-direction:column;gap:10px;">
-
+    <div style="display:flex;flex-direction:column;gap:9px;">
       <div class="card red">
-        <h2>The 4 Methods You Must Implement</h2>
+        <h2>WRST — 4 Methods to Implement</h2>
         <div class="steps">
-          <div class="step">
-            <div class="step-num">1</div>
-            <p><strong>writeValue(val)</strong> — Angular → Your Component.<br>
-            Called when parent does <code>form.setValue()</code>. Update your internal UI.</p>
-          </div>
-          <div class="step">
-            <div class="step-num">2</div>
-            <p><strong>registerOnChange(fn)</strong> — Store the callback.<br>
-            Call <code>fn(newValue)</code> whenever the user changes something in your component.</p>
-          </div>
-          <div class="step">
-            <div class="step-num">3</div>
-            <p><strong>registerOnTouched(fn)</strong> — Store the callback.<br>
-            Call <code>fn()</code> when user leaves (blurs) your component.</p>
-          </div>
-          <div class="step">
-            <div class="step-num">4</div>
-            <p><strong>setDisabledState(isDisabled)</strong> — Called when parent form is disabled.<br>
-            Show/hide your disabled UI state.</p>
-          </div>
+          <div class="step"><div class="step-num">W</div><p><strong>writeValue(val)</strong> — Angular → Your component. Called on <code>setValue()</code>. Update your internal UI.</p></div>
+          <div class="step"><div class="step-num">R</div><p><strong>registerOnChange(fn)</strong> — Store callback. Call <code>fn(newVal)</code> when user changes something inside.</p></div>
+          <div class="step"><div class="step-num">S</div><p><strong>setDisabledState(bool)</strong> — Called when <code>form.disable()</code>. Disable your internal UI.</p></div>
+          <div class="step"><div class="step-num">T</div><p><strong>registerOnTouched(fn)</strong> — Store callback. Call <code>fn()</code> when user blurs your component.</p></div>
         </div>
       </div>
-
       <div class="step-box">
-        <div class="lbl">📋 How to Register a CVA — Copy This Pattern</div>
-        <p>In <code>providers</code> array of your <code>@Component</code>:</p>
-        <pre style="font-family:Consolas;font-size:12px;line-height:1.7;margin-top:8px;color:#e6edf3;">
-{
-  provide:     NG_VALUE_ACCESSOR,
-  useExisting: <span style="color:#ff7b72">forwardRef</span>(() => <span style="color:#f0c674">YourComponent</span>),
+        <div class="lbl">📋 Register Pattern</div>
+        <pre style="font-family:Consolas;font-size:12px;line-height:1.6;color:#e6edf3;">
+providers: [{
+  provide:     <span style="color:#f0c674">NG_VALUE_ACCESSOR</span>,
+  useExisting: <span style="color:#d2a8ff">forwardRef</span>(() => <span style="color:#f0c674">YourComponent</span>),
   multi:       true
-}</pre>
-        <p style="margin-top:6px;font-size:12.5px;"><strong>Why <code>forwardRef</code>?</strong> The class isn't defined yet when the decorator runs. <code>forwardRef</code> says "look this up later at runtime."</p>
+}]</pre>
+        <p style="font-size:12px;margin-top:5px;"><strong>Why forwardRef?</strong> Class not fully defined yet at decorator time.</p>
       </div>
-
       <div class="memory-box">
-        <div class="lbl">🧠 How to Remember — "WRST"</div>
-        <ul>
-          <li><strong>W</strong>riteValue — Angular writes INTO your component</li>
-          <li><strong>R</strong>egisterOnChange — you notify Angular when value changes</li>
-          <li><strong>S</strong>etDisabledState — Angular disables your component</li>
-          <li><strong>T</strong>ouched (registerOnTouched) — you tell Angular "user left"</li>
-        </ul>
-        <p style="margin-top:6px;"><strong>Direction:</strong> W &amp; S = Angular → You &nbsp;|&nbsp; R &amp; T = You → Angular</p>
+        <div class="lbl">🧠 Memory: WRST</div>
+        <p><strong>W</strong>rite · <strong>R</strong>egister · <strong>S</strong>et · <strong>T</strong>ouched</p>
+        <p style="margin-top:5px;"><strong>W &amp; S</strong> = Angular → You &nbsp;|&nbsp; <strong>R &amp; T</strong> = You → Angular</p>
       </div>
     </div>
 
-    <div style="display:flex;flex-direction:column;gap:10px;">
-      <div class="code-wrap">
-        <div class="code-hdr"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span><span style="margin-left:6px;">tag-input.component.ts — Custom Multi-Tag Input</span></div>
-        <pre>
+    <div class="tab-area">
+      <div class="tab-bar">
+        <button class="tab-btn active" onclick="swTab(this,'ts4')">📝 TypeScript</button>
+        <button class="tab-btn" onclick="swTab(this,'html4')">🔷 HTML Template</button>
+        <button class="tab-btn" onclick="swTab(this,'out4')">▶ Browser Output</button>
+      </div>
+      <div class="tab-panel">
+
+        <div id="ts4" class="tab-pane active">
+          <div class="code-wrap">
+            <div class="code-hdr"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span><span style="margin-left:5px;">tag-input.component.ts</span></div>
+            <pre>
 <span class="dec">@Component</span>({
   <span class="var">selector</span>: <span class="str">'app-tag-input'</span>, <span class="var">standalone</span>: <span class="kw">true</span>,
+  <span class="var">imports</span>: [<span class="cls">FormsModule</span>],
   <span class="var">changeDetection</span>: <span class="cls">ChangeDetectionStrategy</span>.<span class="var">OnPush</span>,
-  <span class="var">providers</span>: [{            <span class="cmt">// Register as a form control</span>
-    <span class="var">provide</span>:     <span class="cls">NG_VALUE_ACCESSOR</span>,
-    <span class="var">useExisting</span>: <span class="fn">forwardRef</span>(() => <span class="cls">TagInputComponent</span>),
-    <span class="var">multi</span>:       <span class="kw">true</span>
-  }],
-  <span class="var">template</span>: <span class="str">`
-    &lt;div&gt;
-      @for (tag of tags(); track tag) {
-        &lt;span&gt;{{ tag }}
-          &lt;button (click)="remove(tag)"&gt;×&lt;/button&gt;
-        &lt;/span&gt;
-      }
-      &lt;input [(ngModel)]="inputVal"
-             (keydown.enter)="add($event)"
-             (blur)="onTouched()"
-             [disabled]="isDisabled()" /&gt;
-    &lt;/div&gt;
-  `</span>
+  <span class="var">providers</span>: [
+    { <span class="var">provide</span>: <span class="cls">NG_VALUE_ACCESSOR</span>,
+      <span class="var">useExisting</span>: <span class="fn">forwardRef</span>(() => <span class="cls">TagInputComponent</span>),
+      <span class="var">multi</span>: <span class="kw">true</span> }
+  ],
+  <span class="var">template</span>: <span class="str">`see HTML tab`</span>
 })
-<span class="kw">export class</span> <span class="cls">TagInputComponent</span>
-  <span class="kw">implements</span> <span class="cls">ControlValueAccessor</span> {
-
-  <span class="cmt">// Internal state as Signals</span>
+<span class="kw">export class</span> <span class="cls">TagInputComponent</span> <span class="kw">implements</span> <span class="cls">ControlValueAccessor</span> {
+  <span class="cmt">// Internal state as Signals (OnPush friendly)</span>
   <span class="var">tags</span>       = <span class="fn">signal</span>&lt;<span class="typ">string</span>[]&gt;([]);
   <span class="var">isDisabled</span> = <span class="fn">signal</span>(<span class="kw">false</span>);
   <span class="var">inputVal</span>   = <span class="str">''</span>;
 
-  <span class="cmt">// CVA callbacks — Angular fills these in</span>
+  <span class="cmt">// CVA callbacks: Angular populates these</span>
   <span class="kw">private</span> <span class="var">_onChange</span> = (<span class="var">_</span>: <span class="typ">string</span>[]) => {};
   <span class="var">onTouched</span> = () => {};
 
-  <span class="cmt">// 1️⃣  W — writeValue: Angular → our component</span>
+  <span class="cmt">// W — Angular writes value INTO component</span>
   <span class="fn">writeValue</span>(<span class="var">v</span>: <span class="typ">string</span>[] | <span class="kw">null</span>): <span class="typ">void</span> {
-    <span class="kw">this</span>.<span class="var">tags</span>.<span class="fn">set</span>([...(<span class="var">v</span> ?? [])]);
+    <span class="kw">this</span>.<span class="var">tags</span>.<span class="fn">set</span>([...(<span class="var">v</span> ?? [])]); <span class="cmt">// spread → new ref</span>
   }
-
-  <span class="cmt">// 2️⃣  R — registerOnChange: store parent's listener</span>
-  <span class="fn">registerOnChange</span>(<span class="var">fn</span>: <span class="kw">any</span>): <span class="typ">void</span> { <span class="kw">this</span>.<span class="var">_onChange</span> = <span class="var">fn</span>; }
-
-  <span class="cmt">// 3️⃣  T — registerOnTouched: store touched listener</span>
-  <span class="fn">registerOnTouched</span>(<span class="var">fn</span>: <span class="kw">any</span>): <span class="typ">void</span> { <span class="kw">this</span>.<span class="var">onTouched</span> = <span class="var">fn</span>; }
-
-  <span class="cmt">// 4️⃣  S — setDisabledState: parent disables → update UI</span>
-  <span class="fn">setDisabledState</span>(<span class="var">d</span>: <span class="typ">boolean</span>): <span class="typ">void</span> { <span class="kw">this</span>.<span class="var">isDisabled</span>.<span class="fn">set</span>(<span class="var">d</span>); }
+  <span class="cmt">// R — store parent's change listener</span>
+  <span class="fn">registerOnChange</span>(<span class="var">fn</span>: <span class="kw">any</span>) { <span class="kw">this</span>.<span class="var">_onChange</span> = <span class="var">fn</span>; }
+  <span class="cmt">// T — store parent's touched listener</span>
+  <span class="fn">registerOnTouched</span>(<span class="var">fn</span>: <span class="kw">any</span>) { <span class="kw">this</span>.<span class="var">onTouched</span> = <span class="var">fn</span>; }
+  <span class="cmt">// S — parent form.disable() → update our UI</span>
+  <span class="fn">setDisabledState</span>(<span class="var">d</span>: <span class="typ">boolean</span>) { <span class="kw">this</span>.<span class="var">isDisabled</span>.<span class="fn">set</span>(<span class="var">d</span>); }
 
   <span class="fn">add</span>(<span class="var">e</span>: <span class="cls">Event</span>): <span class="typ">void</span> {
     <span class="var">e</span>.<span class="fn">preventDefault</span>();
@@ -735,7 +889,7 @@
     <span class="kw">if</span> (!<span class="var">tag</span> || <span class="kw">this</span>.<span class="var">isDisabled</span>()) <span class="kw">return</span>;
     <span class="kw">this</span>.<span class="var">tags</span>.<span class="fn">update</span>(<span class="var">t</span> => [...<span class="var">t</span>, <span class="var">tag</span>]);
     <span class="kw">this</span>.<span class="var">inputVal</span> = <span class="str">''</span>;
-    <span class="kw">this</span>.<span class="fn">_onChange</span>(<span class="kw">this</span>.<span class="var">tags</span>()); <span class="cmt">// tell parent new value</span>
+    <span class="kw">this</span>.<span class="fn">_onChange</span>(<span class="kw">this</span>.<span class="var">tags</span>()); <span class="cmt">// ← notify parent!</span>
   }
 
   <span class="fn">remove</span>(<span class="var">tag</span>: <span class="typ">string</span>): <span class="typ">void</span> {
@@ -743,114 +897,201 @@
     <span class="kw">this</span>.<span class="fn">_onChange</span>(<span class="kw">this</span>.<span class="var">tags</span>());
   }
 }</pre>
-      </div>
+          </div>
+        </div>
 
-      <div class="console-wrap">
-        <div class="console-hdr"><span style="color:#3fb950;">▶</span><span>Console Output — Value Flow</span></div>
-        <pre>
-<span class="c-gray">// In a parent form:</span>
-<span class="c-cyan">tags: fb.control&lt;string[]&gt;([])</span>
+        <div id="html4" class="tab-pane">
+          <div class="code-wrap">
+            <div class="code-hdr"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span><span style="margin-left:5px;">parent.component.html + tag-input.component.html</span></div>
+            <pre>
+<span class="cmt">&lt;!-- ── PARENT COMPONENT ─────────────────────── --&gt;</span>
+<span class="cmt">&lt;!-- Use app-tag-input JUST LIKE a native &lt;input&gt; --&gt;</span>
+<span class="tag">&lt;form</span> <span class="ang">[formGroup]</span>=<span class="str">"myForm"</span> <span class="ang">(ngSubmit)</span>=<span class="str">"onSubmit()"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;label&gt;</span>Technologies Used<span class="tag">&lt;/label&gt;</span>
 
-<span class="c-gray">// User types "angular" and presses Enter:</span>
-<span class="c-cyan">console.log(form.value.tags)</span>
-<span class="c-yellow">▶</span> <span class="c-blue">["angular"]</span>  <span class="c-gray">// parent updated via _onChange()</span>
+  <span class="cmt">&lt;!-- formControlName works exactly like on &lt;input&gt; --&gt;</span>
+  <span class="tag">&lt;app-tag-input</span> <span class="ang">formControlName</span>=<span class="str">"tags"</span><span class="tag">&gt;&lt;/app-tag-input&gt;</span>
 
-<span class="c-gray">// User adds "rxjs":</span>
-<span class="c-yellow">▶</span> <span class="c-blue">["angular", "rxjs"]</span>
+  <span class="ang">@if</span> (<span class="exp">myForm.controls['tags'].errors?.['required']</span>) {
+    <span class="tag">&lt;p</span> <span class="atr">class</span>=<span class="str">"error"</span><span class="tag">&gt;</span>Please add at least one tag<span class="tag">&lt;/p&gt;</span>
+  }
 
-<span class="c-gray">// Parent calls form.setValue({ tags: ["signals"] }):</span>
-<span class="c-gray">// writeValue(["signals"]) is called on TagInputComponent</span>
-<span class="c-cyan">tags()  =</span> <span class="c-blue">["signals"]</span>  <span class="c-gray">// UI shows one chip</span>
+  <span class="tag">&lt;button</span> <span class="ang">[disabled]</span>=<span class="str">"myForm.invalid"</span><span class="tag">&gt;</span>Submit<span class="tag">&lt;/button&gt;</span>
+<span class="tag">&lt;/form&gt;</span>
 
-<span class="c-gray">// Parent calls form.disable():</span>
-<span class="c-gray">// setDisabledState(true) is called automatically</span>
-<span class="c-cyan">isDisabled() =</span> <span class="c-green">true</span>  <span class="c-gray">// input and buttons are disabled</span>
+<span class="cmt">&lt;!-- ── INSIDE TagInputComponent's OWN template ── --&gt;</span>
+<span class="tag">&lt;div</span> <span class="atr">class</span>=<span class="str">"tag-wrap"</span> <span class="ang">[class.disabled]</span>=<span class="str">"isDisabled()"</span><span class="tag">&gt;</span>
 
-<span class="c-gray">// User tabs away from the input:</span>
-<span class="c-gray">// onTouched() fires → parent marks control as touched</span>
-<span class="c-cyan">form.controls.tags.touched =</span> <span class="c-green">true</span></pre>
+  <span class="cmt">&lt;!-- Render each chip --&gt;</span>
+  <span class="ang">@for</span> (<span class="exp">tag of tags()</span>; <span class="ang">track</span> <span class="exp">tag</span>) {
+    <span class="tag">&lt;span</span> <span class="atr">class</span>=<span class="str">"chip"</span><span class="tag">&gt;</span>
+      <span class="exp">{{ tag }}</span>
+      <span class="tag">&lt;button</span> <span class="ang">(click)</span>=<span class="str">"remove(tag)"</span>
+              <span class="ang">[disabled]</span>=<span class="str">"isDisabled()"</span><span class="tag">&gt;</span>×<span class="tag">&lt;/button&gt;</span>
+    <span class="tag">&lt;/span&gt;</span>
+  }
+
+  <span class="cmt">&lt;!-- Text input for new tags --&gt;</span>
+  <span class="tag">&lt;input</span>
+    <span class="ang">[(ngModel)]</span>=<span class="str">"inputVal"</span>
+    <span class="ang">(keydown.enter)</span>=<span class="str">"add($event)"</span>
+    <span class="ang">(blur)</span>=<span class="str">"onTouched()"</span>
+    <span class="ang">[disabled]</span>=<span class="str">"isDisabled()"</span>
+    <span class="atr">placeholder</span>=<span class="str">"Type and press Enter..."</span> <span class="tag">/&gt;</span>
+<span class="tag">&lt;/div&gt;</span></pre>
+          </div>
+        </div>
+
+        <div id="out4" class="tab-pane">
+          <div class="browser-label">▶ Browser — Tag Input States</div>
+          <div class="browser-frame">
+            <div class="browser-chrome">
+              <div class="b-dots"><div class="b-dot b-dot-r"></div><div class="b-dot b-dot-y"></div><div class="b-dot b-dot-g"></div></div>
+              <div class="browser-url">localhost:4200/profile</div>
+            </div>
+            <div class="browser-body" style="display:grid;grid-template-columns:1fr 1fr;gap:18px;">
+              <!-- Active state -->
+              <div>
+                <p style="font-size:11px;font-weight:700;color:#16a34a;margin-bottom:8px;">State: Active (3 tags)</p>
+                <div class="mfield">
+                  <div class="mlabel">Technologies Used</div>
+                  <div class="mchip-wrap">
+                    <div class="mchip">angular <button class="mchip-x">×</button></div>
+                    <div class="mchip">rxjs <button class="mchip-x">×</button></div>
+                    <div class="mchip">signals <button class="mchip-x">×</button></div>
+                    <input class="mchip-inp" placeholder="Type and press Enter..." />
+                  </div>
+                </div>
+                <div class="mstate" style="margin-top:8px;">
+                  <span class="mstate-item ok">form.value.tags = ["angular","rxjs","signals"]</span>
+                </div>
+                <button class="mbtn" style="margin-top:10px;width:100%;">Submit</button>
+              </div>
+              <!-- Disabled state -->
+              <div>
+                <p style="font-size:11px;font-weight:700;color:#9ca3af;margin-bottom:8px;">State: Disabled (form.disable())</p>
+                <div class="mfield">
+                  <div class="mlabel">Technologies Used</div>
+                  <div class="mchip-wrap" style="background:#f9fafb;border-style:dashed;cursor:not-allowed;">
+                    <div class="mchip" style="opacity:.6;">angular</div>
+                    <div class="mchip" style="opacity:.6;">rxjs</div>
+                    <input class="mchip-inp" placeholder="Disabled" disabled style="cursor:not-allowed;color:#9ca3af;" />
+                  </div>
+                </div>
+                <div class="mstate" style="margin-top:8px;">
+                  <span class="mstate-item">isDisabled() = true</span>
+                  <span class="mstate-item">setDisabledState(true) was called</span>
+                </div>
+                <button class="mbtn disabled-btn" disabled style="margin-top:10px;width:100%;">Submit</button>
+              </div>
+            </div>
+          </div>
+          <div class="console-wrap">
+            <div class="console-hdr"><span style="color:#3fb950;">▶</span> Console — Value Flow (Parent ↔ CVA)</div>
+            <pre>
+<span class="c-x">// User types "angular" and presses Enter:</span>
+<span class="c-x">// → add() fires → tags.update() → _onChange(["angular"])</span>
+<span class="c-c">console.log(myForm.value.tags)</span>
+<span class="c-y">▶</span> <span class="c-b">["angular"]</span>   <span class="c-x">← parent FormControl updated!</span>
+
+<span class="c-x">// User adds "rxjs" then "signals":</span>
+<span class="c-y">▶</span> <span class="c-b">["angular", "rxjs", "signals"]</span>
+
+<span class="c-x">// Parent calls myForm.setValue({ tags: ["ngrx"] }):</span>
+<span class="c-x">// → writeValue(["ngrx"]) called on TagInputComponent</span>
+<span class="c-c">tags() =</span> <span class="c-b">["ngrx"]</span>  <span class="c-x">← UI updates to show 1 chip</span>
+
+<span class="c-x">// Parent calls myForm.disable():</span>
+<span class="c-x">// → setDisabledState(true) called automatically</span>
+<span class="c-c">isDisabled() =</span> <span class="c-g">true</span>   <span class="c-x">← buttons &amp; input disabled in UI</span>
+
+<span class="c-x">// User tabs away from input:</span>
+<span class="c-x">// → onTouched() fires → parent marks control as touched</span>
+<span class="c-c">myForm.controls.tags.touched =</span> <span class="c-g">true</span></pre>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════
+<!-- ══════════════════════════════════
      SLIDE 5 — DYNAMIC FORMS
-══════════════════════════════════════════ -->
+══════════════════════════════════ -->
 <div class="slide" id="s5">
   <div class="slide-header">
-    <span class="num-badge">Topic 5 / 5</span>
+    <span class="num-badge">5 / 5</span>
     <h1>Dynamic Form Generation</h1>
   </div>
 
   <div class="analogy-box">
-    <div class="lbl">🌍 Real World Analogy — Restaurant Menu Builder</div>
-    <p>
-      Imagine a restaurant app where the chef (backend) sends a <strong>recipe list</strong> (JSON schema).
-      The waiter (FormFactory) reads the recipe and <strong>builds the form</strong> automatically.
-      The customer (user) sees the built form and fills it in —
-      without the developer manually creating each field in code. When the recipe changes, the form updates.
-    </p>
+    <div class="lbl">🌍 Analogy — Recipe Builder</div>
+    <p>The <strong>backend sends a recipe</strong> (JSON schema). The <strong>FormFactory cooks the form</strong>. The <strong>template serves it</strong>. Change the recipe → the form changes automatically — zero manual field coding.</p>
   </div>
 
   <div class="two-col">
-    <div style="display:flex;flex-direction:column;gap:10px;">
-
+    <div style="display:flex;flex-direction:column;gap:9px;">
       <div class="card green">
-        <h2>How Dynamic Forms Work — 3 Steps</h2>
+        <h2>3 Steps</h2>
         <div class="steps">
-          <div class="step"><div class="step-num">1</div><p><strong>Define a Schema</strong> — a simple JS object/array describing each field: its key, type, label, and validators.</p></div>
-          <div class="step"><div class="step-num">2</div><p><strong>Pass schema to FormFactory</strong> — the factory loops through the schema and creates the correct FormControl / FormGroup / FormArray.</p></div>
-          <div class="step"><div class="step-num">3</div><p><strong>Render dynamically</strong> — your template uses <code>@for</code> to loop over schema items and render the correct input for each field type.</p></div>
+          <div class="step"><div class="step-num">1</div><p><strong>Define Schema</strong> — JS array describing each field (key, type, label, validators).</p></div>
+          <div class="step"><div class="step-num">2</div><p><strong>FormFactory.buildGroup(schema)</strong> — generates the FormGroup automatically.</p></div>
+          <div class="step"><div class="step-num">3</div><p><strong>@for in template</strong> — renders correct input for each field type from schema.</p></div>
         </div>
       </div>
-
       <div class="card blue">
-        <h2>The Data Flow</h2>
+        <h2>Data Flow</h2>
         <div class="arrow-flow">
-          <div class="af-box yellow">JSON Schema</div>
+          <div class="af-box yellow">Schema[]</div>
           <div class="af-arr">→</div>
           <div class="af-box orange">FormFactory</div>
           <div class="af-arr">→</div>
           <div class="af-box green">FormGroup</div>
           <div class="af-arr">→</div>
-          <div class="af-box purple">Template<br><small>@for renders</small></div>
+          <div class="af-box purple">@for renders</div>
         </div>
-        <div class="arrow-flow" style="margin-top:8px;">
-          <div class="af-box red">User fills form</div>
+        <div class="arrow-flow" style="margin-top:6px;">
+          <div class="af-box red">User fills</div>
           <div class="af-arr">→</div>
           <div class="af-box cyan">getRawValue()</div>
           <div class="af-arr">→</div>
-          <div class="af-box blue">Submit to API</div>
+          <div class="af-box blue">API POST</div>
         </div>
       </div>
-
       <div class="memory-box">
-        <div class="lbl">🧠 Key Performance Tips to Remember</div>
+        <div class="lbl">🧠 Performance Tips</div>
         <ul>
-          <li><strong>track field.key</strong> on <code>@for</code> — prevents Angular recreating DOM when schema re-renders</li>
-          <li><strong>emitEvent: false</strong> on bulk <code>patchValue()</code> — avoids 50 events when filling 50 fields at once</li>
-          <li><strong>@defer (on viewport)</strong> — don't load date-pickers until they scroll into view</li>
-          <li><strong>OnPush</strong> on every dynamic field component — only re-renders when its input changes</li>
+          <li><strong>track field.key</strong> — prevents DOM re-creation</li>
+          <li><code>emitEvent: false</code> + 1× <code>updateValueAndValidity()</code> for bulk fill</li>
+          <li><strong>@defer (on viewport)</strong> for heavy controls</li>
+          <li><strong>OnPush</strong> on every dynamic field component</li>
         </ul>
       </div>
     </div>
 
-    <div style="display:flex;flex-direction:column;gap:10px;">
-      <div class="code-wrap">
-        <div class="code-hdr"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span><span style="margin-left:6px;">form-factory.ts + dynamic-form.component.ts</span></div>
-        <pre>
-<span class="cmt">// STEP 1: Schema — what fields exist</span>
+    <div class="tab-area">
+      <div class="tab-bar">
+        <button class="tab-btn active" onclick="swTab(this,'ts5')">📝 TypeScript</button>
+        <button class="tab-btn" onclick="swTab(this,'html5')">🔷 HTML Template</button>
+        <button class="tab-btn" onclick="swTab(this,'out5')">▶ Browser Output</button>
+      </div>
+      <div class="tab-panel">
+
+        <div id="ts5" class="tab-pane active">
+          <div class="code-wrap">
+            <div class="code-hdr"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span><span style="margin-left:5px;">form-factory.service.ts + dynamic-form.component.ts</span></div>
+            <pre>
+<span class="cmt">// ── Schema type ──</span>
 <span class="kw">interface</span> <span class="cls">FieldSchema</span> {
-  <span class="var">key</span>:         <span class="typ">string</span>;    <span class="cmt">// e.g. 'email'</span>
-  <span class="var">type</span>:        <span class="typ">string</span>;    <span class="cmt">// 'text' | 'email' | 'group'</span>
-  <span class="var">label</span>:       <span class="typ">string</span>;    <span class="cmt">// shown as &lt;label&gt;</span>
-  <span class="var">required</span>?:   <span class="typ">boolean</span>;
-  <span class="var">defaultValue</span>?: <span class="typ">unknown</span>;
-  <span class="var">children</span>?:   <span class="cls">FieldSchema</span>[];  <span class="cmt">// for 'group' type</span>
+  <span class="var">key</span>:        <span class="typ">string</span>;
+  <span class="var">type</span>:       <span class="str">'text'</span> | <span class="str">'email'</span> | <span class="str">'number'</span> | <span class="str">'group'</span>;
+  <span class="var">label</span>:      <span class="typ">string</span>;
+  <span class="var">required</span>?:  <span class="typ">boolean</span>;
+  <span class="var">children</span>?:  <span class="cls">FieldSchema</span>[];  <span class="cmt">// for 'group' type</span>
 }
 
-<span class="cmt">// STEP 2: FormFactory — builds FormGroup from schema</span>
+<span class="cmt">// ── FormFactory service ──</span>
 <span class="dec">@Injectable</span>({ <span class="var">providedIn</span>: <span class="str">'root'</span> })
 <span class="kw">export class</span> <span class="cls">FormFactory</span> {
   <span class="kw">private</span> <span class="var">fb</span> = <span class="fn">inject</span>(<span class="cls">NonNullableFormBuilder</span>);
@@ -858,181 +1099,249 @@
   <span class="fn">buildGroup</span>(<span class="var">schema</span>: <span class="cls">FieldSchema</span>[]): <span class="cls">FormGroup</span> {
     <span class="kw">const</span> <span class="var">controls</span>: <span class="cls">Record</span>&lt;<span class="typ">string</span>, <span class="cls">AbstractControl</span>&gt; = {};
 
-    <span class="kw">for</span> (<span class="kw">const</span> <span class="var">field</span> <span class="kw">of</span> <span class="var">schema</span>) {
-      <span class="kw">const</span> <span class="var">validators</span> = <span class="var">field</span>.<span class="var">required</span>
-        ? [<span class="cls">Validators</span>.<span class="var">required</span>]
-        : [];
-
-      <span class="kw">if</span> (<span class="var">field</span>.<span class="var">type</span> === <span class="str">'group'</span>) {
-        <span class="cmt">// Nested group — recurse into children</span>
-        <span class="var">controls</span>[<span class="var">field</span>.<span class="var">key</span>] =
-          <span class="kw">this</span>.<span class="fn">buildGroup</span>(<span class="var">field</span>.<span class="var">children</span> ?? []);
+    <span class="kw">for</span> (<span class="kw">const</span> <span class="var">f</span> <span class="kw">of</span> <span class="var">schema</span>) {
+      <span class="kw">if</span> (<span class="var">f</span>.<span class="var">type</span> === <span class="str">'group'</span>) {
+        <span class="var">controls</span>[<span class="var">f</span>.<span class="var">key</span>] = <span class="kw">this</span>.<span class="fn">buildGroup</span>(<span class="var">f</span>.<span class="var">children</span> ?? []);
       } <span class="kw">else</span> {
-        <span class="var">controls</span>[<span class="var">field</span>.<span class="var">key</span>] =
-          <span class="kw">new</span> <span class="cls">FormControl</span>(<span class="var">field</span>.<span class="var">defaultValue</span> ?? <span class="kw">null</span>, <span class="var">validators</span>);
+        <span class="kw">const</span> <span class="var">v</span> = <span class="var">f</span>.<span class="var">required</span> ? [<span class="cls">Validators</span>.<span class="var">required</span>] : [];
+        <span class="var">controls</span>[<span class="var">f</span>.<span class="var">key</span>] = <span class="kw">new</span> <span class="cls">FormControl</span>(<span class="kw">null</span>, <span class="var">v</span>);
       }
     }
     <span class="kw">return this</span>.<span class="var">fb</span>.<span class="fn">group</span>(<span class="var">controls</span>);
   }
 }
 
-<span class="cmt">// STEP 3: Component renders the generated form</span>
-<span class="dec">@Component</span>({
-  <span class="var">standalone</span>: <span class="kw">true</span>,
-  <span class="var">changeDetection</span>: <span class="cls">ChangeDetectionStrategy</span>.<span class="var">OnPush</span>,
-  <span class="var">template</span>: <span class="str">`
-    &lt;form [formGroup]="form" (ngSubmit)="submit()"&gt;
-      @for (field of schema; track field.key) {
-        &lt;label&gt;{{ field.label }}&lt;/label&gt;
-        &lt;input [formControlName]="field.key"
-               [type]="field.type" /&gt;
-      }
-      &lt;button [disabled]="form.invalid"&gt;Submit&lt;/button&gt;
-    &lt;/form&gt;
-  `</span>
-})
+<span class="cmt">// ── Dynamic Form Component ──</span>
+<span class="dec">@Component</span>({ <span class="var">standalone</span>: <span class="kw">true</span>, <span class="var">imports</span>: [<span class="cls">ReactiveFormsModule</span>],
+  <span class="var">changeDetection</span>: <span class="cls">ChangeDetectionStrategy</span>.<span class="var">OnPush</span> })
 <span class="kw">export class</span> <span class="cls">DynamicFormComponent</span> {
   <span class="kw">private</span> <span class="var">factory</span> = <span class="fn">inject</span>(<span class="cls">FormFactory</span>);
 
   <span class="kw">readonly</span> <span class="var">schema</span>: <span class="cls">FieldSchema</span>[] = [
-    { <span class="var">key</span>: <span class="str">'name'</span>,  <span class="var">type</span>: <span class="str">'text'</span>,  <span class="var">label</span>: <span class="str">'Full Name'</span>, <span class="var">required</span>: <span class="kw">true</span>  },
-    { <span class="var">key</span>: <span class="str">'email'</span>, <span class="var">type</span>: <span class="str">'email'</span>, <span class="var">label</span>: <span class="str">'Email'</span>,    <span class="var">required</span>: <span class="kw">true</span>  },
-    { <span class="var">key</span>: <span class="str">'age'</span>,   <span class="var">type</span>: <span class="str">'number'</span>,<span class="var">label</span>: <span class="str">'Age'</span>,     <span class="var">required</span>: <span class="kw">false</span> },
+    { <span class="var">key</span>: <span class="str">'name'</span>,  <span class="var">type</span>: <span class="str">'text'</span>,   <span class="var">label</span>: <span class="str">'Full Name'</span>, <span class="var">required</span>: <span class="kw">true</span> },
+    { <span class="var">key</span>: <span class="str">'email'</span>, <span class="var">type</span>: <span class="str">'email'</span>,  <span class="var">label</span>: <span class="str">'Email'</span>,    <span class="var">required</span>: <span class="kw">true</span> },
+    { <span class="var">key</span>: <span class="str">'age'</span>,   <span class="var">type</span>: <span class="str">'number'</span>, <span class="var">label</span>: <span class="str">'Age'</span>,     <span class="var">required</span>: <span class="kw">false</span> },
   ];
 
   <span class="kw">readonly</span> <span class="var">form</span> = <span class="kw">this</span>.<span class="var">factory</span>.<span class="fn">buildGroup</span>(<span class="kw">this</span>.<span class="var">schema</span>);
 
-  <span class="fn">submit</span>() {
+  <span class="fn">submit</span>(): <span class="typ">void</span> {
+    <span class="kw">if</span> (<span class="kw">this</span>.<span class="var">form</span>.<span class="var">invalid</span>) <span class="kw">return</span>;
     <span class="fn">console</span>.<span class="fn">log</span>(<span class="kw">this</span>.<span class="var">form</span>.<span class="fn">getRawValue</span>());
   }
 }</pre>
-      </div>
+          </div>
+        </div>
 
-      <div class="console-wrap">
-        <div class="console-hdr"><span style="color:#3fb950;">▶</span><span>Console Output — Dynamic Form in Action</span></div>
-        <pre>
-<span class="c-gray">// FormFactory builds controls automatically from schema:</span>
-<span class="c-cyan">console.log(Object.keys(form.controls))</span>
-<span class="c-yellow">▶</span> <span class="c-blue">["name", "email", "age"]</span>  <span class="c-gray">// generated from schema!</span>
+        <div id="html5" class="tab-pane">
+          <div class="code-wrap">
+            <div class="code-hdr"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span><span style="margin-left:5px;">dynamic-form.component.html</span></div>
+            <pre>
+<span class="cmt">&lt;!-- formGroup bound to factory-generated FormGroup --&gt;</span>
+<span class="tag">&lt;form</span> <span class="ang">[formGroup]</span>=<span class="str">"form"</span> <span class="ang">(ngSubmit)</span>=<span class="str">"submit()"</span><span class="tag">&gt;</span>
 
-<span class="c-gray">// User fills name="Nitin", email="nitin@test.com", age=30</span>
-<span class="c-cyan">console.log(form.getRawValue())</span>
-<span class="c-yellow">▶</span> {
-    <span class="c-orange">name</span>:  <span class="c-blue">"Nitin"</span>,
-    <span class="c-orange">email</span>: <span class="c-blue">"nitin@test.com"</span>,
-    <span class="c-orange">age</span>:   <span class="c-blue">30</span>
+  <span class="cmt">&lt;!-- @for loops over schema — track by key for performance --&gt;</span>
+  <span class="ang">@for</span> (<span class="exp">field of schema</span>; <span class="ang">track</span> <span class="exp">field.key</span>) {
+    <span class="tag">&lt;div</span> <span class="atr">class</span>=<span class="str">"field"</span><span class="tag">&gt;</span>
+      <span class="tag">&lt;label&gt;</span><span class="exp">{{ field.label }}</span><span class="tag">&lt;/label&gt;</span>
+
+      <span class="cmt">&lt;!-- Render correct input based on schema type --&gt;</span>
+      <span class="tag">&lt;input</span>
+        <span class="ang">[formControlName]</span>=<span class="str">"field.key"</span>
+        <span class="ang">[type]</span>=<span class="str">"field.type"</span>
+        <span class="ang">[placeholder]</span>=<span class="str">"'Enter ' + field.label"</span>
+      <span class="tag">/&gt;</span>
+
+      <span class="cmt">&lt;!-- Show required error --&gt;</span>
+      <span class="ang">@if</span> (<span class="exp">form.get(field.key)?.errors?.['required']
+           &amp;&amp; form.get(field.key)?.touched</span>) {
+        <span class="tag">&lt;p</span> <span class="atr">class</span>=<span class="str">"error"</span><span class="tag">&gt;</span><span class="exp">{{ field.label }}</span> is required<span class="tag">&lt;/p&gt;</span>
+      }
+    <span class="tag">&lt;/div&gt;</span>
   }
 
-<span class="c-gray">// Server sends NEW schema with extra field:</span>
-<span class="c-cyan">schema.push({ key: 'phone', type: 'text', label: 'Phone' })</span>
-<span class="c-gray">// form is rebuilt → now has 4 controls</span>
-<span class="c-yellow">▶</span> <span class="c-blue">["name", "email", "age", "phone"]</span>
+  <span class="cmt">&lt;!-- Disabled until ALL required fields are valid --&gt;</span>
+  <span class="tag">&lt;button</span> <span class="atr">type</span>=<span class="str">"submit"</span>
+          <span class="ang">[disabled]</span>=<span class="str">"form.invalid || form.pending"</span><span class="tag">&gt;</span>
+    Submit
+  <span class="tag">&lt;/button&gt;</span>
 
-<span class="c-gray">// Bulk fill without emitEvent (performance trick):</span>
-<span class="c-cyan">form.patchValue({ name: 'Nitin' }, { emitEvent: false })</span>
-<span class="c-gray">// No valueChanges events fired during batch fill</span>
-<span class="c-cyan">form.updateValueAndValidity()</span>
-<span class="c-gray">// Single event fired after all fields set ✅</span></pre>
+  <span class="cmt">&lt;!-- Debug: show live value --&gt;</span>
+  <span class="tag">&lt;pre&gt;</span><span class="exp">{{ form.getRawValue() | json }}</span><span class="tag">&lt;/pre&gt;</span>
+
+<span class="tag">&lt;/form&gt;</span></pre>
+          </div>
+        </div>
+
+        <div id="out5" class="tab-pane">
+          <div class="browser-label">▶ Browser — Schema-Generated Form</div>
+          <div class="browser-frame">
+            <div class="browser-chrome">
+              <div class="b-dots"><div class="b-dot b-dot-r"></div><div class="b-dot b-dot-y"></div><div class="b-dot b-dot-g"></div></div>
+              <div class="browser-url">localhost:4200/form</div>
+            </div>
+            <div class="browser-body" style="display:grid;grid-template-columns:1fr 1fr;gap:18px;">
+              <!-- Empty/Invalid state -->
+              <div>
+                <p style="font-size:11px;font-weight:700;color:#ef4444;margin-bottom:8px;">State 1 — Submitted empty (errors shown)</p>
+                <div class="mf">
+                  <div class="mfield">
+                    <div class="mlabel">Full Name <span style="color:#ef4444">*</span></div>
+                    <input class="minput invalid" placeholder="Enter Full Name" readonly />
+                    <div class="merror">Full Name is required</div>
+                  </div>
+                  <div class="mfield">
+                    <div class="mlabel">Email <span style="color:#ef4444">*</span></div>
+                    <input class="minput invalid" placeholder="Enter Email" readonly />
+                    <div class="merror">Email is required</div>
+                  </div>
+                  <div class="mfield">
+                    <div class="mlabel">Age</div>
+                    <input class="minput" placeholder="Enter Age" readonly />
+                  </div>
+                  <button class="mbtn disabled-btn" disabled>Submit</button>
+                  <p style="font-size:11px;color:#6b7280;margin-top:6px;">form.getRawValue() = { name: null, email: null, age: null }</p>
+                </div>
+              </div>
+              <!-- Valid state -->
+              <div>
+                <p style="font-size:11px;font-weight:700;color:#16a34a;margin-bottom:8px;">State 2 — All valid, ready to submit</p>
+                <div class="mf">
+                  <div class="mfield">
+                    <div class="mlabel">Full Name <span style="color:#ef4444">*</span></div>
+                    <input class="minput valid" value="Nitin Kumar" readonly />
+                  </div>
+                  <div class="mfield">
+                    <div class="mlabel">Email <span style="color:#ef4444">*</span></div>
+                    <input class="minput valid" value="nitin@test.com" readonly />
+                  </div>
+                  <div class="mfield">
+                    <div class="mlabel">Age</div>
+                    <input class="minput valid" value="30" readonly />
+                  </div>
+                  <button class="mbtn green-btn">Submit ✓</button>
+                  <p style="font-size:11px;color:#16a34a;margin-top:6px;">form.valid = true</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="console-wrap">
+            <div class="console-hdr"><span style="color:#3fb950;">▶</span> Console — Factory build &amp; submit output</div>
+            <pre>
+<span class="c-x">// FormFactory builds controls from schema automatically:</span>
+<span class="c-c">console.log(Object.keys(form.controls))</span>
+<span class="c-y">▶</span> <span class="c-b">["name", "email", "age"]</span>   <span class="c-x">← generated from schema array!</span>
+
+<span class="c-x">// User fills form and clicks Submit:</span>
+<span class="c-c">console.log(form.getRawValue())</span>
+<span class="c-y">▶</span> {
+    <span class="c-o">name</span>:  <span class="c-b">"Nitin Kumar"</span>,
+    <span class="c-o">email</span>: <span class="c-b">"nitin@test.com"</span>,
+    <span class="c-o">age</span>:   <span class="c-b">30</span>
+  }
+
+<span class="c-x">// Server sends NEW schema (extra field added at runtime):</span>
+<span class="c-c">schema.push({ key: 'phone', type: 'text', label: 'Phone', required: false })</span>
+<span class="c-x">// form.buildGroup(schema) is re-called → 4 controls now!</span>
+<span class="c-y">▶</span> <span class="c-b">["name", "email", "age", "phone"]</span>
+
+<span class="c-x">// Bulk fill performance tip:</span>
+<span class="c-c">form.patchValue({ name: 'Nitin' }, { emitEvent: false }) // no events</span>
+<span class="c-c">form.updateValueAndValidity()  // fire ONE event at the end ✅</span></pre>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════
-     SLIDE 6 — QUICK REVISION CARD
-══════════════════════════════════════════ -->
+<!-- ══════════════════════════════════
+     SLIDE 6 — REVISION
+══════════════════════════════════ -->
 <div class="slide" id="s6">
   <div class="slide-header">
     <span class="num-badge">Revision</span>
-    <h1>Quick Revision — All 5 Topics at a Glance</h1>
+    <h1>Quick Revision — All 5 Topics</h1>
   </div>
 
-  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;">
-
+  <div class="rev-grid">
     <div class="card red">
       <h2>1. Typed Forms</h2>
       <ul>
         <li>Use <strong>NNFB</strong> for required fields</li>
-        <li>Use <code>new FormControl&lt;T|null&gt;(null)</code> for optional</li>
-        <li>Always submit with <strong>.getRawValue()</strong></li>
+        <li><code>new FormControl&lt;T|null&gt;</code> for optional</li>
+        <li>Always submit with <code>.getRawValue()</code></li>
+        <li><code>.value</code> = partial, may miss disabled fields ⚠️</li>
         <li><code>FormRecord</code> = dynamic runtime keys</li>
-        <li><code>.value</code> = partial, may miss disabled fields</li>
       </ul>
-      <div style="margin-top:8px;background:#1a0808;border-radius:6px;padding:8px;font-family:Consolas;font-size:11.5px;color:#a5d6ff;">
-        form.getRawValue()<br>
-        <span style="color:#3fb950;">// ALL fields, correct types ✅</span>
+      <div style="background:#1a0808;border-radius:6px;padding:7px 10px;margin-top:8px;font-family:Consolas;font-size:11px;color:#a5d6ff;">
+        form.getRawValue() <span style="color:#3fb950;">// ALL fields ✅</span>
       </div>
     </div>
-
     <div class="card orange">
       <h2>2. Async Validation</h2>
       <ul>
-        <li>Use <code>updateOn: 'blur'</code> — no API on keystroke</li>
+        <li><code>updateOn: 'blur'</code> — no API on keystroke</li>
         <li><strong>TSF Rule:</strong> Timer → SwitchMap → First</li>
-        <li>Forget <code>first()</code> = stuck in PENDING forever ⚠️</li>
-        <li>Expose PENDING via <code>toSignal(statusChanges)</code></li>
+        <li>Forget <code>first()</code> = stuck PENDING forever ⚠️</li>
+        <li>Show spinner via <code>toSignal(statusChanges)</code></li>
       </ul>
-      <div style="margin-top:8px;background:#1a1008;border-radius:6px;padding:8px;font-family:Consolas;font-size:11.5px;color:#a5d6ff;">
-        timer(400) → switchMap<br>
-        → map → catchError → <span style="color:#f85149;">first()</span>
+      <div style="background:#1a1008;border-radius:6px;padding:7px 10px;margin-top:8px;font-family:Consolas;font-size:11px;color:#a5d6ff;">
+        timer → switchMap → map → catchError → <span style="color:#f85149">first()</span>
       </div>
     </div>
-
     <div class="card purple">
       <h2>3. Signals + Forms (v22)</h2>
       <ul>
         <li><strong>TCLR:</strong> ToSignal → Computed → Linked → Resource</li>
         <li><code>toSignal(valueChanges)</code> bridges RxJS → Signal</li>
-        <li><code>computed()</code> = automatic, lazy derived state</li>
+        <li><code>computed()</code> = lazy, memoized derived state</li>
         <li><code>linkedSignal()</code> = writable, auto-resets</li>
         <li><code>resource()</code> = reactive fetch + auto-abort</li>
       </ul>
     </div>
-
     <div class="card cyan">
-      <h2>4. CVA — Custom Controls</h2>
+      <h2>4. CVA</h2>
       <ul>
-        <li><strong>WRST:</strong> WriteValue, Register, SetDisabled, Touched</li>
+        <li><strong>WRST:</strong> Write · Register · Set · Touched</li>
         <li>W &amp; S = Angular → Your Component</li>
-        <li>R &amp; T = Your Component → Angular</li>
-        <li>Register via <code>NG_VALUE_ACCESSOR</code> + <code>forwardRef</code></li>
+        <li>R &amp; T = You → Angular (notify change/blur)</li>
+        <li><code>NG_VALUE_ACCESSOR</code> + <code>forwardRef</code></li>
         <li>Add <code>NG_VALIDATORS</code> for form-level validation</li>
       </ul>
     </div>
-
     <div class="card green">
       <h2>5. Dynamic Forms</h2>
       <ul>
         <li>Schema → FormFactory → FormGroup</li>
-        <li>Use <code>track field.key</code> for DOM performance</li>
-        <li>Bulk update: <code>patchValue + emitEvent:false</code></li>
-        <li>Call <code>updateValueAndValidity()</code> once after batch</li>
-        <li><code>@defer</code> for heavy controls (date pickers)</li>
+        <li><code>track field.key</code> in <code>@for</code></li>
+        <li>Bulk patch: <code>emitEvent:false</code> + single <code>updateValueAndValidity()</code></li>
+        <li><code>@defer</code> for heavy controls</li>
       </ul>
     </div>
-
     <div class="card yellow">
       <h2>📋 Interview Cheat Sheet</h2>
       <table>
-        <tr><th>Question</th><th>Answer</th></tr>
-        <tr><td><code>.value</code> vs <code>.getRawValue()</code>?</td><td>getRawValue = ALL fields including disabled</td></tr>
-        <tr><td>Why <code>first()</code> in async validator?</td><td>To complete stream → exit PENDING</td></tr>
-        <tr><td>Why <code>forwardRef</code> in CVA?</td><td>Class not defined yet at decorator time</td></tr>
-        <tr><td>What does <code>toSignal()</code> do?</td><td>Converts Observable to synchronous Signal</td></tr>
-        <tr><td>What is <code>linkedSignal</code>?</td><td>Writable signal that auto-resets from source</td></tr>
-        <tr><td>Why <code>switchMap</code> in validator?</td><td>Cancels old HTTP call when new value arrives</td></tr>
+        <tr><th>Q</th><th>Quick Answer</th></tr>
+        <tr><td><code>.value</code> vs <code>.getRawValue()</code>?</td><td>getRawValue = ALL fields incl. disabled</td></tr>
+        <tr><td>Why <code>first()</code>?</td><td>Complete stream → exit PENDING</td></tr>
+        <tr><td>Why <code>forwardRef</code>?</td><td>Class not defined yet at decorator time</td></tr>
+        <tr><td><code>toSignal()</code>?</td><td>Observable → synchronous Signal</td></tr>
+        <tr><td><code>linkedSignal</code>?</td><td>Writable signal that auto-resets</td></tr>
+        <tr><td>Why <code>switchMap</code>?</td><td>Cancel old HTTP on new value</td></tr>
       </table>
     </div>
   </div>
 
-  <div style="background:#1a0d2e;border:1px solid #d2a8ff;border-left:4px solid #d2a8ff;border-radius:10px;padding:14px 18px;margin-top:4px;">
-    <div style="font-size:10px;font-weight:800;color:#d2a8ff;letter-spacing:1px;text-transform:uppercase;margin-bottom:7px;">🏆 The One-Line Summary to Remember</div>
-    <p style="font-size:14px;line-height:1.8;">
-      Angular Forms v22 = <strong style="color:#ff7b72">Typed Controls</strong> (compile safety)
+  <div style="background:#1a0d2e;border:1px solid #d2a8ff;border-left:4px solid #d2a8ff;border-radius:10px;padding:12px 16px;margin-top:4px;">
+    <div style="font-size:10px;font-weight:800;color:#d2a8ff;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">🏆 One-Line Summary</div>
+    <p style="font-size:13.5px;line-height:1.8;">
+      <strong style="color:#ff7b72">Typed Controls</strong> (NNFB + getRawValue)
       + <strong style="color:#ffa657">TSF Validators</strong> (Timer·SwitchMap·First)
       + <strong style="color:#d2a8ff">TCLR Signals</strong> (ToSignal·Computed·Linked·Resource)
-      + <strong style="color:#39d0d8">WRST Adapter</strong> (CVA methods)
-      + <strong style="color:#3fb950">Schema Factory</strong> (dynamic builds).
+      + <strong style="color:#39d0d8">WRST Adapter</strong> (CVA 4 methods)
+      + <strong style="color:#3fb950">Schema Factory</strong> (buildGroup from JSON).
     </p>
   </div>
 </div>
@@ -1044,9 +1353,19 @@
   <span id="counter">1 / 7</span>
   <button id="btnNext" onclick="go(1)">&#8594;</button>
 </div>
-<div id="hint">← → Arrow keys to navigate</div>
+<div id="hint">← → arrow keys · click tabs to switch code view</div>
 
 <script>
+  // ── Tab switching ──
+  function swTab(btn, paneId) {
+    const slide = btn.closest('.slide');
+    slide.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    slide.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(paneId).classList.add('active');
+  }
+
+  // ── Slide navigation ──
   const slides = document.querySelectorAll('.slide');
   const total  = slides.length;
   let   cur    = 0;
@@ -1059,8 +1378,7 @@
     document.getElementById('counter').textContent = `${cur + 1} / ${total}`;
     document.getElementById('btnPrev').disabled = cur === 0;
     document.getElementById('btnNext').disabled = cur === total - 1;
-    document.getElementById('progress-bar').style.width =
-      `${((cur + 1) / total) * 100}%`;
+    document.getElementById('progress-bar').style.width = `${((cur+1)/total)*100}%`;
   }
 
   function go(dir) { show(cur + dir); }
