@@ -1346,6 +1346,173 @@ providers: [{
   </div>
 </div>
 
+<!-- ══════════════════════════════════
+     SLIDE 7 — INTERVIEW QUESTIONS
+══════════════════════════════════ -->
+<div class="slide" id="s7">
+  <div class="slide-header">
+    <span class="num-badge">Interview Q&amp;A</span>
+    <h1>Angular Forms — Interview Questions &amp; Answers</h1>
+  </div>
+
+  <style>
+    .iq-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .iq-section-title {
+      font-size: 11px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase;
+      padding: 5px 10px; border-radius: 6px 6px 0 0; margin-bottom: 0;
+    }
+    .iq-section-title.red    { background: #3a1818; color: #f85149; }
+    .iq-section-title.orange { background: #3a2000; color: #ffa657; }
+    .iq-section-title.purple { background: #2a1a3e; color: #d2a8ff; }
+    .iq-section-title.cyan   { background: #0a2e2e; color: #39d0d8; }
+    .iq-group { border: 1px solid #30363d; border-radius: 0 6px 6px 6px; overflow: hidden; margin-bottom: 10px; }
+    .iq-item { border-bottom: 1px solid #21262d; padding: 10px 13px; }
+    .iq-item:last-child { border-bottom: none; }
+    .iq-q {
+      font-size: 13px; font-weight: 700; color: #f0f6fc; margin-bottom: 5px;
+      display: flex; align-items: flex-start; gap: 7px;
+    }
+    .iq-q-num {
+      background: #DD0031; color: #fff; font-size: 10px; font-weight: 800;
+      padding: 2px 6px; border-radius: 4px; flex-shrink: 0; margin-top: 1px;
+    }
+    .iq-a { font-size: 12px; line-height: 1.75; color: #8b949e; padding-left: 26px; }
+    .iq-a strong { color: #c9d1d9; }
+    .iq-a code { font-family: Consolas, monospace; font-size: 11px; background: #1c2128; color: #79c0ff; padding: 1px 5px; border-radius: 3px; }
+    .iq-a .ans-tag { display: inline-block; font-size: 10px; font-weight: 700; padding: 1px 7px; border-radius: 10px; margin-right: 4px; }
+    .ans-green  { background: #1a3c1a; color: #3fb950; }
+    .ans-yellow { background: #2e2200; color: #e3b341; }
+    .ans-red    { background: #3a1818; color: #f85149; }
+    .ans-blue   { background: #0d2340; color: #58a6ff; }
+    .iq-tricky {
+      background: #2a1a00; border: 1px solid #e3b341; border-left: 4px solid #e3b341;
+      border-radius: 8px; padding: 10px 13px; margin-top: 10px;
+    }
+    .iq-tricky .lbl { font-size: 10px; font-weight: 800; color: #e3b341; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 5px; }
+  </style>
+
+  <div class="iq-grid">
+
+    <!-- ── LEFT COLUMN ── -->
+    <div>
+      <!-- Typed Forms -->
+      <div class="iq-section-title red">📋 Typed Forms — Q&amp;A</div>
+      <div class="iq-group">
+        <div class="iq-item">
+          <div class="iq-q"><span class="iq-q-num">Q1</span>What is the difference between <code>form.value</code> and <code>form.getRawValue()</code>?</div>
+          <div class="iq-a"><span class="ans-tag ans-red">Tricky ⚠️</span><strong><code>form.value</code></strong> returns a <strong>Partial</strong> object — disabled controls are <strong>excluded</strong> and appear as <code>undefined</code>. <strong><code>getRawValue()</code></strong> returns ALL fields regardless of disabled state. Always use <code>getRawValue()</code> when submitting to avoid silent data loss.</div>
+        </div>
+        <div class="iq-item">
+          <div class="iq-q"><span class="iq-q-num">Q2</span>Why use <code>NonNullableFormBuilder</code> over <code>FormBuilder</code>?</div>
+          <div class="iq-a">NNFB sets <code>nonNullable: true</code> on every <code>.control()</code> call. On <code>.reset()</code>, controls restore to their <strong>initial value</strong> (e.g. <code>''</code>) instead of <code>null</code>. TypeScript infers <code>string</code> not <code>string | null</code> — fewer null checks in submit logic.</div>
+        </div>
+        <div class="iq-item">
+          <div class="iq-q"><span class="iq-q-num">Q3</span>When would you use <code>FormRecord</code> instead of <code>FormGroup</code>?</div>
+          <div class="iq-a"><code>FormRecord</code> is for forms where <strong>keys are determined at runtime</strong> (e.g. user-defined metadata fields, locale-specific attributes). <code>FormGroup</code> requires keys to be known at compile time. Both extend <code>AbstractControl</code>.</div>
+        </div>
+        <div class="iq-item">
+          <div class="iq-q"><span class="iq-q-num">Q4</span>What is the risk of using <code>setValidators()</code> on a live control?</div>
+          <div class="iq-a"><span class="ans-tag ans-red">Common Mistake</span><code>setValidators()</code> <strong>replaces</strong> the entire validator array — any previously added validators are discarded. Use <code>addValidators()</code> to merge. Always call <code>updateValueAndValidity({ emitEvent: false })</code> after either to re-run validation.</div>
+        </div>
+        <div class="iq-item">
+          <div class="iq-q"><span class="iq-q-num">Q5</span>How do you write a cross-field validator (e.g., password == confirmPassword)?</div>
+          <div class="iq-a">Attach a <code>ValidatorFn</code> to the <strong>FormGroup</strong> (not individual controls). Cast <code>AbstractControl</code> to the typed group, read both sibling controls, compare values. Return <code>null</code> if valid or <code>{ passwordMismatch: true }</code> if not.</div>
+        </div>
+      </div>
+
+      <!-- Async Validation -->
+      <div class="iq-section-title orange">⚡ Async Validation — Q&amp;A</div>
+      <div class="iq-group">
+        <div class="iq-item">
+          <div class="iq-q"><span class="iq-q-num">Q6</span>Why must you call <code>first()</code> at the end of an async validator?</div>
+          <div class="iq-a"><span class="ans-tag ans-red">Gotcha ⚠️</span>Angular expects the Observable to <strong>complete</strong> to transition the control out of <code>PENDING</code>. Without <code>first()</code>, a stream from a Subject or BehaviorSubject never completes — the control is stuck in PENDING <strong>forever</strong>, silently blocking form submission.</div>
+        </div>
+        <div class="iq-item">
+          <div class="iq-q"><span class="iq-q-num">Q7</span>What happens when a control has two async validators?</div>
+          <div class="iq-a">Angular runs them <strong>in parallel</strong> using an internal <code>forkJoin</code>. The control stays <code>PENDING</code> until ALL complete. Errors are merged — if any validator returns non-null errors, the control becomes <code>INVALID</code>.</div>
+        </div>
+        <div class="iq-item">
+          <div class="iq-q"><span class="iq-q-num">Q8</span>Why use <code>timer(400)</code> inside the validator instead of <code>debounceTime()</code>?</div>
+          <div class="iq-a">With <code>updateOn:'blur'</code>, the validator fires only once per trigger — <code>debounceTime</code> on the validator's own stream has no effect. <code>timer(400)</code> delays the <em>HTTP call</em> by 400ms from trigger time. Combined with <code>switchMap</code>, it cancels in-flight calls if the user re-blurs before 400ms.</div>
+        </div>
+        <div class="iq-item">
+          <div class="iq-q"><span class="iq-q-num">Q9</span>How do you show a loading spinner while an async validator runs?</div>
+          <div class="iq-a">Use <code>emailCtrl.pending</code> in the template: <code>@if (emailCtrl.pending) &#123; &lt;span&gt;Checking...&lt;/span&gt; &#125;</code>. For <strong>OnPush</strong> components, expose it as a signal: <code>toSignal(ctrl.statusChanges.pipe(map(s =&gt; s === 'PENDING')))</code> to drive CD without zone.</div>
+        </div>
+        <div class="iq-item">
+          <div class="iq-q"><span class="iq-q-num">Q10</span>What is <code>updateOn: 'blur'</code> vs <code>updateOn: 'submit'</code>?</div>
+          <div class="iq-a"><code>'blur'</code> — triggers validation when user leaves the field. Best for async validators (no API on every keystroke). <code>'submit'</code> — validation only fires on form submission. Used for long, multi-step forms where mid-editing errors would be disruptive.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── RIGHT COLUMN ── -->
+    <div>
+      <!-- Signals -->
+      <div class="iq-section-title purple">✦ Signals + Forms (v22) — Q&amp;A</div>
+      <div class="iq-group">
+        <div class="iq-item">
+          <div class="iq-q"><span class="iq-q-num">Q11</span>What does <code>toSignal()</code> do and why is it preferred in v22 zoneless?</div>
+          <div class="iq-a">Converts a RxJS Observable into a synchronous <strong>Signal</strong>. Auto-subscribes in injection context and auto-unsubscribes via <code>DestroyRef</code>. In <strong>zoneless v22</strong>, a signal read in the template schedules a targeted re-render — no zone patches needed.</div>
+        </div>
+        <div class="iq-item">
+          <div class="iq-q"><span class="iq-q-num">Q12</span>Difference between <code>computed()</code> and <code>linkedSignal()</code>?</div>
+          <div class="iq-a"><code>computed()</code> is <strong>read-only</strong> and lazily memoized — re-evaluates only when its dependencies change. <code>linkedSignal()</code> is <strong>writable</strong> but resets to a derived value when its source signal changes. Use it for resettable state (like page = 1 when query changes).</div>
+        </div>
+        <div class="iq-item">
+          <div class="iq-q"><span class="iq-q-num">Q13</span>When should you use <code>resource()</code> vs <code>toSignal(http.get())</code>?</div>
+          <div class="iq-a"><code>resource()</code> is <strong>reactive</strong> — re-fires automatically when its <code>request</code> signals change and auto-cancels stale requests via <code>AbortController</code>. <code>toSignal(http.get())</code> fires once on creation. Use <code>resource()</code> for search, filters, or pagination.</div>
+        </div>
+        <div class="iq-item">
+          <div class="iq-q"><span class="iq-q-num">Q14</span>What is <code>initialValue</code> in <code>toSignal()</code> and why is it important?</div>
+          <div class="iq-a"><span class="ans-tag ans-yellow">Important</span>Without <code>initialValue</code>, if the source doesn't emit synchronously, the signal type becomes <code>Signal&lt;T | undefined&gt;</code>. Providing <code>initialValue</code> narrows it to <code>Signal&lt;T&gt;</code> — eliminates null checks in templates and computed signals.</div>
+        </div>
+        <div class="iq-item">
+          <div class="iq-q"><span class="iq-q-num">Q15</span>What pitfall should you avoid when writing to signals inside <code>effect()</code>?</div>
+          <div class="iq-a">Writing to a signal inside an <code>effect()</code> that also reads that signal causes an <strong>infinite loop</strong>. Use <code>untracked()</code> to write without creating a dependency, or prefer <code>linkedSignal()</code> for writable derived state instead of effect-based writes.</div>
+        </div>
+      </div>
+
+      <!-- CVA & Dynamic Forms -->
+      <div class="iq-section-title cyan">🔧 CVA &amp; Dynamic Forms — Q&amp;A</div>
+      <div class="iq-group">
+        <div class="iq-item">
+          <div class="iq-q"><span class="iq-q-num">Q16</span>Why is <code>forwardRef()</code> required in the CVA provider?</div>
+          <div class="iq-a">The <code>providers</code> array inside <code>@Component</code> is evaluated when the <strong>decorator runs</strong> — before the class body is defined. <code>forwardRef(() =&gt; YourClass)</code> defers the lookup to runtime when Angular's DI system resolves the injector token.</div>
+        </div>
+        <div class="iq-item">
+          <div class="iq-q"><span class="iq-q-num">Q17</span>What happens if you forget to call <code>_onChange()</code> after mutating state in a CVA?</div>
+          <div class="iq-a"><span class="ans-tag ans-red">Bug ⚠️</span>The parent <code>FormControl</code> won't know the value changed. Its <code>.value</code>, <code>.valid</code>, and <code>.dirty</code> stay <strong>stale</strong>. Angular's form will not reflect the actual UI state. Always call <code>this._onChange(newValue)</code> immediately after any internal mutation.</div>
+        </div>
+        <div class="iq-item">
+          <div class="iq-q"><span class="iq-q-num">Q18</span>How does the parent form know when your CVA component is "touched"?</div>
+          <div class="iq-a">You call the <code>onTouched()</code> callback (stored via <code>registerOnTouched</code>) when your component loses focus — typically in <code>(blur)</code> on the inner input. This tells Angular's form to mark the parent <code>FormControl</code> as <strong>touched</strong>, enabling error message display.</div>
+        </div>
+        <div class="iq-item">
+          <div class="iq-q"><span class="iq-q-num">Q19</span>Why use <code>emitEvent: false</code> in dynamic forms when bulk-patching values?</div>
+          <div class="iq-a">Without it, patching 30 fields fires 30 <code>valueChanges</code> events — each can trigger async validators, Signal updates, and CD cycles. Patch with <code>emitEvent: false</code>, then call <code>updateValueAndValidity()</code> <strong>once</strong> at the end for a single, clean event emission.</div>
+        </div>
+        <div class="iq-item">
+          <div class="iq-q"><span class="iq-q-num">Q20</span>How do you add validation to a CVA component so the parent form sees it as INVALID?</div>
+          <div class="iq-a">Register on the <code>NG_VALIDATORS</code> multi-provider token AND implement the <code>Validator</code> interface. Angular calls your <code>validate(ctrl)</code> method when re-evaluating. Return <code>null</code> for valid, or an error object (e.g. <code>&#123; minTags: true &#125;</code>) for invalid. The parent <code>FormControl</code> status reflects your returned errors.</div>
+        </div>
+      </div>
+
+      <!-- Tricky / Most asked -->
+      <div class="iq-tricky">
+        <div class="lbl">🎯 Most Asked — Trick Questions</div>
+        <ul style="list-style:none;padding:0;display:flex;flex-direction:column;gap:6px;">
+          <li style="font-size:12px;color:#c9d1d9;padding:5px 8px;background:#1c1400;border-radius:5px;"><strong style="color:#e3b341;">Q:</strong> Does <code>form.reset()</code> set values to <code>null</code> or to the initial value? <span style="color:#3fb950;font-weight:700;">A:</span> <strong>FormBuilder</strong> → resets to <code>null</code>. <strong>NonNullableFormBuilder</strong> → resets to the initial value passed to <code>control()</code>.</li>
+          <li style="font-size:12px;color:#c9d1d9;padding:5px 8px;background:#1c1400;border-radius:5px;"><strong style="color:#e3b341;">Q:</strong> Can a disabled control trigger <code>valueChanges</code>? <span style="color:#3fb950;font-weight:700;">A:</span> <strong>No.</strong> Disabled controls don't emit <code>valueChanges</code>. Their value is also excluded from <code>form.value</code> but included in <code>getRawValue()</code>.</li>
+          <li style="font-size:12px;color:#c9d1d9;padding:5px 8px;background:#1c1400;border-radius:5px;"><strong style="color:#e3b341;">Q:</strong> What is the default <code>updateOn</code> for a control? <span style="color:#3fb950;font-weight:700;">A:</span> <strong><code>'change'</code></strong> — fires on every input event. Change to <code>'blur'</code> for async validators, <code>'submit'</code> for long forms.</li>
+          <li style="font-size:12px;color:#c9d1d9;padding:5px 8px;background:#1c1400;border-radius:5px;"><strong style="color:#e3b341;">Q:</strong> Can you use <code>@for track field.key</code> to prevent FormControl re-creation? <span style="color:#3fb950;font-weight:700;">A:</span> <strong>Yes</strong> — without track, Angular destroys/recreates DOM nodes and their associated directives (incl. form bindings) on every render, resetting control values and state.</li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+</div>
+
 </div><!-- /#deck -->
 
 <div id="nav">
