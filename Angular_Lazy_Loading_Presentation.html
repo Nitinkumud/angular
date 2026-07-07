@@ -161,6 +161,26 @@
     .slide::-webkit-scrollbar { width: 6px; }
     .slide::-webkit-scrollbar-track { background: transparent; }
     .slide::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
+
+    /* ── Tabs ── */
+    .tab-bar { display: flex; gap: 0; border-bottom: 2px solid #21262d; flex-shrink: 0; }
+    .tab-btn {
+      padding: 8px 22px; font-size: 13px; font-weight: 600; cursor: pointer;
+      background: none; border: none; color: #8b949e;
+      border-bottom: 3px solid transparent; margin-bottom: -2px;
+      transition: color .2s, border-color .2s;
+    }
+    .tab-btn:hover { color: #e6edf3; }
+    .tab-btn.active { color: #58a6ff; border-bottom-color: #58a6ff; }
+    .tab-btn.old.active { color: #ffa657; border-bottom-color: #ffa657; }
+    .tab-panel { display: none; flex-direction: column; gap: 14px; }
+    .tab-panel.active { display: flex; }
+
+    .step { display:flex; gap:12px; align-items:flex-start; }
+    .step-num { background:#1f6feb; color:#fff; font-size:11px; font-weight:700;
+      width:22px; height:22px; border-radius:50%; display:flex; align-items:center;
+      justify-content:center; flex-shrink:0; margin-top:2px; }
+    .step-num.orange { background:#c75000; }
   </style>
 </head>
 <body>
@@ -369,61 +389,229 @@ dist/my-app/
 
   <!-- ══ SLIDE 3 — loadChildren ══ -->
   <div class="slide" id="s3">
-    <div class="slide-header"><span class="topic-badge">03</span><h1>loadChildren — Lazy Feature Routes</h1></div>
+    <div class="slide-header"><span class="topic-badge">03</span><h1>loadChildren — Lazy Feature Routes (Deep Dive)</h1></div>
     <div class="content">
-      <div class="two-col">
-        <div class="card accent-purple">
-          <h3>loadChildren with Routes array (Modern ✅)</h3>
-          <p>Returns a <strong>Routes array</strong> directly — no NgModule needed. Preferred pattern in Angular v17+.</p>
-        </div>
-        <div class="card accent-orange">
-          <h3>loadChildren with NgModule (Legacy)</h3>
-          <p>Returns a <strong>module class</strong>. Still works but NgModule architecture is being phased out. Used in enterprise apps pre-Angular 17.</p>
-        </div>
+
+      <p style="font-size:13px; color:#8b949e;"><code>loadChildren</code> tells Angular's router to <strong>defer loading an entire group of child routes</strong> until the user navigates to that path. Two approaches exist — pick based on your Angular version.</p>
+
+      <!-- Tab bar -->
+      <div class="tab-bar">
+        <button class="tab-btn active"      onclick="switchTab(event,'s3','new')">✅ New Way — Angular 17+ / v22 (Routes Array)</button>
+        <button class="tab-btn old"         onclick="switchTab(event,'s3','old')">🗂 Old Way — Pre Angular 17 (NgModule)</button>
+        <button class="tab-btn"             onclick="switchTab(event,'s3','diff')">⚖ Side-by-Side Comparison</button>
       </div>
 
-      <div class="code-block"><pre><span class="cmt">// ── MODERN: loadChildren → Routes array (Angular 17+ / v22) ─────────────</span>
+      <!-- ── TAB: NEW WAY ── -->
+      <div class="tab-panel active" id="s3-new">
+        <div class="two-col">
+          <div class="card accent-purple">
+            <h3>How it works</h3>
+            <ul>
+              <li><code>loadChildren</code> returns a <strong>dynamic import</strong> of a <code>.routes.ts</code> file</li>
+              <li>That file exports a <code>Routes</code> array with child routes</li>
+              <li>Each child can also use <code>loadComponent</code> → max code splitting</li>
+              <li>No <code>@NgModule</code>, no <code>RouterModule.forChild()</code> needed</li>
+            </ul>
+          </div>
+          <div class="card accent-green">
+            <h3>Folder Structure</h3>
+            <div class="code-block" style="margin-top:6px;"><pre><span class="op">src/app/</span>
+  <span class="var">app.routes.ts</span>         <span class="cmt">← root routes</span>
+  <span class="op">admin/</span>
+    <span class="var">admin.routes.ts</span>     <span class="cmt">← feature routes</span>
+    <span class="var">admin-shell.component.ts</span>
+    <span class="op">users/</span>
+      <span class="var">users.component.ts</span>
+    <span class="op">reports/</span>
+      <span class="var">reports.component.ts</span></pre></div>
+          </div>
+        </div>
+
+        <div class="code-block"><pre><span class="cmt">// ── STEP 1: app.routes.ts (root) ────────────────────────────────────</span>
+<span class="kw">import</span> { <span class="cls">Routes</span> } <span class="kw">from</span> <span class="str">'@angular/router'</span>;
+
 <span class="kw">export const</span> <span class="var">routes</span>: <span class="cls">Routes</span> = [
+  { <span class="var">path</span>: <span class="str">''</span>,      <span class="var">loadComponent</span>: () => <span class="fn">import</span>(<span class="str">'./home/home.component'</span>) },
+
   {
     <span class="var">path</span>: <span class="str">'admin'</span>,
+    <span class="cmt">// 👇 dynamically imports admin.routes.ts only when user visits /admin</span>
     <span class="var">loadChildren</span>: () => <span class="fn">import</span>(<span class="str">'./admin/admin.routes'</span>)
                             .<span class="fn">then</span>(<span class="var">m</span> => <span class="var">m</span>.<span class="var">adminRoutes</span>)
-  },
-  {
-    <span class="var">path</span>: <span class="str">'products'</span>,
-    <span class="var">loadChildren</span>: () => <span class="fn">import</span>(<span class="str">'./products/products.routes'</span>)
-                            .<span class="fn">then</span>(<span class="var">m</span> => <span class="var">m</span>.<span class="var">productRoutes</span>)
   }
 ];
 
-<span class="cmt">// admin/admin.routes.ts — feature routes file</span>
+<span class="cmt">// ── STEP 2: admin/admin.routes.ts (feature routes) ──────────────────</span>
 <span class="kw">import</span> { <span class="cls">Routes</span> } <span class="kw">from</span> <span class="str">'@angular/router'</span>;
 
 <span class="kw">export const</span> <span class="var">adminRoutes</span>: <span class="cls">Routes</span> = [
+  <span class="cmt">// '' means /admin itself → loads AdminShellComponent</span>
   { <span class="var">path</span>: <span class="str">''</span>,        <span class="var">loadComponent</span>: () => <span class="fn">import</span>(<span class="str">'./admin-shell.component'</span>) },
+
+  <span class="cmt">// /admin/users → loads UsersComponent</span>
   { <span class="var">path</span>: <span class="str">'users'</span>,   <span class="var">loadComponent</span>: () => <span class="fn">import</span>(<span class="str">'./users/users.component'</span>) },
+
+  <span class="cmt">// /admin/reports → loads ReportsComponent</span>
   { <span class="var">path</span>: <span class="str">'reports'</span>, <span class="var">loadComponent</span>: () => <span class="fn">import</span>(<span class="str">'./reports/reports.component'</span>) }
 ];
 
-<span class="cmt">// ── LEGACY: loadChildren → NgModule (pre Angular 17) ────────────────────</span>
-{
-  <span class="var">path</span>: <span class="str">'admin'</span>,
-  <span class="var">loadChildren</span>: () => <span class="fn">import</span>(<span class="str">'./admin/admin.module'</span>)
-                          .<span class="fn">then</span>(<span class="var">m</span> => <span class="var">m</span>.<span class="cls">AdminModule</span>)
-}
+<span class="cmt">// ── STEP 3: admin-shell.component.ts ────────────────────────────────</span>
+<span class="kw">import</span> { <span class="cls">Component</span> } <span class="kw">from</span> <span class="str">'@angular/core'</span>;
+<span class="kw">import</span> { <span class="cls">RouterOutlet</span>, <span class="cls">RouterLink</span> } <span class="kw">from</span> <span class="str">'@angular/router'</span>;
 
-<span class="cmt">// admin.module.ts</span>
+<span class="dec">@Component</span>({
+  <span class="var">standalone</span>: <span class="kw">true</span>,
+  <span class="var">imports</span>: [<span class="cls">RouterOutlet</span>, <span class="cls">RouterLink</span>],
+  <span class="var">template</span>: <span class="str">`
+    &lt;nav&gt;
+      &lt;a routerLink="users"&gt;Users&lt;/a&gt;
+      &lt;a routerLink="reports"&gt;Reports&lt;/a&gt;
+    &lt;/nav&gt;
+    &lt;router-outlet /&gt;  &lt;!-- child components render here --&gt;
+  `</span>
+})
+<span class="kw">export default class</span> <span class="cls">AdminShellComponent</span> {}</pre></div>
+
+        <div class="flow" style="margin-top:4px;">
+          <div class="flow-box blue">User visits /admin</div><div class="flow-arrow">→</div>
+          <div class="flow-box purple">Router matches 'admin'</div><div class="flow-arrow">→</div>
+          <div class="flow-box orange">import('./admin.routes') runs</div><div class="flow-arrow">→</div>
+          <div class="flow-box blue">adminRoutes array loaded</div><div class="flow-arrow">→</div>
+          <div class="flow-box purple">Child route '' matched</div><div class="flow-arrow">→</div>
+          <div class="flow-box green">AdminShellComponent rendered ✅</div>
+        </div>
+      </div>
+
+      <!-- ── TAB: OLD WAY ── -->
+      <div class="tab-panel" id="s3-old">
+        <div class="two-col">
+          <div class="card accent-orange">
+            <h3>How it works</h3>
+            <ul>
+              <li><code>loadChildren</code> returns a dynamic import of an <strong>NgModule class</strong></li>
+              <li>That module uses <code>RouterModule.forChild()</code> to define child routes</li>
+              <li>Module's <code>declarations</code> array lists all feature components</li>
+              <li>Angular 16 and below — this was the <strong>only</strong> way</li>
+            </ul>
+          </div>
+          <div class="card accent-red">
+            <h3>Folder Structure</h3>
+            <div class="code-block" style="margin-top:6px;"><pre><span class="op">src/app/</span>
+  <span class="var">app-routing.module.ts</span>   <span class="cmt">← root routes</span>
+  <span class="op">admin/</span>
+    <span class="var">admin.module.ts</span>       <span class="cmt">← NgModule</span>
+    <span class="var">admin-routing.module.ts</span> <span class="cmt">← child routes</span>
+    <span class="var">admin.component.ts</span>
+    <span class="var">users.component.ts</span>
+    <span class="var">reports.component.ts</span></pre></div>
+          </div>
+        </div>
+
+        <div class="code-block"><pre><span class="cmt">// ── STEP 1: app-routing.module.ts ───────────────────────────────────</span>
+<span class="kw">const</span> <span class="var">routes</span>: <span class="cls">Routes</span> = [
+  { <span class="var">path</span>: <span class="str">''</span>, <span class="var">component</span>: <span class="cls">HomeComponent</span> },       <span class="cmt">// eager</span>
+  {
+    <span class="var">path</span>: <span class="str">'admin'</span>,
+    <span class="cmt">// 👇 dynamically imports AdminModule when user visits /admin</span>
+    <span class="var">loadChildren</span>: () => <span class="fn">import</span>(<span class="str">'./admin/admin.module'</span>)
+                            .<span class="fn">then</span>(<span class="var">m</span> => <span class="var">m</span>.<span class="cls">AdminModule</span>)
+  }
+];
+
+<span class="dec">@NgModule</span>({ <span class="var">imports</span>: [<span class="cls">RouterModule</span>.<span class="fn">forRoot</span>(<span class="var">routes</span>)], <span class="var">exports</span>: [<span class="cls">RouterModule</span>] })
+<span class="kw">export class</span> <span class="cls">AppRoutingModule</span> {}
+
+<span class="cmt">// ── STEP 2: admin/admin-routing.module.ts ───────────────────────────</span>
+<span class="kw">const</span> <span class="var">adminRoutes</span>: <span class="cls">Routes</span> = [
+  { <span class="var">path</span>: <span class="str">''</span>,        <span class="var">component</span>: <span class="cls">AdminComponent</span>   },
+  { <span class="var">path</span>: <span class="str">'users'</span>,   <span class="var">component</span>: <span class="cls">UsersComponent</span>   },
+  { <span class="var">path</span>: <span class="str">'reports'</span>, <span class="var">component</span>: <span class="cls">ReportsComponent</span> }
+];
+
+<span class="cmt">// 👇 forChild() — NOT forRoot() — registers routes for this module only</span>
+<span class="dec">@NgModule</span>({ <span class="var">imports</span>: [<span class="cls">RouterModule</span>.<span class="fn">forChild</span>(<span class="var">adminRoutes</span>)], <span class="var">exports</span>: [<span class="cls">RouterModule</span>] })
+<span class="kw">export class</span> <span class="cls">AdminRoutingModule</span> {}
+
+<span class="cmt">// ── STEP 3: admin/admin.module.ts ───────────────────────────────────</span>
 <span class="dec">@NgModule</span>({
-  <span class="var">imports</span>: [<span class="cls">RouterModule</span>.<span class="fn">forChild</span>([
-    { <span class="var">path</span>: <span class="str">''</span>, <span class="var">component</span>: <span class="cls">AdminComponent</span> }
-  ])]
+  <span class="var">declarations</span>: [            <span class="cmt">// register ALL components for this module</span>
+    <span class="cls">AdminComponent</span>,
+    <span class="cls">UsersComponent</span>,
+    <span class="cls">ReportsComponent</span>
+  ],
+  <span class="var">imports</span>: [
+    <span class="cls">CommonModule</span>,
+    <span class="cls">AdminRoutingModule</span>     <span class="cmt">// import routing module</span>
+  ]
 })
 <span class="kw">export class</span> <span class="cls">AdminModule</span> {}</pre></div>
 
-      <div class="tip-box">
-        <div class="tip-hdr">✅ Angular v22 Best Practice</div>
-        <p>Prefer <code>loadChildren → Routes array</code> over NgModule. Combine with <code>loadComponent</code> inside feature routes for maximum code splitting. Each feature becomes its own chunk automatically via Webpack / esbuild.</p>
+        <div class="warn-box">
+          <div class="warn-hdr">⚠️ Problems with Old Way</div>
+          <p>Every component must be <strong>declared in NgModule</strong> — boilerplate heavy. <code>RouterModule.forChild()</code> is required in every feature. Cannot use <code>loadComponent</code> for individual child routes — all 3 components load together in one chunk even if user visits only one.</p>
+        </div>
       </div>
+
+      <!-- ── TAB: COMPARISON ── -->
+      <div class="tab-panel" id="s3-diff">
+        <table>
+          <thead>
+            <tr>
+              <th>Aspect</th>
+              <th>🗂 Old Way — NgModule (pre v17)</th>
+              <th>✅ New Way — Routes Array (v17+ / v22)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>loadChildren returns</strong></td>
+              <td>An <code>NgModule</code> class</td>
+              <td>A <code>Routes</code> array</td>
+            </tr>
+            <tr>
+              <td><strong>Child routes defined in</strong></td>
+              <td><code>RouterModule.forChild()</code> inside NgModule</td>
+              <td>A plain <code>.routes.ts</code> file — just an array</td>
+            </tr>
+            <tr>
+              <td><strong>Components registered via</strong></td>
+              <td><code>declarations: []</code> in NgModule</td>
+              <td><code>loadComponent</code> inside each route</td>
+            </tr>
+            <tr>
+              <td><strong>Individual chunk per component?</strong></td>
+              <td><span class="badge badge-red">No — all components in one chunk</span></td>
+              <td><span class="badge badge-green">Yes — each loadComponent = its own chunk</span></td>
+            </tr>
+            <tr>
+              <td><strong>Boilerplate</strong></td>
+              <td>High — 3 files minimum (module, routing module, component)</td>
+              <td>Low — 1 routes file + components</td>
+            </tr>
+            <tr>
+              <td><strong>standalone: true required?</strong></td>
+              <td>No — class components</td>
+              <td>Yes — standalone components (default in v17+)</td>
+            </tr>
+            <tr>
+              <td><strong>Tree-shakeable?</strong></td>
+              <td><span class="badge badge-red">Partial</span></td>
+              <td><span class="badge badge-green">Fully tree-shakeable</span></td>
+            </tr>
+            <tr>
+              <td><strong>Angular v22 recommended?</strong></td>
+              <td><span class="badge badge-red">No — being phased out</span></td>
+              <td><span class="badge badge-green">Yes — official best practice</span></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="tip-box">
+          <div class="tip-hdr">✅ Key Takeaway</div>
+          <p>Old way puts ALL feature components in <strong>one chunk</strong> (admin.module.js). New way gives each component its <strong>own chunk</strong> via <code>loadComponent</code> — so if a user visits <code>/admin/users</code>, only the users chunk downloads, not the reports chunk. This is the real performance advantage of the new approach.</p>
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -1057,6 +1245,14 @@ dist/my-app/
   }
 
   function move(d) { goTo(cur + d); }
+
+  function switchTab(e, slideId, panelId) {
+    const slide = document.getElementById(slideId);
+    slide.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    slide.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(slideId + '-' + panelId).classList.add('active');
+    e.target.classList.add('active');
+  }
 
   document.addEventListener('keydown', e => {
     if (e.key === 'ArrowRight' || e.key === 'ArrowDown')  move(1);
