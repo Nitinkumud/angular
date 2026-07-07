@@ -326,9 +326,38 @@ dist/my-app/
 });</pre></div>
 
       <div class="two-col">
-        <div class="tip-box">
-          <div class="tip-hdr">✅ Default Export Shortcut</div>
-          <p>If the component is the <strong>default export</strong>, you can skip <code>.then(m =&gt; m.XComponent)</code>. Angular resolves it automatically.</p>
+        <div class="tip-box" style="grid-column: 1 / -1;">
+          <div class="tip-hdr">✅ Default Export Shortcut — Explained with Code</div>
+          <p style="margin-bottom:10px;">When a file has a <strong>named export</strong>, you must tell Angular which class to use via <code>.then(m =&gt; m.XComponent)</code>. When a file uses <strong>default export</strong>, Angular picks it up automatically — no <code>.then()</code> needed.</p>
+          <div class="two-col" style="gap:12px;">
+            <div class="code-block"><pre><span class="cmt">// ❌ NAMED export — .then() IS required</span>
+
+<span class="cmt">// admin.component.ts</span>
+<span class="dec">@Component</span>({ <span class="var">standalone</span>: <span class="kw">true</span>, ... })
+<span class="kw">export class</span> <span class="cls">AdminComponent</span> {}   <span class="cmt">// named export</span>
+
+<span class="cmt">// routes — must pick the class by name:</span>
+{
+  <span class="var">path</span>: <span class="str">'admin'</span>,
+  <span class="var">loadComponent</span>: () =>
+    <span class="fn">import</span>(<span class="str">'./admin/admin.component'</span>)
+      .<span class="fn">then</span>(<span class="var">m</span> => <span class="var">m</span>.<span class="cls">AdminComponent</span>) <span class="cmt">// required ✅</span>
+}</pre></div>
+            <div class="code-block"><pre><span class="cmt">// ✅ DEFAULT export — .then() NOT needed</span>
+
+<span class="cmt">// admin.component.ts</span>
+<span class="dec">@Component</span>({ <span class="var">standalone</span>: <span class="kw">true</span>, ... })
+<span class="kw">export default class</span> <span class="cls">AdminComponent</span> {} <span class="cmt">// default</span>
+
+<span class="cmt">// routes — Angular resolves it automatically:</span>
+{
+  <span class="var">path</span>: <span class="str">'admin'</span>,
+  <span class="var">loadComponent</span>: () =>
+    <span class="fn">import</span>(<span class="str">'./admin/admin.component'</span>)
+    <span class="cmt">// no .then() needed ✅</span>
+}</pre></div>
+          </div>
+          <p style="margin-top:10px; font-size:12px; color:#8b949e;">Why does it work? A dynamic <code>import()</code> returns a <strong>module object</strong>. A default export is stored under the key <code>default</code> on that object (<code>m.default</code>). Angular's router automatically checks <code>m.default</code> when no <code>.then()</code> is provided — so it finds and uses your component class without you writing the selector manually.</p>
         </div>
         <div class="warn-box">
           <div class="warn-hdr">⚠️ Must be Standalone</div>
