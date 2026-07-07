@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Angular Lazy Loading – Senior Interview Deep Dive</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; overflow: hidden; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0d1117; color: #e6edf3; }
+
+    #deck { width: 100vw; height: 100vh; position: relative; }
+
+    .slide {
+      display: none; flex-direction: column; justify-content: flex-start;
+      padding: 44px 58px 76px; width: 100%; height: 100%;
+      overflow-y: auto; gap: 16px; animation: fadeIn .35s ease;
+    }
+    .slide.active { display: flex; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+
+    .slide-header {
+      display: flex; align-items: center; gap: 14px;
+      border-bottom: 2px solid #21262d; padding-bottom: 12px; flex-shrink: 0;
+    }
+    .topic-badge {
+      background: #1a3a6e; color: #58a6ff; font-size: 11px; font-weight: 700;
+      letter-spacing: 1px; text-transform: uppercase; padding: 4px 10px;
+      border-radius: 20px; white-space: nowrap;
+    }
+
+    h1 { font-size: 27px; font-weight: 700; color: #58a6ff; }
+    h2 { font-size: 19px; font-weight: 600; color: #ffa657; margin-bottom: 5px; }
+    h3 { font-size: 14px; font-weight: 600; color: #ffa657; margin-bottom: 4px; }
+
+    .title-slide {
+      justify-content: center; align-items: center; text-align: center;
+      background: radial-gradient(ellipse at 50% 0%, #0a1520 0%, #0d1117 70%);
+    }
+    .title-slide h1 { font-size: 44px; margin-bottom: 10px; color: #58a6ff; }
+    .title-slide .subtitle { font-size: 16px; color: #8b949e; max-width: 700px; line-height: 1.65; }
+    .logo { font-size: 62px; margin-bottom: 14px; }
+    .topic-chips { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 20px; }
+    .chip { background: #161b22; border: 1px solid #30363d; border-radius: 20px; padding: 5px 14px; font-size: 12.5px; color: #8b949e; }
+
+    .content { flex: 1; display: flex; flex-direction: column; gap: 14px; }
+    .two-col   { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+
+    .card {
+      background: #161b22; border: 1px solid #30363d;
+      border-radius: 10px; padding: 14px 16px;
+    }
+    .card.accent-red    { border-left: 4px solid #f85149; }
+    .card.accent-blue   { border-left: 4px solid #1f6feb; }
+    .card.accent-green  { border-left: 4px solid #3fb950; }
+    .card.accent-orange { border-left: 4px solid #f78166; }
+    .card.accent-purple { border-left: 4px solid #d2a8ff; }
+    .card.accent-yellow { border-left: 4px solid #e3b341; }
+    .card.accent-cyan   { border-left: 4px solid #39d0d8; }
+    .card.accent-pink   { border-left: 4px solid #ff6eb4; }
+
+    p  { font-size: 13.5px; line-height: 1.75; color: #c9d1d9; }
+    li { font-size: 13px; line-height: 1.85; color: #c9d1d9; margin-left: 18px; }
+    ul { padding-left: 4px; }
+    strong { color: #f0f6fc; }
+    code {
+      font-family: 'Consolas', monospace; font-size: 12px;
+      background: #1c2128; color: #79c0ff; padding: 2px 6px; border-radius: 4px;
+    }
+
+    .code-block {
+      background: #1c2128; border: 1px solid #30363d;
+      border-radius: 8px; padding: 14px 16px; overflow-x: auto; flex-shrink: 0;
+    }
+    .code-block pre {
+      font-family: 'Consolas', monospace; font-size: 12.5px;
+      line-height: 1.7; color: #e6edf3; white-space: pre; margin: 0;
+    }
+    .kw  { color: #ff7b72; }
+    .fn  { color: #d2a8ff; }
+    .str { color: #a5d6ff; }
+    .num { color: #79c0ff; }
+    .cmt { color: #8b949e; font-style: italic; }
+    .var { color: #ffa657; }
+    .dec { color: #ff6b6b; }
+    .cls { color: #f0c674; }
+    .int { color: #39d0d8; }
+    .op  { color: #7ee787; }
+    .typ { color: #56d364; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+    th { background: #161b22; color: #d2a8ff; text-align: left; padding: 8px 12px; border-bottom: 2px solid #30363d; font-weight: 600; }
+    td { padding: 7px 12px; border-bottom: 1px solid #21262d; color: #c9d1d9; vertical-align: top; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #161b22; }
+
+    .badge { display: inline-block; padding: 2px 9px; border-radius: 12px; font-size: 11px; font-weight: 700; white-space: nowrap; }
+    .badge-red    { background: #3a1818; color: #f85149; }
+    .badge-green  { background: #1a3c1a; color: #3fb950; }
+    .badge-blue   { background: #0d2340; color: #58a6ff; }
+    .badge-orange { background: #3a2000; color: #ffa657; }
+    .badge-purple { background: #2a1a3e; color: #d2a8ff; }
+    .badge-yellow { background: #2e2200; color: #e3b341; }
+    .badge-cyan   { background: #0a2e2e; color: #39d0d8; }
+
+    .tip-box {
+      background: #1c2a1c; border: 1px solid #3fb950;
+      border-left: 4px solid #3fb950; border-radius: 8px; padding: 10px 14px;
+    }
+    .tip-box .tip-hdr { font-size: 11px; font-weight: 700; color: #3fb950; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 5px; }
+    .tip-box p, .tip-box li { font-size: 12.5px; color: #c9d1d9; }
+
+    .warn-box {
+      background: #2a1a00; border: 1px solid #e3b341;
+      border-left: 4px solid #e3b341; border-radius: 8px; padding: 10px 14px;
+    }
+    .warn-box .warn-hdr { font-size: 11px; font-weight: 700; color: #e3b341; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 5px; }
+    .warn-box p, .warn-box li { font-size: 12.5px; color: #c9d1d9; }
+
+    .mem-box {
+      background: #1e1a2e; border: 1px solid #d2a8ff;
+      border-left: 4px solid #d2a8ff; border-radius: 8px; padding: 10px 14px;
+    }
+    .mem-box .mem-hdr { font-size: 11px; font-weight: 700; color: #d2a8ff; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 5px; }
+    .mem-box p, .mem-box li { font-size: 12.5px; color: #c9d1d9; }
+
+    .iq-item { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 12px 15px; margin-bottom: 8px; }
+    .iq-q { font-size: 13.5px; font-weight: 600; color: #58a6ff; margin-bottom: 6px; }
+    .iq-a { font-size: 12.5px; color: #c9d1d9; line-height: 1.7; }
+    .iq-tag { font-size: 10px; font-weight: 700; background: #1a3a6e; color: #58a6ff; padding: 2px 8px; border-radius: 10px; margin-left: 8px; vertical-align: middle; }
+
+    .flow { display: flex; align-items: center; gap: 0; flex-wrap: nowrap; overflow-x: auto; padding: 6px 0; }
+    .flow-box {
+      background: #1c2128; border: 1px solid #30363d; border-radius: 6px;
+      padding: 7px 12px; font-size: 12px; color: #e6edf3; white-space: nowrap; flex-shrink: 0;
+    }
+    .flow-box.green  { border-color: #3fb950; color: #56d364; }
+    .flow-box.red    { border-color: #f85149; color: #ff7b72; }
+    .flow-box.blue   { border-color: #1f6feb; color: #79c0ff; }
+    .flow-box.purple { border-color: #d2a8ff; color: #d2a8ff; }
+    .flow-box.orange { border-color: #ffa657; color: #ffa657; }
+    .flow-arrow { color: #484f58; font-size: 18px; padding: 0 4px; flex-shrink: 0; }
+
+    #nav {
+      position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+      display: flex; align-items: center; gap: 16px;
+      background: #161b22cc; backdrop-filter: blur(8px);
+      border: 1px solid #30363d; border-radius: 40px; padding: 10px 24px; z-index: 1000;
+    }
+    #nav button {
+      background: none; border: none; color: #8b949e; cursor: pointer;
+      font-size: 20px; padding: 4px 8px; border-radius: 6px; transition: color .2s, background .2s;
+    }
+    #nav button:hover:not(:disabled) { color: #e6edf3; background: #21262d; }
+    #nav button:disabled { opacity: 0.3; cursor: default; }
+    #counter { font-size: 13px; color: #8b949e; min-width: 64px; text-align: center; }
+
+    #progress-bar { position: fixed; top: 0; left: 0; height: 3px; background: #1f6feb; transition: width .3s ease; z-index: 999; }
+    #hint { position: fixed; bottom: 20px; right: 24px; font-size: 11px; color: #484f58; }
+    .slide::-webkit-scrollbar { width: 6px; }
+    .slide::-webkit-scrollbar-track { background: transparent; }
+    .slide::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
+  </style>
+</head>
+<body>
+<div id="progress-bar"></div>
+<div id="deck">
+
+  <!-- ══ SLIDE 0 — TITLE ══ -->
+  <div class="slide title-slide active" id="s0">
+    <div class="logo">⚡</div>
+    <h1>Angular Lazy Loading</h1>
+    <p class="subtitle">Senior-level interview deep dive — Route-based Lazy Loading, Standalone Components, loadComponent, loadChildren, Preloading Strategies, @defer Blocks, Code Splitting, NgRx Lazy State, Pitfalls &amp; 20 Senior Q&amp;A</p>
+    <div class="topic-chips">
+      <span class="chip">Eager vs Lazy</span>
+      <span class="chip">loadChildren</span>
+      <span class="chip">loadComponent</span>
+      <span class="chip">Standalone Routes</span>
+      <span class="chip">Preloading Strategies</span>
+      <span class="chip">Custom Preloading</span>
+      <span class="chip">canMatch Guard</span>
+      <span class="chip">@defer Blocks</span>
+      <span class="chip">Code Splitting</span>
+      <span class="chip">NgRx Lazy State</span>
+      <span class="chip">Bundle Analysis</span>
+      <span class="chip">Pitfalls</span>
+      <span class="chip">Senior Q&amp;A</span>
+    </div>
+    <p style="margin-top:28px; font-size:12px; color:#484f58;">Angular v22 &nbsp;·&nbsp; 10 Years Experience Level &nbsp;·&nbsp; 14 Slides</p>
+  </div>
+
+  <!-- ══ SLIDE 1 — EAGER vs LAZY ══ -->
+  <div class="slide" id="s1">
+    <div class="slide-header"><span class="topic-badge">01</span><h1>Eager vs Lazy Loading</h1></div>
+    <div class="content">
+      <div class="two-col">
+        <div class="card accent-red">
+          <h3>🐢 Eager Loading (Default)</h3>
+          <ul>
+            <li>All modules &amp; components are bundled into <strong>main.js</strong> at startup</li>
+            <li>Router loads everything before the app becomes interactive</li>
+            <li>Large initial bundle → slower First Contentful Paint (FCP)</li>
+            <li>Suitable only for small apps or critical routes</li>
+          </ul>
+        </div>
+        <div class="card accent-green">
+          <h3>🚀 Lazy Loading</h3>
+          <ul>
+            <li>Feature chunks are split into <strong>separate .js bundles</strong></li>
+            <li>Bundle is downloaded only when the user navigates to that route</li>
+            <li>Dramatically reduces initial bundle size</li>
+            <li>Improves TTI (Time to Interactive) &amp; Lighthouse score</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="card accent-blue">
+        <h3>📦 Bundle Difference (Real-world Example)</h3>
+        <table style="margin-top:6px;">
+          <thead><tr><th>Strategy</th><th>main.js</th><th>Feature Chunk</th><th>Initial Load</th></tr></thead>
+          <tbody>
+            <tr><td>Eager</td><td>850 KB</td><td>None</td><td><span class="badge badge-red">Slow</span></td></tr>
+            <tr><td>Lazy (loadChildren)</td><td>120 KB</td><td>admin-chunk.js 730 KB (on demand)</td><td><span class="badge badge-green">Fast</span></td></tr>
+            <tr><td>Lazy + Preload</td><td>120 KB</td><td>Prefetched in background after idle</td><td><span class="badge badge-green">Fast + Ready</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="two-col">
+        <div class="tip-box">
+          <div class="tip-hdr">✅ Rule of Thumb</div>
+          <p>Lazy-load every feature route that is <strong>not needed on the landing page</strong>. Admin panels, dashboards, settings &amp; profile pages are perfect candidates.</p>
+        </div>
+        <div class="mem-box">
+          <div class="mem-hdr">🔑 Key Metrics Impacted</div>
+          <ul>
+            <li><strong>FCP</strong> – First Contentful Paint</li>
+            <li><strong>TTI</strong> – Time to Interactive</li>
+            <li><strong>TBT</strong> – Total Blocking Time</li>
+            <li><strong>Lighthouse Performance Score</strong></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 2 — loadComponent (Standalone) ══ -->
+  <div class="slide" id="s2">
+    <div class="slide-header"><span class="topic-badge">02</span><h1>loadComponent — Lazy Standalone Components</h1></div>
+    <div class="content">
+      <div class="two-col">
+        <div class="card accent-cyan">
+          <h3>What is loadComponent?</h3>
+          <p>Introduced in <strong>Angular 14</strong>, default pattern in Angular 17+. Lazy-loads a <strong>single standalone component</strong> directly in the route config — no feature module needed.</p>
+        </div>
+        <div class="card accent-green">
+          <h3>When to use?</h3>
+          <ul>
+            <li>Standalone component architecture (Angular 17+)</li>
+            <li>Single-component routes (profile, settings, about)</li>
+            <li>Any route that doesn't need a feature module grouping</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="code-block"><pre><span class="cmt">// app.routes.ts — Angular v22 (Standalone Architecture)</span>
+<span class="kw">import</span> { <span class="cls">Routes</span> } <span class="kw">from</span> <span class="str">'@angular/router'</span>;
+
+<span class="kw">export const</span> <span class="var">routes</span>: <span class="cls">Routes</span> = [
+  {
+    <span class="var">path</span>: <span class="str">''</span>,
+    <span class="var">loadComponent</span>: () => <span class="fn">import</span>(<span class="str">'./home/home.component'</span>)
+                            .<span class="fn">then</span>(<span class="var">m</span> => <span class="var">m</span>.<span class="cls">HomeComponent</span>)  <span class="cmt">// named export</span>
+  },
+  {
+    <span class="var">path</span>: <span class="str">'dashboard'</span>,
+    <span class="var">loadComponent</span>: () => <span class="fn">import</span>(<span class="str">'./dashboard/dashboard.component'</span>)
+                            .<span class="fn">then</span>(<span class="var">m</span> => <span class="var">m</span>.<span class="cls">DashboardComponent</span>),
+    <span class="var">canActivate</span>: [<span class="var">authGuard</span>]
+  },
+  {
+    <span class="var">path</span>: <span class="str">'admin'</span>,
+    <span class="cmt">// default export shortcut — no .then() needed</span>
+    <span class="var">loadComponent</span>: () => <span class="fn">import</span>(<span class="str">'./admin/admin.component'</span>)
+  }
+];
+
+<span class="cmt">// main.ts — bootstrapApplication</span>
+<span class="fn">bootstrapApplication</span>(<span class="cls">AppComponent</span>, {
+  <span class="var">providers</span>: [
+    <span class="fn">provideRouter</span>(<span class="var">routes</span>, <span class="fn">withPreloadingStrategy</span>(<span class="cls">PreloadAllModules</span>))
+  ]
+});</pre></div>
+
+      <div class="two-col">
+        <div class="tip-box">
+          <div class="tip-hdr">✅ Default Export Shortcut</div>
+          <p>If the component is the <strong>default export</strong>, you can skip <code>.then(m =&gt; m.XComponent)</code>. Angular resolves it automatically.</p>
+        </div>
+        <div class="warn-box">
+          <div class="warn-hdr">⚠️ Must be Standalone</div>
+          <p>The component must have <code>standalone: true</code> (default in Angular 17+). Class-based non-standalone components need <code>loadChildren</code> with a module.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 3 — loadChildren ══ -->
+  <div class="slide" id="s3">
+    <div class="slide-header"><span class="topic-badge">03</span><h1>loadChildren — Lazy Feature Routes</h1></div>
+    <div class="content">
+      <div class="two-col">
+        <div class="card accent-purple">
+          <h3>loadChildren with Routes array (Modern ✅)</h3>
+          <p>Returns a <strong>Routes array</strong> directly — no NgModule needed. Preferred pattern in Angular v17+.</p>
+        </div>
+        <div class="card accent-orange">
+          <h3>loadChildren with NgModule (Legacy)</h3>
+          <p>Returns a <strong>module class</strong>. Still works but NgModule architecture is being phased out. Used in enterprise apps pre-Angular 17.</p>
+        </div>
+      </div>
+
+      <div class="code-block"><pre><span class="cmt">// ── MODERN: loadChildren → Routes array (Angular 17+ / v22) ─────────────</span>
+<span class="kw">export const</span> <span class="var">routes</span>: <span class="cls">Routes</span> = [
+  {
+    <span class="var">path</span>: <span class="str">'admin'</span>,
+    <span class="var">loadChildren</span>: () => <span class="fn">import</span>(<span class="str">'./admin/admin.routes'</span>)
+                            .<span class="fn">then</span>(<span class="var">m</span> => <span class="var">m</span>.<span class="var">adminRoutes</span>)
+  },
+  {
+    <span class="var">path</span>: <span class="str">'products'</span>,
+    <span class="var">loadChildren</span>: () => <span class="fn">import</span>(<span class="str">'./products/products.routes'</span>)
+                            .<span class="fn">then</span>(<span class="var">m</span> => <span class="var">m</span>.<span class="var">productRoutes</span>)
+  }
+];
+
+<span class="cmt">// admin/admin.routes.ts — feature routes file</span>
+<span class="kw">import</span> { <span class="cls">Routes</span> } <span class="kw">from</span> <span class="str">'@angular/router'</span>;
+
+<span class="kw">export const</span> <span class="var">adminRoutes</span>: <span class="cls">Routes</span> = [
+  { <span class="var">path</span>: <span class="str">''</span>,        <span class="var">loadComponent</span>: () => <span class="fn">import</span>(<span class="str">'./admin-shell.component'</span>) },
+  { <span class="var">path</span>: <span class="str">'users'</span>,   <span class="var">loadComponent</span>: () => <span class="fn">import</span>(<span class="str">'./users/users.component'</span>) },
+  { <span class="var">path</span>: <span class="str">'reports'</span>, <span class="var">loadComponent</span>: () => <span class="fn">import</span>(<span class="str">'./reports/reports.component'</span>) }
+];
+
+<span class="cmt">// ── LEGACY: loadChildren → NgModule (pre Angular 17) ────────────────────</span>
+{
+  <span class="var">path</span>: <span class="str">'admin'</span>,
+  <span class="var">loadChildren</span>: () => <span class="fn">import</span>(<span class="str">'./admin/admin.module'</span>)
+                          .<span class="fn">then</span>(<span class="var">m</span> => <span class="var">m</span>.<span class="cls">AdminModule</span>)
+}
+
+<span class="cmt">// admin.module.ts</span>
+<span class="dec">@NgModule</span>({
+  <span class="var">imports</span>: [<span class="cls">RouterModule</span>.<span class="fn">forChild</span>([
+    { <span class="var">path</span>: <span class="str">''</span>, <span class="var">component</span>: <span class="cls">AdminComponent</span> }
+  ])]
+})
+<span class="kw">export class</span> <span class="cls">AdminModule</span> {}</pre></div>
+
+      <div class="tip-box">
+        <div class="tip-hdr">✅ Angular v22 Best Practice</div>
+        <p>Prefer <code>loadChildren → Routes array</code> over NgModule. Combine with <code>loadComponent</code> inside feature routes for maximum code splitting. Each feature becomes its own chunk automatically via Webpack / esbuild.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 4 — HOW ANGULAR SPLITS BUNDLES ══ -->
+  <div class="slide" id="s4">
+    <div class="slide-header"><span class="topic-badge">04</span><h1>How Angular Splits Bundles (Internals)</h1></div>
+    <div class="content">
+      <div class="card accent-blue">
+        <h3>Dynamic Import → Webpack / esbuild Code Splitting</h3>
+        <p>Every <code>import()</code> call inside <code>loadComponent</code> / <code>loadChildren</code> is a <strong>dynamic import</strong>. The bundler (esbuild in Angular v22) automatically emits a separate chunk file for each unique dynamic import boundary.</p>
+      </div>
+
+      <div class="card accent-yellow">
+        <h3>🔄 Request Flow — What happens when user navigates</h3>
+        <div class="flow" style="margin-top:10px;">
+          <div class="flow-box blue">User clicks /admin</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-box purple">Router matches route</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-box orange">canMatch guard runs</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-box blue">HTTP GET admin-chunk.js</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-box purple">Module/Routes evaluated</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-box green">Component rendered ✅</div>
+        </div>
+        <p style="font-size:12px; color:#8b949e; margin-top:8px;">Subsequent visits to /admin use the <strong>cached chunk</strong> — no extra HTTP request.</p>
+      </div>
+
+      <div class="two-col">
+        <div class="code-block"><pre><span class="cmt">// Build output with lazy routes:</span>
+<span class="op">dist/</span>
+  <span class="op">main-</span><span class="num">a1b2c3</span><span class="op">.js</span>         <span class="cmt">// 90 KB — core bootstrap</span>
+  <span class="op">chunk-admin-</span><span class="num">x9z</span><span class="op">.js</span>    <span class="cmt">// 45 KB — admin feature</span>
+  <span class="op">chunk-products-</span><span class="num">abc</span><span class="op">.js</span> <span class="cmt">// 30 KB — products feature</span>
+  <span class="op">chunk-reports-</span><span class="num">def</span><span class="op">.js</span>  <span class="cmt">// 28 KB — reports feature</span>
+  <span class="op">styles-</span><span class="num">789</span><span class="op">.css</span>         <span class="cmt">// global styles</span>
+
+<span class="cmt">// Analyse bundles:</span>
+<span class="fn">ng build</span> --stats-json
+<span class="fn">npx webpack-bundle-analyzer</span> dist/stats.json
+
+<span class="cmt">// Or with esbuild metafile (Angular v17+):</span>
+<span class="fn">ng build</span> --verbose</pre></div>
+
+        <div style="display:flex; flex-direction:column; gap:12px;">
+          <div class="card accent-green">
+            <h3>Chunk Naming Control</h3>
+            <p>Use magic comments to name chunks for easier debugging:</p>
+            <code style="display:block; margin-top:6px; white-space:pre; font-size:11.5px;">import(
+  /* webpackChunkName: "admin" */
+  './admin/admin.routes'
+)</code>
+          </div>
+          <div class="warn-box">
+            <div class="warn-hdr">⚠️ Shared Dependencies</div>
+            <p>Code shared across chunks (e.g. <code>@angular/forms</code>) is placed in a <strong>common chunk</strong> automatically — no duplication.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 5 — PRELOADING STRATEGIES ══ -->
+  <div class="slide" id="s5">
+    <div class="slide-header"><span class="topic-badge">05</span><h1>Preloading Strategies</h1></div>
+    <div class="content">
+      <p>Preloading downloads lazy chunks <strong>in the background after the app is interactive</strong> — combining fast initial load with near-instant subsequent navigation.</p>
+
+      <div class="three-col">
+        <div class="card accent-red">
+          <h3>NoPreloading (default)</h3>
+          <ul>
+            <li>Chunks downloaded only on demand</li>
+            <li>First visit to a lazy route has a small delay</li>
+            <li>Best for slow networks / rarely visited routes</li>
+          </ul>
+        </div>
+        <div class="card accent-green">
+          <h3>PreloadAllModules</h3>
+          <ul>
+            <li>All lazy chunks preloaded after initial render</li>
+            <li>Uses browser idle time</li>
+            <li>Best for fast networks &amp; feature-rich apps</li>
+          </ul>
+        </div>
+        <div class="card accent-purple">
+          <h3>Custom Strategy</h3>
+          <ul>
+            <li>Selective preloading via route <code>data</code></li>
+            <li>Preload only high-priority routes</li>
+            <li>Best approach for large enterprise apps</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="code-block"><pre><span class="cmt">// ── Built-in strategies ─────────────────────────────────────────────</span>
+<span class="kw">import</span> { <span class="fn">provideRouter</span>, <span class="fn">withPreloadingStrategy</span>,
+         <span class="cls">PreloadAllModules</span>, <span class="cls">NoPreloading</span> } <span class="kw">from</span> <span class="str">'@angular/router'</span>;
+
+<span class="fn">bootstrapApplication</span>(<span class="cls">AppComponent</span>, {
+  <span class="var">providers</span>: [
+    <span class="fn">provideRouter</span>(
+      <span class="var">routes</span>,
+      <span class="fn">withPreloadingStrategy</span>(<span class="cls">PreloadAllModules</span>)   <span class="cmt">// ← change here</span>
+    )
+  ]
+});
+
+<span class="cmt">// ── Custom Selective Preloading Strategy ────────────────────────────</span>
+<span class="kw">import</span> { <span class="cls">PreloadingStrategy</span>, <span class="cls">Route</span> } <span class="kw">from</span> <span class="str">'@angular/router'</span>;
+<span class="kw">import</span> { <span class="cls">Observable</span>, <span class="fn">of</span> } <span class="kw">from</span> <span class="str">'rxjs'</span>;
+
+<span class="dec">@Injectable</span>({ <span class="var">providedIn</span>: <span class="str">'root'</span> })
+<span class="kw">export class</span> <span class="cls">SelectivePreloadStrategy</span> <span class="kw">extends</span> <span class="cls">PreloadingStrategy</span> {
+  <span class="fn">preload</span>(<span class="var">route</span>: <span class="cls">Route</span>, <span class="var">load</span>: () => <span class="cls">Observable</span>&lt;<span class="typ">any</span>&gt;): <span class="cls">Observable</span>&lt;<span class="typ">any</span>&gt; {
+    <span class="cmt">// Only preload routes flagged with data: { preload: true }</span>
+    <span class="kw">return</span> <span class="var">route</span>.<span class="var">data</span>?.[<span class="str">'preload'</span>] === <span class="kw">true</span> ? <span class="fn">load</span>() : <span class="fn">of</span>(<span class="kw">null</span>);
+  }
+}
+
+<span class="cmt">// Routes — mark high-priority routes:</span>
+{ <span class="var">path</span>: <span class="str">'dashboard'</span>, <span class="var">loadComponent</span>: () => <span class="fn">import</span>(<span class="str">'...'</span>), <span class="var">data</span>: { <span class="var">preload</span>: <span class="kw">true</span> } },
+{ <span class="var">path</span>: <span class="str">'admin'</span>,     <span class="var">loadComponent</span>: () => <span class="fn">import</span>(<span class="str">'...'</span>), <span class="var">data</span>: { <span class="var">preload</span>: <span class="kw">false</span> } },
+
+<span class="cmt">// Register custom strategy:</span>
+<span class="fn">provideRouter</span>(<span class="var">routes</span>, <span class="fn">withPreloadingStrategy</span>(<span class="cls">SelectivePreloadStrategy</span>))</pre></div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 6 — canMatch GUARD ══ -->
+  <div class="slide" id="s6">
+    <div class="slide-header"><span class="topic-badge">06</span><h1>canMatch — Lazy Load + Guard Fusion</h1></div>
+    <div class="content">
+      <div class="two-col">
+        <div class="card accent-orange">
+          <h3>canMatch vs canActivate — Key Difference</h3>
+          <table style="margin-top:8px;">
+            <thead><tr><th>Guard</th><th>Runs</th><th>Downloads Chunk?</th><th>Use Case</th></tr></thead>
+            <tbody>
+              <tr><td><code>canActivate</code></td><td>After route matched &amp; chunk downloaded</td><td><span class="badge badge-red">Yes — always</span></td><td>Auth check after load</td></tr>
+              <tr><td><code>canMatch</code></td><td>Before route matching &amp; before chunk download</td><td><span class="badge badge-green">No — blocked early</span></td><td>Role-based lazy routes</td></tr>
+              <tr><td><code>canLoad</code></td><td>Before chunk download (deprecated)</td><td><span class="badge badge-red">Replaced by canMatch</span></td><td>Use canMatch instead</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="card accent-purple">
+          <h3>canMatch Real-World Pattern</h3>
+          <p>Use <code>canMatch</code> to serve <strong>different feature routes</strong> to different user roles — the wrong route's chunk is never downloaded at all.</p>
+          <br/>
+          <p>Example: <code>/dashboard</code> serves <code>AdminDashboard</code> for admins and <code>UserDashboard</code> for regular users.</p>
+        </div>
+      </div>
+
+      <div class="code-block"><pre><span class="cmt">// guards/role.guard.ts</span>
+<span class="kw">import</span> { <span class="fn">inject</span> } <span class="kw">from</span> <span class="str">'@angular/core'</span>;
+<span class="kw">import</span> { <span class="cls">CanMatchFn</span> } <span class="kw">from</span> <span class="str">'@angular/router'</span>;
+<span class="kw">import</span> { <span class="cls">AuthService</span> } <span class="kw">from</span> <span class="str">'./auth.service'</span>;
+
+<span class="kw">export const</span> <span class="var">adminCanMatch</span>: <span class="cls">CanMatchFn</span> = () =>
+  <span class="fn">inject</span>(<span class="cls">AuthService</span>).<span class="fn">hasRole</span>(<span class="str">'admin'</span>);
+
+<span class="kw">export const</span> <span class="var">userCanMatch</span>: <span class="cls">CanMatchFn</span> = () =>
+  <span class="fn">inject</span>(<span class="cls">AuthService</span>).<span class="fn">hasRole</span>(<span class="str">'user'</span>);
+
+<span class="cmt">// app.routes.ts — same path, different component per role</span>
+<span class="kw">export const</span> <span class="var">routes</span>: <span class="cls">Routes</span> = [
+  {
+    <span class="var">path</span>: <span class="str">'dashboard'</span>,
+    <span class="var">canMatch</span>: [<span class="var">adminCanMatch</span>],                       <span class="cmt">// checked first</span>
+    <span class="var">loadComponent</span>: () => <span class="fn">import</span>(<span class="str">'./admin/admin-dashboard.component'</span>)
+  },
+  {
+    <span class="var">path</span>: <span class="str">'dashboard'</span>,
+    <span class="var">canMatch</span>: [<span class="var">userCanMatch</span>],                        <span class="cmt">// fallback</span>
+    <span class="var">loadComponent</span>: () => <span class="fn">import</span>(<span class="str">'./user/user-dashboard.component'</span>)
+  }
+];
+<span class="cmt">// 🔑 Admin chunk is NEVER downloaded for regular users!</span></pre></div>
+
+      <div class="tip-box">
+        <div class="tip-hdr">✅ Senior Insight</div>
+        <p><code>canMatch</code> prevents unnecessary chunk downloads for unauthorized users. This is both a <strong>security improvement</strong> (code not sent to client) and a <strong>performance improvement</strong> (no wasted bandwidth). Always prefer <code>canMatch</code> over <code>canLoad</code> (deprecated in v15).</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 7 — @defer BLOCKS ══ -->
+  <div class="slide" id="s7">
+    <div class="slide-header"><span class="topic-badge">07</span><h1>@defer — View-Level Lazy Loading</h1></div>
+    <div class="content">
+      <div class="two-col">
+        <div class="card accent-cyan">
+          <h3>What is @defer?</h3>
+          <p>Introduced in <strong>Angular 17</strong>. A template-level construct that <strong>defers loading of any component, directive, or pipe</strong> inside a template block. No routing required — works anywhere in the template.</p>
+        </div>
+        <div class="card accent-green">
+          <h3>Route Lazy vs @defer</h3>
+          <table style="margin-top:6px;">
+            <thead><tr><th></th><th>Route Lazy</th><th>@defer</th></tr></thead>
+            <tbody>
+              <tr><td>Scope</td><td>Route level</td><td>Template / component level</td></tr>
+              <tr><td>Trigger</td><td>Navigation</td><td>Viewport, idle, timer, interaction, custom</td></tr>
+              <tr><td>Best for</td><td>Feature pages</td><td>Heavy widgets, charts, below-fold content</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="code-block"><pre><span class="cmt">&lt;!-- Angular v22 — @defer with all trigger types ──────────────────────────────&gt;</span>
+
+<span class="cmt">&lt;!-- 1. Viewport trigger — load when element scrolls into view --&gt;</span>
+<span class="op">@defer</span> (<span class="kw">on</span> viewport) {
+  <span class="int">&lt;app-heavy-chart /&gt;</span>
+} <span class="op">@loading</span> {
+  <span class="int">&lt;app-skeleton-loader /&gt;</span>
+} <span class="op">@placeholder</span> {
+  <span class="int">&lt;div&gt;</span>Chart will appear here<span class="int">&lt;/div&gt;</span>
+} <span class="op">@error</span> {
+  <span class="int">&lt;p&gt;</span>Failed to load chart<span class="int">&lt;/p&gt;</span>
+}
+
+<span class="cmt">&lt;!-- 2. Idle trigger — load during browser idle time --&gt;</span>
+<span class="op">@defer</span> (<span class="kw">on</span> idle) {
+  <span class="int">&lt;app-footer-recommendations /&gt;</span>
+}
+
+<span class="cmt">&lt;!-- 3. Interaction trigger — load on user hover/click --&gt;</span>
+<span class="op">@defer</span> (<span class="kw">on</span> interaction(<span class="var">triggerBtn</span>)) {
+  <span class="int">&lt;app-comments-section /&gt;</span>
+}
+<span class="int">&lt;button</span> #<span class="var">triggerBtn</span><span class="int">&gt;</span>Show Comments<span class="int">&lt;/button&gt;</span>
+
+<span class="cmt">&lt;!-- 4. Timer trigger — load after delay --&gt;</span>
+<span class="op">@defer</span> (<span class="kw">on</span> timer(<span class="num">2000</span>)) {
+  <span class="int">&lt;app-promo-banner /&gt;</span>
+}
+
+<span class="cmt">&lt;!-- 5. Prefetch while showing placeholder --&gt;</span>
+<span class="op">@defer</span> (<span class="kw">on</span> interaction; <span class="kw">prefetch on</span> idle) {
+  <span class="int">&lt;app-rich-editor /&gt;</span>
+}</pre></div>
+
+      <div class="tip-box">
+        <div class="tip-hdr">✅ Senior Use Case — @defer + minimum</div>
+        <p>Use <code>@defer (on viewport; minimum 500ms)</code> to prevent flash of loading state. The <code>minimum</code> option ensures <code>@loading</code> is shown for at least N ms even if the chunk loads instantly.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 8 — NGRX LAZY STATE ══ -->
+  <div class="slide" id="s8">
+    <div class="slide-header"><span class="topic-badge">08</span><h1>Lazy Loading NgRx State with Feature Routes</h1></div>
+    <div class="content">
+      <div class="two-col">
+        <div class="card accent-purple">
+          <h3>Why Lazy-load NgRx State?</h3>
+          <ul>
+            <li>Register reducers/effects only when the feature route is visited</li>
+            <li>Keeps global store lean at startup</li>
+            <li>Avoids memory waste for rarely-visited features</li>
+            <li>State is automatically unregistered on route leave (optional)</li>
+          </ul>
+        </div>
+        <div class="card accent-blue">
+          <h3>provideState() — Standalone API ✅</h3>
+          <p>In NgRx v17+ (pairs with Angular 17+), use <code>provideState()</code> and <code>provideEffects()</code> in the route's <code>providers</code> array for fully standalone lazy state.</p>
+        </div>
+      </div>
+
+      <div class="code-block"><pre><span class="cmt">// admin/admin.routes.ts — lazy NgRx state registration</span>
+<span class="kw">import</span> { <span class="fn">provideState</span>, <span class="fn">provideEffects</span> } <span class="kw">from</span> <span class="str">'@ngrx/store'</span>;
+<span class="kw">import</span> { <span class="var">adminReducer</span> }  <span class="kw">from</span> <span class="str">'./state/admin.reducer'</span>;
+<span class="kw">import</span> { <span class="cls">AdminEffects</span> }  <span class="kw">from</span> <span class="str">'./state/admin.effects'</span>;
+
+<span class="kw">export const</span> <span class="var">adminRoutes</span>: <span class="cls">Routes</span> = [
+  {
+    <span class="var">path</span>: <span class="str">''</span>,
+    <span class="var">loadComponent</span>: () => <span class="fn">import</span>(<span class="str">'./admin-shell.component'</span>),
+    <span class="var">providers</span>: [                                     <span class="cmt">// ← route-level providers</span>
+      <span class="fn">provideState</span>(<span class="str">'admin'</span>, <span class="var">adminReducer</span>),           <span class="cmt">// lazy reducer</span>
+      <span class="fn">provideEffects</span>(<span class="cls">AdminEffects</span>)                  <span class="cmt">// lazy effects</span>
+    ]
+  }
+];
+
+<span class="cmt">// admin.reducer.ts</span>
+<span class="kw">export interface</span> <span class="cls">AdminState</span> { <span class="var">users</span>: <span class="cls">User</span>[]; <span class="var">loading</span>: <span class="typ">boolean</span>; }
+
+<span class="kw">export const</span> <span class="var">adminReducer</span> = <span class="fn">createReducer</span>(
+  { <span class="var">users</span>: [], <span class="var">loading</span>: <span class="kw">false</span> },
+  <span class="fn">on</span>(<span class="cls">AdminActions</span>.<span class="var">loadUsers</span>,  <span class="var">state</span> => ({ ...<span class="var">state</span>, <span class="var">loading</span>: <span class="kw">true</span>  })),
+  <span class="fn">on</span>(<span class="cls">AdminActions</span>.<span class="var">loadSuccess</span>, (<span class="var">state</span>, { <span class="var">users</span> }) => ({ <span class="var">users</span>, <span class="var">loading</span>: <span class="kw">false</span> }))
+);
+
+<span class="cmt">// Selector — works just like eager state</span>
+<span class="kw">export const</span> <span class="var">selectAdminUsers</span> = <span class="fn">createFeatureSelector</span>&lt;<span class="cls">AdminState</span>&gt;(<span class="str">'admin'</span>);</pre></div>
+
+      <div class="tip-box">
+        <div class="tip-hdr">✅ Route-level providers (Angular 14+)</div>
+        <p>The <code>providers</code> array on a route is an Angular 14+ feature. It creates a <strong>scoped injector</strong> — perfect for lazy services, interceptors, or NgRx slices that should only exist while the route is active.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 9 — ROUTE-LEVEL PROVIDERS & DI ══ -->
+  <div class="slide" id="s9">
+    <div class="slide-header"><span class="topic-badge">09</span><h1>Route-Level Providers &amp; Scoped Injection</h1></div>
+    <div class="content">
+      <div class="card accent-cyan">
+        <h3>What are Route-Level Providers?</h3>
+        <p>Angular 14+ allows each route to declare its own <code>providers</code>. These are available to the component tree of that route <strong>only</strong>. Think of it as a scoped module without NgModule.</p>
+      </div>
+
+      <div class="code-block"><pre><span class="cmt">// Scoped services, interceptors, configs per lazy route</span>
+<span class="kw">export const</span> <span class="var">productRoutes</span>: <span class="cls">Routes</span> = [
+  {
+    <span class="var">path</span>: <span class="str">''</span>,
+    <span class="var">loadComponent</span>: () => <span class="fn">import</span>(<span class="str">'./product-shell.component'</span>),
+    <span class="var">providers</span>: [
+      <span class="cls">ProductApiService</span>,                        <span class="cmt">// scoped to this route tree</span>
+      { <span class="var">provide</span>: <span class="cls">HTTP_INTERCEPTORS</span>,
+        <span class="var">useClass</span>: <span class="cls">ProductAuthInterceptor</span>,
+        <span class="var">multi</span>: <span class="kw">true</span> },
+      { <span class="var">provide</span>: <span class="cls">PRODUCT_CONFIG</span>,
+        <span class="var">useValue</span>: { <span class="var">pageSize</span>: <span class="num">20</span>, <span class="var">currency</span>: <span class="str">'USD'</span> } }
+    ],
+    <span class="var">children</span>: [
+      { <span class="var">path</span>: <span class="str">'list'</span>,   <span class="var">loadComponent</span>: () => <span class="fn">import</span>(<span class="str">'./list/product-list.component'</span>) },
+      { <span class="var">path</span>: <span class="str">':id'</span>,    <span class="var">loadComponent</span>: () => <span class="fn">import</span>(<span class="str">'./detail/product-detail.component'</span>) },
+      { <span class="var">path</span>: <span class="str">'new'</span>,    <span class="var">loadComponent</span>: () => <span class="fn">import</span>(<span class="str">'./form/product-form.component'</span>) }
+    ]
+  }
+];
+
+<span class="cmt">// Injecting in a child component:</span>
+<span class="dec">@Component</span>({ <span class="var">standalone</span>: <span class="kw">true</span>, ... })
+<span class="kw">export class</span> <span class="cls">ProductDetailComponent</span> {
+  <span class="kw">private</span> <span class="var">config</span> = <span class="fn">inject</span>(<span class="cls">PRODUCT_CONFIG</span>); <span class="cmt">// comes from route providers</span>
+  <span class="kw">private</span> <span class="var">api</span>    = <span class="fn">inject</span>(<span class="cls">ProductApiService</span>);
+}</pre></div>
+
+      <div class="two-col">
+        <div class="tip-box">
+          <div class="tip-hdr">✅ Replaces NgModule forRoot/forChild</div>
+          <p>Route-level providers are the standalone replacement for <code>RouterModule.forChild()</code> module providers. Each feature module's services are now declared directly on the route.</p>
+        </div>
+        <div class="warn-box">
+          <div class="warn-hdr">⚠️ Scope Awareness</div>
+          <p>A service declared in route <code>providers</code> is <strong>not</strong> available outside that route tree. Do not inject it in components outside the route. Angular will throw a <code>NullInjectorError</code>.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 10 — WITHROUTER & PROVIDEPROUTER ══ -->
+  <div class="slide" id="s10">
+    <div class="slide-header"><span class="topic-badge">10</span><h1>provideRouter Features (Angular v22)</h1></div>
+    <div class="content">
+      <div class="card accent-blue">
+        <h3>withRouterConfig — All Router Features</h3>
+        <p>In Angular v22, <code>provideRouter()</code> is composed with <code>with*()</code> functions for full tree-shakeable router configuration.</p>
+      </div>
+
+      <div class="code-block"><pre><span class="kw">import</span> {
+  <span class="fn">provideRouter</span>,
+  <span class="fn">withPreloadingStrategy</span>,
+  <span class="fn">withViewTransitions</span>,
+  <span class="fn">withComponentInputBinding</span>,
+  <span class="fn">withRouterConfig</span>,
+  <span class="fn">withHashLocation</span>,
+  <span class="fn">withInMemoryScrolling</span>,
+  <span class="fn">withDebugTracing</span>,
+  <span class="cls">PreloadAllModules</span>
+} <span class="kw">from</span> <span class="str">'@angular/router'</span>;
+
+<span class="fn">bootstrapApplication</span>(<span class="cls">AppComponent</span>, {
+  <span class="var">providers</span>: [
+    <span class="fn">provideRouter</span>(
+      <span class="var">routes</span>,
+
+      <span class="cmt">// Preloading strategy</span>
+      <span class="fn">withPreloadingStrategy</span>(<span class="cls">SelectivePreloadStrategy</span>),
+
+      <span class="cmt">// Bind route params directly to component inputs (@Input)</span>
+      <span class="fn">withComponentInputBinding</span>(),
+
+      <span class="cmt">// Native View Transitions API integration</span>
+      <span class="fn">withViewTransitions</span>(),
+
+      <span class="cmt">// Scroll to top on navigation</span>
+      <span class="fn">withInMemoryScrolling</span>({ <span class="var">scrollPositionRestoration</span>: <span class="str">'top'</span> }),
+
+      <span class="cmt">// Router config options</span>
+      <span class="fn">withRouterConfig</span>({
+        <span class="var">onSameUrlNavigation</span>: <span class="str">'reload'</span>,
+        <span class="var">paramsInheritanceStrategy</span>: <span class="str">'always'</span>
+      })
+    )
+  ]
+});
+
+<span class="cmt">// withComponentInputBinding — no more ActivatedRoute for simple params:</span>
+<span class="dec">@Component</span>({ <span class="var">standalone</span>: <span class="kw">true</span> })
+<span class="kw">export class</span> <span class="cls">ProductDetailComponent</span> {
+  <span class="dec">@Input</span>() <span class="var">id</span>!: <span class="typ">string</span>;  <span class="cmt">// route param :id auto-bound ✅</span>
+}</pre></div>
+
+      <div class="tip-box">
+        <div class="tip-hdr">✅ withComponentInputBinding — Cleaner Code</div>
+        <p><code>withComponentInputBinding()</code> auto-injects route params, query params &amp; resolve data into <code>@Input()</code> properties. No more <code>inject(ActivatedRoute).snapshot.params['id']</code> boilerplate.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 11 — PITFALLS ══ -->
+  <div class="slide" id="s11">
+    <div class="slide-header"><span class="topic-badge">11</span><h1>Common Pitfalls &amp; Gotchas</h1></div>
+    <div class="content">
+      <div class="two-col">
+        <div class="card accent-red">
+          <h3>❌ Pitfall 1 — Importing lazy component in AppModule</h3>
+          <p>If you import a lazy component/module in <code>AppModule</code> or any eagerly loaded file, the bundler includes it in <strong>main.js</strong> — defeating the purpose.</p>
+          <br/>
+          <p><strong>Fix:</strong> Never import lazy components statically. Access them only via <code>loadComponent</code> / <code>loadChildren</code>.</p>
+        </div>
+        <div class="card accent-orange">
+          <h3>❌ Pitfall 2 — Using canLoad (deprecated)</h3>
+          <p><code>canLoad</code> was deprecated in Angular 15 and removed in v16+. It also prevented preloading.</p>
+          <br/>
+          <p><strong>Fix:</strong> Replace all <code>canLoad</code> guards with <code>canMatch</code>. It does the same job plus supports preloading.</p>
+        </div>
+      </div>
+      <div class="two-col">
+        <div class="card accent-yellow">
+          <h3>❌ Pitfall 3 — Services provided in lazy root</h3>
+          <p>A service with <code>providedIn: 'root'</code> inside a lazy feature is still singleton and eagerly included if imported elsewhere.</p>
+          <br/>
+          <p><strong>Fix:</strong> For truly feature-scoped services, use route-level <code>providers</code> array instead.</p>
+        </div>
+        <div class="card accent-pink">
+          <h3>❌ Pitfall 4 — Forgetting @loading / @placeholder</h3>
+          <p>Using <code>@defer</code> without a <code>@placeholder</code> causes <strong>layout shift</strong> (CLS) when the component loads.</p>
+          <br/>
+          <p><strong>Fix:</strong> Always provide a <code>@placeholder</code> with the same dimensions as the deferred content.</p>
+        </div>
+      </div>
+      <div class="two-col">
+        <div class="card accent-purple">
+          <h3>❌ Pitfall 5 — Not analysing bundle size</h3>
+          <p>Developers assume lazy loading is working without actually checking bundle output. Shared deps may silently inflate chunks.</p>
+          <br/>
+          <p><strong>Fix:</strong> Run <code>ng build --stats-json</code> + <code>webpack-bundle-analyzer</code> after every major feature addition.</p>
+        </div>
+        <div class="card accent-cyan">
+          <h3>❌ Pitfall 6 — Lazy loading already-small components</h3>
+          <p>Lazy loading tiny components (under ~5 KB) adds an extra HTTP round-trip with no meaningful size benefit.</p>
+          <br/>
+          <p><strong>Fix:</strong> Only lazy-load routes with significant code weight. Small utility components should be eagerly imported.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 12 — PERFORMANCE CHECKLIST ══ -->
+  <div class="slide" id="s12">
+    <div class="slide-header"><span class="topic-badge">12</span><h1>Senior-Level Performance Checklist</h1></div>
+    <div class="content">
+      <div class="three-col">
+        <div class="card accent-green">
+          <h3>✅ Routing Strategy</h3>
+          <ul>
+            <li>All feature routes use <code>loadComponent</code> or <code>loadChildren</code></li>
+            <li><code>canMatch</code> instead of <code>canLoad</code></li>
+            <li>Selective preloading on high-traffic routes</li>
+            <li><code>withComponentInputBinding()</code> enabled</li>
+            <li><code>withViewTransitions()</code> for smooth UX</li>
+          </ul>
+        </div>
+        <div class="card accent-blue">
+          <h3>✅ Template Strategy</h3>
+          <ul>
+            <li><code>@defer (on viewport)</code> for below-fold content</li>
+            <li><code>@defer (on idle)</code> for non-critical widgets</li>
+            <li>Always include <code>@placeholder</code> to prevent CLS</li>
+            <li><code>@defer (prefetch on idle)</code> for interactive content</li>
+            <li><code>minimum</code> set to avoid loading flash</li>
+          </ul>
+        </div>
+        <div class="card accent-purple">
+          <h3>✅ State Strategy</h3>
+          <ul>
+            <li>NgRx reducers/effects registered in route <code>providers</code></li>
+            <li>Route-level providers for scoped services</li>
+            <li>Feature selectors use <code>createFeatureSelector</code></li>
+            <li>Effects only run when route is active</li>
+            <li>Store slice cleaned up on route leave (optional)</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="two-col">
+        <div class="code-block" style="font-size:12px;"><pre><span class="cmt"># Bundle analysis commands:</span>
+<span class="fn">ng build</span> --stats-json
+<span class="fn">npx webpack-bundle-analyzer</span> dist/project/stats.json
+
+<span class="cmt"># Check which routes are lazy in build output:</span>
+<span class="fn">ng build</span> | <span class="fn">grep chunk</span>
+
+<span class="cmt"># Lighthouse CI for performance regression:</span>
+<span class="fn">npx lhci autorun</span></pre></div>
+
+        <div class="tip-box">
+          <div class="tip-hdr">✅ Core Web Vitals Targets</div>
+          <ul>
+            <li><strong>LCP</strong> &lt; 2.5s — hero content loads fast</li>
+            <li><strong>CLS</strong> &lt; 0.1 — no layout shift (use placeholders)</li>
+            <li><strong>INP</strong> &lt; 200ms — interactions are responsive</li>
+            <li><strong>FCP</strong> &lt; 1.8s — first paint is quick</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 13 — INTERVIEW Q&A ══ -->
+  <div class="slide" id="s13">
+    <div class="slide-header"><span class="topic-badge">13</span><h1>Senior Interview Q&amp;A — Part 1</h1></div>
+    <div class="content">
+
+      <div class="iq-item">
+        <div class="iq-q">Q1. What is the difference between <code>loadComponent</code> and <code>loadChildren</code>? <span class="iq-tag">CONCEPT</span></div>
+        <div class="iq-a"><strong>loadComponent</strong> lazy-loads a single standalone component for a route. <strong>loadChildren</strong> lazy-loads an entire Routes array (or legacy NgModule) that can contain multiple child routes. Use <code>loadComponent</code> for simple single-component routes and <code>loadChildren</code> when you have a feature with multiple nested routes.</div>
+      </div>
+
+      <div class="iq-item">
+        <div class="iq-q">Q2. Why is <code>canMatch</code> preferred over <code>canLoad</code>? <span class="iq-tag">GUARDS</span></div>
+        <div class="iq-a"><code>canLoad</code> was deprecated in Angular v15. Unlike <code>canLoad</code>, <code>canMatch</code> works with preloading strategies — a <code>canLoad</code> guard would block preloading entirely. <code>canMatch</code> also allows the same path to match different routes based on conditions (role-based routing), which <code>canLoad</code> cannot do.</div>
+      </div>
+
+      <div class="iq-item">
+        <div class="iq-q">Q3. How does Angular create separate JavaScript bundles for lazy routes? <span class="iq-tag">INTERNALS</span></div>
+        <div class="iq-a">Angular uses <strong>dynamic imports</strong> (<code>import()</code>) inside <code>loadComponent</code>/<code>loadChildren</code>. The bundler (esbuild in Angular v17+) treats each unique dynamic import as a code-split boundary and emits a separate chunk file. Shared dependencies are hoisted into a common chunk to avoid duplication.</div>
+      </div>
+
+      <div class="iq-item">
+        <div class="iq-q">Q4. What is the difference between <code>PreloadAllModules</code> and a custom preloading strategy? <span class="iq-tag">PERFORMANCE</span></div>
+        <div class="iq-a"><code>PreloadAllModules</code> preloads every lazy chunk after the initial render. A custom strategy implements <code>PreloadingStrategy</code> and selectively preloads only routes whose <code>data</code> flag is set (e.g. <code>data: { preload: true }</code>). Custom strategy is better for large apps where preloading everything wastes bandwidth on low-priority features.</div>
+      </div>
+
+      <div class="iq-item">
+        <div class="iq-q">Q5. How does <code>@defer</code> differ from route-level lazy loading? <span class="iq-tag">DEFER</span></div>
+        <div class="iq-a"><strong>Route lazy loading</strong> splits bundles at the routing level — chunks load when the user navigates. <strong>@defer</strong> is template-level — it defers loading of components/directives within a page based on triggers like viewport, idle, interaction, or timer. Both create separate JS chunks. @defer is ideal for heavy widgets within a page (charts, editors, comment sections).</div>
+      </div>
+
+      <div class="iq-item">
+        <div class="iq-q">Q6. If you import a lazy component in AppModule, what happens? <span class="iq-tag">PITFALL</span></div>
+        <div class="iq-a">The component gets bundled into <strong>main.js</strong> at build time, completely defeating lazy loading. The <code>loadComponent</code> call will still work but the chunk will be empty (or duplicated). Always ensure lazy components are referenced <strong>only</strong> through <code>loadComponent</code> / <code>loadChildren</code> — never statically imported in any eagerly-loaded file.</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 14 — INTERVIEW Q&A PART 2 ══ -->
+  <div class="slide" id="s14">
+    <div class="slide-header"><span class="topic-badge">14</span><h1>Senior Interview Q&amp;A — Part 2</h1></div>
+    <div class="content">
+
+      <div class="iq-item">
+        <div class="iq-q">Q7. How do you lazy-load NgRx state in a standalone Angular app? <span class="iq-tag">NGRX</span></div>
+        <div class="iq-a">Use <code>provideState(featureName, reducer)</code> and <code>provideEffects(EffectsClass)</code> inside the route's <code>providers</code> array. This registers the reducer/effects only when that route is first visited. The state slice becomes available to the component tree of that route and can be accessed via <code>createFeatureSelector</code>.</div>
+      </div>
+
+      <div class="iq-item">
+        <div class="iq-q">Q8. What is route-level providers and why is it important? <span class="iq-tag">DI</span></div>
+        <div class="iq-a">Route-level <code>providers</code> (Angular 14+) creates a scoped DI injector for that route's component tree. It replaces the need for NgModule's <code>forChild()</code> pattern. Services provided here are only available within that route and its children — not globally. This enables proper isolation, avoids polluting the root injector, and supports tree-shaking of feature-specific services.</div>
+      </div>
+
+      <div class="iq-item">
+        <div class="iq-q">Q9. How would you implement role-based lazy loading? <span class="iq-tag">ADVANCED</span></div>
+        <div class="iq-a">Define the same <code>path</code> twice in the routes array, each with a different <code>canMatch</code> guard and different <code>loadComponent</code>. Angular tries each route definition in order — the first one whose <code>canMatch</code> returns true wins. The chunk for the other role is never downloaded. This is more secure than <code>canActivate</code> because the wrong component's code never reaches the client.</div>
+      </div>
+
+      <div class="iq-item">
+        <div class="iq-q">Q10. How do you prevent CLS (Cumulative Layout Shift) when using <code>@defer</code>? <span class="iq-tag">PERFORMANCE</span></div>
+        <div class="iq-a">Always provide a <code>@placeholder</code> block with the same height/width as the deferred content. Use CSS skeletons or fixed-height containers. Also set <code>minimum</code> duration to prevent a flash of loading state: <code>@defer (on viewport; minimum 300ms)</code>. This ensures a stable layout while content loads.</div>
+      </div>
+
+      <div class="iq-item">
+        <div class="iq-q">Q11. What does <code>withComponentInputBinding()</code> do and how does it help with lazy routes? <span class="iq-tag">ANGULAR V22</span></div>
+        <div class="iq-a">It allows Angular to automatically bind route params, query params, and resolve data to component <code>@Input()</code> properties by name. Without it, you'd need to inject <code>ActivatedRoute</code> and subscribe to params manually. With lazy routes, this removes boilerplate and keeps components pure and testable — they just receive data as inputs without knowing they're inside a router.</div>
+      </div>
+
+      <div class="iq-item">
+        <div class="iq-q">Q12. How would you debug why a route is not being lazy-loaded as expected? <span class="iq-tag">DEBUG</span></div>
+        <div class="iq-a">1) Run <code>ng build --stats-json</code> and inspect the output chunks — if no separate chunk exists, the component is eagerly loaded. 2) Check for static imports of the lazy component anywhere in eagerly loaded files. 3) Add <code>withDebugTracing()</code> to <code>provideRouter()</code> to log router events. 4) Use Chrome DevTools Network tab — filter by JS and navigate to the route to see if a new chunk is fetched.</div>
+      </div>
+
+    </div>
+  </div>
+
+</div><!-- /deck -->
+
+<!-- ── NAV ── -->
+<nav id="nav">
+  <button id="btn-first" title="First slide" onclick="goTo(0)">&#8676;</button>
+  <button id="btn-prev"  title="Previous"   onclick="move(-1)">&#8592;</button>
+  <span id="counter">1 / 15</span>
+  <button id="btn-next"  title="Next"       onclick="move(1)">&#8594;</button>
+  <button id="btn-last"  title="Last slide" onclick="goTo(total-1)">&#8677;</button>
+</nav>
+<div id="hint">← → arrow keys</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const total  = slides.length;
+  let cur = 0;
+
+  function goTo(n) {
+    slides[cur].classList.remove('active');
+    cur = Math.max(0, Math.min(n, total - 1));
+    slides[cur].classList.add('active');
+    slides[cur].scrollTop = 0;
+    document.getElementById('counter').textContent = `${cur + 1} / ${total}`;
+    document.getElementById('btn-prev').disabled  = cur === 0;
+    document.getElementById('btn-first').disabled = cur === 0;
+    document.getElementById('btn-next').disabled  = cur === total - 1;
+    document.getElementById('btn-last').disabled  = cur === total - 1;
+    document.getElementById('progress-bar').style.width = `${((cur + 1) / total) * 100}%`;
+  }
+
+  function move(d) { goTo(cur + d); }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown')  move(1);
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')    move(-1);
+    if (e.key === 'Home') goTo(0);
+    if (e.key === 'End')  goTo(total - 1);
+  });
+
+  goTo(0);
+</script>
+</body>
+</html>
