@@ -619,60 +619,223 @@ dist/my-app/
   <div class="slide" id="s4">
     <div class="slide-header"><span class="topic-badge">04</span><h1>How Angular Splits Bundles (Internals)</h1></div>
     <div class="content">
-      <div class="card accent-blue">
-        <h3>Dynamic Import → Webpack / esbuild Code Splitting</h3>
-        <p>Every <code>import()</code> call inside <code>loadComponent</code> / <code>loadChildren</code> is a <strong>dynamic import</strong>. The bundler (esbuild in Angular v22) automatically emits a separate chunk file for each unique dynamic import boundary.</p>
+
+      <p style="font-size:13px; color:#8b949e;">Angular doesn't split bundles itself — it writes <strong>dynamic <code>import()</code> calls</strong> and hands the code to a <strong>bundler</strong> (Webpack or esbuild) which physically creates the separate files.</p>
+
+      <!-- Tab bar -->
+      <div class="tab-bar">
+        <button class="tab-btn active"  onclick="switchTab(event,'s4','how')">🔬 How Code Splitting Works</button>
+        <button class="tab-btn"         onclick="switchTab(event,'s4','webpack')">📦 Webpack</button>
+        <button class="tab-btn"         onclick="switchTab(event,'s4','esbuild')">⚡ esbuild (Angular v17+)</button>
+        <button class="tab-btn"         onclick="switchTab(event,'s4','flow')">🔄 Full Request Flow</button>
       </div>
 
-      <div class="card accent-yellow">
-        <h3>🔄 Request Flow — What happens when user navigates</h3>
-        <div class="flow" style="margin-top:10px;">
-          <div class="flow-box blue">User clicks /admin</div>
-          <div class="flow-arrow">→</div>
-          <div class="flow-box purple">Router matches route</div>
-          <div class="flow-arrow">→</div>
-          <div class="flow-box orange">canMatch guard runs</div>
-          <div class="flow-arrow">→</div>
-          <div class="flow-box blue">HTTP GET admin-chunk.js</div>
-          <div class="flow-arrow">→</div>
-          <div class="flow-box purple">Module/Routes evaluated</div>
-          <div class="flow-arrow">→</div>
-          <div class="flow-box green">Component rendered ✅</div>
+      <!-- ── TAB: HOW IT WORKS ── -->
+      <div class="tab-panel active" id="s4-how">
+        <div class="two-col">
+          <div class="card accent-blue">
+            <h3>Step 1 — You write a dynamic import()</h3>
+            <p>When you use <code>loadComponent: () =&gt; import('./admin.component')</code>, you are writing a <strong>dynamic import</strong> — a JavaScript standard (ES2020) that loads a module at runtime rather than at parse time.</p>
+            <br/>
+            <p>This is different from a <strong>static import</strong> at the top of a file. Static imports are resolved at <em>build time</em>. Dynamic imports are resolved at <em>runtime</em>.</p>
+          </div>
+          <div class="card accent-purple">
+            <h3>Step 2 — Bundler sees it as a split boundary</h3>
+            <p>During <code>ng build</code>, the bundler scans all files. Every time it finds a <code>import()</code> call, it treats that as a <strong>code-split point</strong> and emits the imported file (and all its dependencies) into a <strong>separate output chunk file</strong>.</p>
+            <br/>
+            <p>The main bundle gets a tiny <em>loader stub</em> that knows the chunk's filename and fetches it over HTTP when needed.</p>
+          </div>
         </div>
-        <p style="font-size:12px; color:#8b949e; margin-top:8px;">Subsequent visits to /admin use the <strong>cached chunk</strong> — no extra HTTP request.</p>
-      </div>
 
-      <div class="two-col">
-        <div class="code-block"><pre><span class="cmt">// Build output with lazy routes:</span>
-<span class="op">dist/</span>
-  <span class="op">main-</span><span class="num">a1b2c3</span><span class="op">.js</span>         <span class="cmt">// 90 KB — core bootstrap</span>
-  <span class="op">chunk-admin-</span><span class="num">x9z</span><span class="op">.js</span>    <span class="cmt">// 45 KB — admin feature</span>
-  <span class="op">chunk-products-</span><span class="num">abc</span><span class="op">.js</span> <span class="cmt">// 30 KB — products feature</span>
-  <span class="op">chunk-reports-</span><span class="num">def</span><span class="op">.js</span>  <span class="cmt">// 28 KB — reports feature</span>
-  <span class="op">styles-</span><span class="num">789</span><span class="op">.css</span>         <span class="cmt">// global styles</span>
+        <div class="code-block"><pre><span class="cmt">// ── What YOU write in routes ──────────────────────────────────────────────────</span>
+{
+  <span class="var">path</span>: <span class="str">'admin'</span>,
+  <span class="var">loadComponent</span>: () => <span class="fn">import</span>(<span class="str">'./admin/admin.component'</span>)  <span class="cmt">// dynamic import()</span>
+}
 
-<span class="cmt">// Analyse bundles:</span>
-<span class="fn">ng build</span> --stats-json
-<span class="fn">npx webpack-bundle-analyzer</span> dist/stats.json
+<span class="cmt">// ── What the BUNDLER emits ────────────────────────────────────────────────────</span>
+<span class="cmt">// main.js gets a tiny stub (pseudo-code):</span>
+<span class="kw">const</span> <span class="var">chunkMap</span> = {
+  <span class="str">'./admin/admin.component'</span>: <span class="str">'chunk-admin-x9z.js'</span>   <span class="cmt">// filename decided at build time</span>
+};
+<span class="cmt">// When router calls loadComponent(), browser runs:</span>
+<span class="fn">fetch</span>(<span class="str">'/chunk-admin-x9z.js'</span>)
+  .<span class="fn">then</span>(<span class="var">script</span> => <span class="fn">eval</span>(<span class="var">script</span>))    <span class="cmt">// executes the chunk</span>
+  .<span class="fn">then</span>(<span class="var">module</span> => <span class="var">module</span>.<span class="kw">default</span>)  <span class="cmt">// returns the component class</span>
 
-<span class="cmt">// Or with esbuild metafile (Angular v17+):</span>
-<span class="fn">ng build</span> --verbose</pre></div>
+<span class="cmt">// ── Actual ng build output ────────────────────────────────────────────────────</span>
+<span class="op">dist/my-app/</span>
+  <span class="typ">main-a1b2c3.js</span>          <span class="cmt">// bootstrap + eagerly imported code</span>
+  <span class="typ">chunk-admin-x9z.js</span>      <span class="cmt">// AdminComponent + its imports</span>
+  <span class="typ">chunk-products-abc.js</span>   <span class="cmt">// ProductComponent + its imports</span>
+  <span class="typ">common-xyz.js</span>           <span class="cmt">// shared code (e.g. @angular/forms used by 2+ chunks)</span></pre></div>
 
-        <div style="display:flex; flex-direction:column; gap:12px;">
+        <div class="two-col">
+          <div class="tip-box">
+            <div class="tip-hdr">✅ Static vs Dynamic Import</div>
+            <table style="margin-top:6px;">
+              <thead><tr><th>Type</th><th>Syntax</th><th>Resolved at</th><th>Creates chunk?</th></tr></thead>
+              <tbody>
+                <tr><td>Static</td><td><code>import { X } from './x'</code></td><td>Build time</td><td>No — goes into main.js</td></tr>
+                <tr><td>Dynamic</td><td><code>import('./x')</code></td><td>Runtime</td><td>Yes — separate chunk</td></tr>
+              </tbody>
+            </table>
+          </div>
           <div class="card accent-green">
-            <h3>Chunk Naming Control</h3>
-            <p>Use magic comments to name chunks for easier debugging:</p>
-            <code style="display:block; margin-top:6px; white-space:pre; font-size:11.5px;">import(
-  /* webpackChunkName: "admin" */
-  './admin/admin.routes'
-)</code>
-          </div>
-          <div class="warn-box">
-            <div class="warn-hdr">⚠️ Shared Dependencies</div>
-            <p>Code shared across chunks (e.g. <code>@angular/forms</code>) is placed in a <strong>common chunk</strong> automatically — no duplication.</p>
+            <h3>Shared Chunk (Common Chunk)</h3>
+            <p>If <code>@angular/forms</code> is used by both <code>admin.chunk.js</code> and <code>products.chunk.js</code>, the bundler moves it into a <strong>shared common chunk</strong> downloaded once and cached — preventing duplication across multiple lazy chunks.</p>
           </div>
         </div>
       </div>
+
+      <!-- ── TAB: WEBPACK ── -->
+      <div class="tab-panel" id="s4-webpack">
+        <div class="two-col">
+          <div class="card accent-orange">
+            <h3>What is Webpack?</h3>
+            <p>Webpack is a <strong>JavaScript module bundler</strong>. It takes your source files (TypeScript, CSS, assets) and packages them into optimised output files for the browser. Angular CLI used Webpack as its default bundler from Angular 2 up to Angular 16.</p>
+          </div>
+          <div class="card accent-yellow">
+            <h3>How Webpack handles dynamic import()</h3>
+            <ul>
+              <li>Webpack scans the entire dependency graph at build time</li>
+              <li>Every <code>import('./x')</code> becomes a <strong>split point</strong></li>
+              <li>Webpack assigns each split point a <strong>chunk ID</strong> (a number or name)</li>
+              <li>Emits a separate <code>chunk-[id].js</code> file for each split point</li>
+              <li>Injects a <strong>runtime manifest</strong> into <code>main.js</code> that maps chunk IDs to filenames</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="code-block"><pre><span class="cmt">// ── Webpack internals (simplified) ───────────────────────────────────────────</span>
+
+<span class="cmt">// 1. You write:</span>
+<span class="var">loadComponent</span>: () => <span class="fn">import</span>(<span class="str">'./admin/admin.component'</span>)
+
+<span class="cmt">// 2. Webpack transforms it into:</span>
+<span class="var">loadComponent</span>: () => __<span class="fn">webpack_require__</span>.<span class="fn">e</span>(<span class="cmt">/* chunk ID */</span> <span class="num">42</span>)
+  .<span class="fn">then</span>(__<span class="fn">webpack_require__</span>.<span class="fn">bind</span>(__<span class="var">webpack_require__</span>, <span class="num">1234</span>))
+
+<span class="cmt">// 3. __webpack_require__.e() does this at runtime:</span>
+<span class="cmt">//    - checks if chunk 42 is already loaded (cache)</span>
+<span class="cmt">//    - if not: creates a &lt;script&gt; tag pointing to chunk-42.js</span>
+<span class="cmt">//    - resolves the promise when the script loads</span>
+
+<span class="cmt">// ── Magic comments — control chunk names ─────────────────────────────────────</span>
+<span class="var">loadComponent</span>: () =>
+  <span class="fn">import</span>(
+    <span class="cmt">/* webpackChunkName: "admin" */</span>     <span class="cmt">// names the output file</span>
+    <span class="cmt">/* webpackPrefetch: true */</span>          <span class="cmt">// browser prefetches when idle</span>
+    <span class="cmt">/* webpackPreload: true */</span>           <span class="cmt">// browser loads in parallel</span>
+    <span class="str">'./admin/admin.component'</span>
+  )
+<span class="cmt">// Output file: chunk-admin.js  (instead of chunk-42.js)</span>
+
+<span class="cmt">// ── Angular CLI Webpack config (angular.json) ────────────────────────────────</span>
+<span class="cmt">// Angular 2–16 used Webpack under the hood via @angular-devkit/build-angular</span>
+<span class="cmt">// You rarely need webpack.config.js — Angular CLI handled it automatically</span></pre></div>
+
+        <div class="two-col">
+          <div class="warn-box">
+            <div class="warn-hdr">⚠️ Webpack in Angular v17+</div>
+            <p>Angular CLI switched the <strong>default</strong> builder to esbuild in v17. Webpack is still available via <code>@angular-devkit/build-angular:browser</code> builder but esbuild (<code>application</code> builder) is now the recommended default.</p>
+          </div>
+          <div class="tip-box">
+            <div class="tip-hdr">✅ webpackPrefetch vs webpackPreload</div>
+            <ul>
+              <li><strong>prefetch</strong> — low priority, downloaded during browser idle. Use for routes the user <em>might</em> visit next.</li>
+              <li><strong>preload</strong> — high priority, downloaded in parallel with parent chunk. Use for resources needed immediately after parent loads.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── TAB: ESBUILD ── -->
+      <div class="tab-panel" id="s4-esbuild">
+        <div class="two-col">
+          <div class="card accent-cyan">
+            <h3>What is esbuild?</h3>
+            <p>esbuild is an extremely fast JavaScript/TypeScript bundler and minifier written in <strong>Go</strong> (not JavaScript). It is <strong>10–100× faster</strong> than Webpack because it uses Go's concurrency model and avoids the overhead of Node.js.</p>
+            <br/>
+            <p>Angular CLI adopted esbuild as the default builder starting <strong>Angular v17</strong> via the <code>application</code> builder.</p>
+          </div>
+          <div class="card accent-green">
+            <h3>esbuild vs Webpack — Speed Comparison</h3>
+            <table style="margin-top:6px;">
+              <thead><tr><th>Operation</th><th>Webpack</th><th>esbuild</th></tr></thead>
+              <tbody>
+                <tr><td>Cold build (large app)</td><td>~45–90s</td><td>~3–8s</td></tr>
+                <tr><td>Incremental rebuild</td><td>~3–10s</td><td>&lt; 500ms</td></tr>
+                <tr><td>Minification</td><td>Terser (slow)</td><td>Built-in (fast)</td></tr>
+                <tr><td>Tree-shaking</td><td>✅</td><td>✅ (more aggressive)</td></tr>
+                <tr><td>Code splitting</td><td>✅</td><td>✅</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="code-block"><pre><span class="cmt">// ── angular.json — switch between builders ───────────────────────────────────</span>
+{
+  <span class="str">"architect"</span>: {
+    <span class="str">"build"</span>: {
+      <span class="cmt">// ✅ NEW: esbuild builder (Angular v17+ default)</span>
+      <span class="str">"builder"</span>: <span class="str">"@angular-devkit/build-angular:application"</span>,
+
+      <span class="cmt">// 🗂 OLD: Webpack builder (still works, not recommended)</span>
+      <span class="cmt">// "builder": "@angular-devkit/build-angular:browser",</span>
+
+      <span class="str">"options"</span>: {
+        <span class="str">"outputPath"</span>: <span class="str">"dist/my-app"</span>,
+        <span class="str">"index"</span>: <span class="str">"src/index.html"</span>,
+        <span class="str">"browser"</span>: <span class="str">"src/main.ts"</span>,     <span class="cmt">// esbuild uses "browser" key</span>
+        <span class="cmt">// "main": "src/main.ts",       // Webpack used "main" key</span>
+        <span class="str">"polyfills"</span>: [<span class="str">"zone.js"</span>],
+        <span class="str">"tsConfig"</span>: <span class="str">"tsconfig.app.json"</span>
+      }
+    }
+  }
+}
+
+<span class="cmt">// ── How esbuild handles dynamic import() ────────────────────────────────────</span>
+<span class="cmt">// esbuild uses the same ES module code-splitting standard.</span>
+<span class="cmt">// Every import() call → separate output chunk (.js file)</span>
+<span class="cmt">// Output uses native ES module syntax (import/export) instead of</span>
+<span class="cmt">// Webpack's custom __webpack_require__ runtime.</span>
+
+<span class="cmt">// esbuild output chunk (native ESM):</span>
+<span class="kw">import</span> { <span class="var">something</span> } <span class="kw">from</span> <span class="str">'./common-xyz.js'</span>; <span class="cmt">// shared chunk reference</span>
+<span class="kw">export default class</span> <span class="cls">AdminComponent</span> { ... }
+
+<span class="cmt">// ── Check which builder your project uses ───────────────────────────────────</span>
+<span class="cmt">// Run: cat angular.json | grep builder</span>
+<span class="cmt">// "application"  → esbuild  ✅</span>
+<span class="cmt">// "browser"      → Webpack  🗂</span></pre></div>
+
+        <div class="tip-box">
+          <div class="tip-hdr">✅ Practical Impact of esbuild for Lazy Loading</div>
+          <p>With esbuild, <code>ng build</code> is dramatically faster and <code>ng serve</code> hot-reload is near-instant. Code splitting behaviour is identical to Webpack — every <code>import()</code> still creates a separate chunk. The difference is purely <strong>build speed</strong>, not the runtime behaviour in the browser.</p>
+        </div>
+      </div>
+
+      <!-- ── TAB: FULL REQUEST FLOW ── -->
+      <div class="tab-panel" id="s4-flow">
+        <div class="card accent-yellow">
+          <h3>🔄 Complete Step-by-Step — User navigates to /admin</h3>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:10px; margin-top:4px;">
+          <div class="step"><div class="step-num">1</div><div><strong>User clicks a link or types /admin in browser</strong><br/><span style="font-size:12px;color:#8b949e;">Browser fires a <code>popstate</code> / <code>click</code> event. Angular's router intercepts it — no full page reload.</span></div></div>
+          <div class="step"><div class="step-num">2</div><div><strong>Router scans the routes array for a matching path</strong><br/><span style="font-size:12px;color:#8b949e;">It finds <code>{ path: 'admin', loadChildren: () =&gt; import(...) }</code> and sees it's a lazy route.</span></div></div>
+          <div class="step"><div class="step-num">3</div><div><strong>canMatch guards run (if any)</strong><br/><span style="font-size:12px;color:#8b949e;">If a guard returns <code>false</code>, the route is skipped entirely — chunk is <em>never downloaded</em>. If <code>true</code>, proceed.</span></div></div>
+          <div class="step"><div class="step-num">4</div><div><strong>Router calls the loadChildren / loadComponent factory function</strong><br/><span style="font-size:12px;color:#8b949e;">This executes <code>import('./admin/admin.routes')</code> — the browser sends an <strong>HTTP GET</strong> request for <code>chunk-admin-x9z.js</code>.</span></div></div>
+          <div class="step"><div class="step-num">5</div><div><strong>Browser downloads and executes the chunk</strong><br/><span style="font-size:12px;color:#8b949e;">The chunk JS runs, registering the module. The promise resolves with the Routes array or component class.</span></div></div>
+          <div class="step"><div class="step-num">6</div><div><strong>Router registers child routes from the loaded Routes array</strong><br/><span style="font-size:12px;color:#8b949e;">Angular merges the lazy routes into its internal route tree for this session.</span></div></div>
+          <div class="step"><div class="step-num">7</div><div><strong>canActivate guards run (if any)</strong><br/><span style="font-size:12px;color:#8b949e;">Final auth/permission check before the component is created.</span></div></div>
+          <div class="step"><div class="step-num">8</div><div><strong>Resolver runs (if any) — pre-fetches data</strong><br/><span style="font-size:12px;color:#8b949e;">Route resolver fetches API data before the component renders, so no loading spinner inside the component.</span></div></div>
+          <div class="step"><div class="step-num">9</div><div><strong>Component is instantiated and rendered into &lt;router-outlet&gt;</strong><br/><span style="font-size:12px;color:#8b949e;">Angular creates the component, runs lifecycle hooks, and inserts the DOM.</span></div></div>
+          <div class="step"><div class="step-num" style="background:#3fb950;">✓</div><div><strong>Chunk is now cached in the browser</strong><br/><span style="font-size:12px;color:#8b949e;">Second visit to /admin skips steps 4–5 entirely — the cached chunk is used immediately. HTTP 304 or memory cache.</span></div></div>
+        </div>
+      </div>
+
     </div>
   </div>
 
