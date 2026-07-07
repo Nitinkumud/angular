@@ -198,39 +198,59 @@
         <div class="card accent-red">
           <h3>🐢 Eager Loading (Default)</h3>
           <ul>
-            <li>All modules &amp; components are bundled into <strong>main.js</strong> at startup</li>
-            <li>Router loads everything before the app becomes interactive</li>
-            <li>Large initial bundle → slower First Contentful Paint (FCP)</li>
-            <li>Suitable only for small apps or critical routes</li>
+            <li>Every component/module is <strong>statically imported</strong> — bundler includes everything in <strong>one main.js</strong></li>
+            <li>Router navigates instantly (code already downloaded) but initial page load is slow</li>
+            <li>Large initial bundle → slower FCP &amp; TTI</li>
+            <li><code>ng build</code> output: <strong>only main.js + polyfills.js</strong></li>
           </ul>
         </div>
         <div class="card accent-green">
           <h3>🚀 Lazy Loading</h3>
           <ul>
-            <li>Feature chunks are split into <strong>separate .js bundles</strong></li>
-            <li>Bundle is downloaded only when the user navigates to that route</li>
-            <li>Dramatically reduces initial bundle size</li>
-            <li>Improves TTI (Time to Interactive) &amp; Lighthouse score</li>
+            <li>Feature routes use <strong>dynamic <code>import()</code></strong> inside <code>loadComponent</code> / <code>loadChildren</code></li>
+            <li>Bundler sees each <code>import()</code> as a <strong>split point</strong> → emits a <em>separate chunk file</em></li>
+            <li>That chunk is only <strong>downloaded on first visit</strong> to that route</li>
+            <li><code>ng build</code> output: <strong>main.js + one chunk.js per lazy route</strong></li>
           </ul>
         </div>
       </div>
 
       <div class="card accent-blue">
-        <h3>📦 Bundle Difference (Real-world Example)</h3>
-        <table style="margin-top:6px;">
-          <thead><tr><th>Strategy</th><th>main.js</th><th>Feature Chunk</th><th>Initial Load</th></tr></thead>
-          <tbody>
-            <tr><td>Eager</td><td>850 KB</td><td>None</td><td><span class="badge badge-red">Slow</span></td></tr>
-            <tr><td>Lazy (loadChildren)</td><td>120 KB</td><td>admin-chunk.js 730 KB (on demand)</td><td><span class="badge badge-green">Fast</span></td></tr>
-            <tr><td>Lazy + Preload</td><td>120 KB</td><td>Prefetched in background after idle</td><td><span class="badge badge-green">Fast + Ready</span></td></tr>
-          </tbody>
-        </table>
+        <h3>📦 Actual <code>ng build</code> output — same app, two configurations</h3>
+        <div class="two-col" style="margin-top:10px; gap:12px;">
+          <div class="code-block"><pre><span class="cmt">// ❌ WITHOUT lazy loading (all eager)</span>
+<span class="cmt">// Every route uses: component: HomeComponent</span>
+
+dist/my-app/
+  <span class="var">main</span>-<span class="num">a1b2c3</span>.js     <span class="cmt">// 850 KB — everything</span>
+  <span class="var">polyfills</span>-<span class="num">xyz</span>.js   <span class="cmt">// ~35 KB</span>
+  <span class="var">styles</span>-<span class="num">abc</span>.css      <span class="cmt">// CSS</span>
+
+<span class="cmt">// Browser downloads 850 KB before app starts</span></pre></div>
+          <div class="code-block"><pre><span class="cmt">// ✅ WITH lazy loading (loadComponent)</span>
+<span class="cmt">// Routes use: loadComponent: () => import(...)</span>
+
+dist/my-app/
+  <span class="var">main</span>-<span class="num">a1b2c3</span>.js       <span class="cmt">// 120 KB — bootstrap only</span>
+  <span class="var">chunk-admin</span>-<span class="num">x9z</span>.js   <span class="cmt">// 350 KB — on demand</span>
+  <span class="var">chunk-products</span>-<span class="num">abc</span>.js <span class="cmt">// 280 KB — on demand</span>
+  <span class="var">chunk-reports</span>-<span class="num">def</span>.js  <span class="cmt">// 200 KB — on demand</span>
+  <span class="var">polyfills</span>-<span class="num">xyz</span>.js      <span class="cmt">// ~35 KB</span>
+  <span class="var">styles</span>-<span class="num">abc</span>.css        <span class="cmt">// CSS</span>
+
+<span class="cmt">// Browser downloads only 120 KB at startup ✅</span></pre></div>
+        </div>
+      </div>
+
+      <div class="warn-box">
+        <div class="warn-hdr">⚠️ Key Point — Separate chunks only appear WHEN you use dynamic import()</div>
+        <p>If your route uses <code>component: AdminComponent</code> (static import), there is no extra chunk — everything stays in <strong>main.js</strong>. The separate <code>chunk-*.js</code> files are created by the bundler <strong>only</strong> when it encounters <code>loadComponent: () =&gt; import('./admin/admin.component')</code>. The <code>import()</code> call is what triggers code splitting.</p>
       </div>
 
       <div class="two-col">
         <div class="tip-box">
-          <div class="tip-hdr">✅ Rule of Thumb</div>
-          <p>Lazy-load every feature route that is <strong>not needed on the landing page</strong>. Admin panels, dashboards, settings &amp; profile pages are perfect candidates.</p>
+          <div class="tip-hdr">✅ How to verify in your own project</div>
+          <p>Run <code>ng build</code> and check the <code>dist/</code> folder. If you see only <code>main.js</code>, your routes are all eager. Add <code>loadComponent</code> and rebuild — you will see new <code>chunk-*.js</code> files appear.</p>
         </div>
         <div class="mem-box">
           <div class="mem-hdr">🔑 Key Metrics Impacted</div>
