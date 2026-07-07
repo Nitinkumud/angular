@@ -253,12 +253,24 @@ dist/my-app/
           <p>Run <code>ng build</code> and check the <code>dist/</code> folder. If you see only <code>main.js</code>, your routes are all eager. Add <code>loadComponent</code> and rebuild — you will see new <code>chunk-*.js</code> files appear.</p>
         </div>
         <div class="mem-box">
-          <div class="mem-hdr">🔑 Key Metrics Impacted</div>
-          <ul>
-            <li><strong>FCP</strong> – First Contentful Paint</li>
-            <li><strong>TTI</strong> – Time to Interactive</li>
-            <li><strong>TBT</strong> – Total Blocking Time</li>
-            <li><strong>Lighthouse Performance Score</strong></li>
+          <div class="mem-hdr">🔑 Key Metrics Impacted by Lazy Loading</div>
+          <ul style="margin-top:4px;">
+            <li style="margin-bottom:8px;">
+              <strong>FCP – First Contentful Paint</strong><br/>
+              <span style="font-size:12px; color:#8b949e;">Time until the browser renders the first piece of visible content (text, image). A smaller <code>main.js</code> (due to lazy loading) means the browser parses less JS → FCP improves. Target: <strong style="color:#3fb950;">&lt; 1.8s</strong></span>
+            </li>
+            <li style="margin-bottom:8px;">
+              <strong>TTI – Time to Interactive</strong><br/>
+              <span style="font-size:12px; color:#8b949e;">Time until the page is fully interactive — all event handlers attached, no long tasks blocking the main thread. Less JS to parse at startup = faster TTI. Target: <strong style="color:#3fb950;">&lt; 3.8s</strong></span>
+            </li>
+            <li style="margin-bottom:8px;">
+              <strong>TBT – Total Blocking Time</strong><br/>
+              <span style="font-size:12px; color:#8b949e;">Sum of time the main thread was blocked (by JS parsing/execution) between FCP and TTI. A 850 KB eager bundle blocks the thread far longer than a 120 KB lazy bundle. Target: <strong style="color:#3fb950;">&lt; 200ms</strong></span>
+            </li>
+            <li>
+              <strong>Lighthouse Performance Score</strong><br/>
+              <span style="font-size:12px; color:#8b949e;">Weighted score (0–100) calculated from FCP, TBT, LCP, CLS &amp; Speed Index. Lazy loading directly improves FCP &amp; TBT which together account for <strong style="color:#e3b341;">~50%</strong> of the total score.</span>
+            </li>
           </ul>
         </div>
       </div>
