@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nitin Kumar – Learning Hub</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #0f1117;
+      color: #e2e8f0;
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      background: linear-gradient(135deg, #1a1f2e 0%, #0d1117 100%);
+      border-bottom: 1px solid #30363d;
+      padding: 40px 24px 32px;
+      text-align: center;
+    }
+
+    header h1 {
+      font-size: 2.4rem;
+      font-weight: 700;
+      background: linear-gradient(90deg, #58a6ff, #bc8cff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 8px;
+    }
+
+    header p {
+      color: #8b949e;
+      font-size: 1rem;
+      letter-spacing: 0.5px;
+    }
+
+    /* ── Main layout ── */
+    main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 40px 24px 60px;
+    }
+
+    /* ── Section ── */
+    .section {
+      margin-bottom: 44px;
+    }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: #8b949e;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      margin-bottom: 16px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #21262d;
+    }
+
+    .section-title .badge {
+      font-size: 0.72rem;
+      background: #21262d;
+      border: 1px solid #30363d;
+      border-radius: 20px;
+      padding: 2px 10px;
+      color: #8b949e;
+    }
+
+    /* ── Card grid ── */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 16px;
+    }
+
+    /* ── Card ── */
+    .card {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      padding: 20px 22px;
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      transition: border-color 0.2s, transform 0.15s, box-shadow 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      transition: opacity 0.2s;
+      border-radius: 12px;
+    }
+
+    .card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    }
+
+    .card:hover::before { opacity: 1; }
+
+    /* Colour themes per category */
+    .card.angular { border-left: 3px solid #dd0031; }
+    .card.angular:hover { border-color: #ff4d6d; box-shadow: 0 8px 24px rgba(221,0,49,0.15); }
+
+    .card.javascript { border-left: 3px solid #f7df1e; }
+    .card.javascript:hover { border-color: #ffe566; box-shadow: 0 8px 24px rgba(247,223,30,0.15); }
+
+    .card.rxjs { border-left: 3px solid #b7178c; }
+    .card.rxjs:hover { border-color: #e040fb; box-shadow: 0 8px 24px rgba(183,23,140,0.15); }
+
+    .card.css { border-left: 3px solid #264de4; }
+    .card.css:hover { border-color: #58a6ff; box-shadow: 0 8px 24px rgba(38,77,228,0.15); }
+
+    .card.resume { border-left: 3px solid #3fb950; }
+    .card.resume:hover { border-color: #56d364; box-shadow: 0 8px 24px rgba(63,185,80,0.15); }
+
+    /* Icon circle */
+    .icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+      flex-shrink: 0;
+    }
+
+    .angular .icon  { background: rgba(221,0,49,0.15); }
+    .javascript .icon { background: rgba(247,223,30,0.12); }
+    .rxjs .icon     { background: rgba(183,23,140,0.15); }
+    .css .icon      { background: rgba(38,77,228,0.15); }
+    .resume .icon   { background: rgba(63,185,80,0.15); }
+
+    /* Text block */
+    .card-body { flex: 1; min-width: 0; }
+
+    .card-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #e6edf3;
+      line-height: 1.4;
+      margin-bottom: 4px;
+    }
+
+    .card-desc {
+      font-size: 0.8rem;
+      color: #8b949e;
+      line-height: 1.5;
+    }
+
+    .card-arrow {
+      color: #30363d;
+      font-size: 1.1rem;
+      margin-top: 2px;
+      flex-shrink: 0;
+      transition: color 0.2s, transform 0.2s;
+    }
+
+    .card:hover .card-arrow {
+      color: #58a6ff;
+      transform: translateX(4px);
+    }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center;
+      padding: 24px;
+      color: #484f58;
+      font-size: 0.8rem;
+      border-top: 1px solid #21262d;
+    }
+
+    footer a { color: #58a6ff; text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>&#128218; Nitin Kumar – Learning Hub</h1>
+    <p>All presentations in one place &mdash; click any card to open the slide deck</p>
+  </header>
+
+  <main>
+
+    <!-- ── Angular ── -->
+    <section class="section">
+      <div class="section-title">
+        <span>&#9650; Angular</span>
+        <span class="badge">6 presentations</span>
+      </div>
+      <div class="grid">
+
+        <a class="card angular" href="Angular_Advanced_Forms_Architecture_v22.html" target="_blank">
+          <div class="icon">&#128203;</div>
+          <div class="card-body">
+            <div class="card-title">Advanced Forms Architecture</div>
+            <div class="card-desc">Reactive forms, dynamic forms, validation strategies &amp; architecture patterns</div>
+          </div>
+          <span class="card-arrow">&#8594;</span>
+        </a>
+
+        <a class="card angular" href="Angular_Auth_Guards_Presentation.html" target="_blank">
+          <div class="icon">&#128274;</div>
+          <div class="card-body">
+            <div class="card-title">Auth Guards</div>
+            <div class="card-desc">Route protection with CanActivate, CanDeactivate &amp; role-based guards</div>
+          </div>
+          <span class="card-arrow">&#8594;</span>
+        </a>
+
+        <a class="card angular" href="Angular_Change_Detection_Presentation.html" target="_blank">
+          <div class="icon">&#128260;</div>
+          <div class="card-body">
+            <div class="card-title">Change Detection</div>
+            <div class="card-desc">Default vs OnPush strategy, Signals, zone.js &amp; performance tuning</div>
+          </div>
+          <span class="card-arrow">&#8594;</span>
+        </a>
+
+        <a class="card angular" href="Angular_Hydration_Presentation.html" target="_blank">
+          <div class="icon">&#128167;</div>
+          <div class="card-body">
+            <div class="card-title">Hydration</div>
+            <div class="card-desc">SSR hydration, incremental hydration &amp; defer blocks in Angular 17+</div>
+          </div>
+          <span class="card-arrow">&#8594;</span>
+        </a>
+
+        <a class="card angular" href="Angular_Interview_Questions_Accenture.html" target="_blank">
+          <div class="icon">&#128221;</div>
+          <div class="card-body">
+            <div class="card-title">Interview Questions</div>
+            <div class="card-desc">Top Angular interview Q&amp;A covering core concepts for job preparation</div>
+          </div>
+          <span class="card-arrow">&#8594;</span>
+        </a>
+
+        <a class="card angular" href="Angular_Lifecycle_Hooks_Presentation.html" target="_blank">
+          <div class="icon">&#9854;</div>
+          <div class="card-body">
+            <div class="card-title">Lifecycle Hooks</div>
+            <div class="card-desc">ngOnInit, ngOnChanges, ngDoCheck, ngAfterContentInit &amp; more</div>
+          </div>
+          <span class="card-arrow">&#8594;</span>
+        </a>
+
+      </div>
+    </section>
+
+    <!-- ── NgRx ── -->
+    <section class="section">
+      <div class="section-title">
+        <span>&#9679; NgRx / State Management</span>
+        <span class="badge">1 presentation</span>
+      </div>
+      <div class="grid">
+
+        <a class="card angular" href="NgRx_State_Management_Presentation.html" target="_blank">
+          <div class="icon">&#128225;</div>
+          <div class="card-body">
+            <div class="card-title">NgRx State Management</div>
+            <div class="card-desc">Store, Actions, Reducers, Effects, Selectors &amp; Entity patterns</div>
+          </div>
+          <span class="card-arrow">&#8594;</span>
+        </a>
+
+      </div>
+    </section>
+
+    <!-- ── JavaScript ── -->
+    <section class="section">
+      <div class="section-title">
+        <span>&#128994; JavaScript</span>
+        <span class="badge">2 presentations</span>
+      </div>
+      <div class="grid">
+
+        <a class="card javascript" href="JavaScript_Functions_Presentation.html" target="_blank">
+          <div class="icon">&#955;</div>
+          <div class="card-body">
+            <div class="card-title">JavaScript Functions</div>
+            <div class="card-desc">Closures, HOF, callbacks, arrow functions, IIFE &amp; scope deep dive</div>
+          </div>
+          <span class="card-arrow">&#8594;</span>
+        </a>
+
+        <a class="card javascript" href="JavaScript_Coding_Interview_Questions.html" target="_blank">
+          <div class="icon">&#128187;</div>
+          <div class="card-body">
+            <div class="card-title">Coding Interview Questions</div>
+            <div class="card-desc">Top JS coding problems with solutions &amp; explanation for interviews</div>
+          </div>
+          <span class="card-arrow">&#8594;</span>
+        </a>
+
+      </div>
+    </section>
+
+    <!-- ── RxJS ── -->
+    <section class="section">
+      <div class="section-title">
+        <span>&#127744; RxJS</span>
+        <span class="badge">3 presentations</span>
+      </div>
+      <div class="grid">
+
+        <a class="card rxjs" href="RxJS_Operators_Presentation.html" target="_blank">
+          <div class="icon">&#128300;</div>
+          <div class="card-body">
+            <div class="card-title">RxJS Operators</div>
+            <div class="card-desc">map, switchMap, mergeMap, combineLatest, debounceTime &amp; more</div>
+          </div>
+          <span class="card-arrow">&#8594;</span>
+        </a>
+
+        <a class="card rxjs" href="RxJS_Cold_Hot_Observables_Presentation.html" target="_blank">
+          <div class="icon">&#128293;</div>
+          <div class="card-body">
+            <div class="card-title">Cold vs Hot Observables</div>
+            <div class="card-desc">Understanding unicast/multicast, Subject types &amp; real-world examples</div>
+          </div>
+          <span class="card-arrow">&#8594;</span>
+        </a>
+
+        <a class="card rxjs" href="LinkedIn_RxJS_Post.html" target="_blank">
+          <div class="icon">&#128279;</div>
+          <div class="card-body">
+            <div class="card-title">RxJS LinkedIn Post</div>
+            <div class="card-desc">Key RxJS concepts explained for LinkedIn — quick revision reference</div>
+          </div>
+          <span class="card-arrow">&#8594;</span>
+        </a>
+
+      </div>
+    </section>
+
+    <!-- ── CSS ── -->
+    <section class="section">
+      <div class="section-title">
+        <span>&#127912; CSS</span>
+        <span class="badge">1 presentation</span>
+      </div>
+      <div class="grid">
+
+        <a class="card css" href="CSS_Interview_Presentation.html" target="_blank">
+          <div class="icon">&#127912;</div>
+          <div class="card-body">
+            <div class="card-title">CSS Interview Preparation</div>
+            <div class="card-desc">Flexbox, Grid, specificity, animations &amp; responsive design deep dive</div>
+          </div>
+          <span class="card-arrow">&#8594;</span>
+        </a>
+
+      </div>
+    </section>
+
+    <!-- ── Resume ── -->
+    <section class="section">
+      <div class="section-title">
+        <span>&#128100; Resume</span>
+        <span class="badge">1 file</span>
+      </div>
+      <div class="grid">
+
+        <a class="card resume" href="Nitin_Kumar_Resume.html" target="_blank">
+          <div class="icon">&#128196;</div>
+          <div class="card-body">
+            <div class="card-title">Nitin Kumar – Resume</div>
+            <div class="card-desc">Front-end developer resume — Angular, JavaScript &amp; modern web stack</div>
+          </div>
+          <span class="card-arrow">&#8594;</span>
+        </a>
+
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    Built by <a href="https://github.com/Nitinkumud/angular" target="_blank">Nitin Kumar</a> &mdash; 2026
+  </footer>
+
+</body>
+</html>
