@@ -1,0 +1,1115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Angular SSR – Senior Interview Deep Dive (v22)</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; overflow: hidden; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0d1117; color: #e6edf3; }
+
+    #deck { width: 100vw; height: 100vh; position: relative; }
+    .slide {
+      display: none; flex-direction: column; justify-content: flex-start;
+      padding: 44px 58px 76px; width: 100%; height: 100%;
+      overflow-y: auto; gap: 14px; animation: fadeIn .35s ease;
+    }
+    .slide.active { display: flex; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+
+    .slide-header {
+      display: flex; align-items: center; gap: 14px;
+      border-bottom: 2px solid #21262d; padding-bottom: 12px; flex-shrink: 0;
+    }
+    .topic-badge {
+      background: #1a2a10; color: #3fb950; font-size: 11px; font-weight: 700;
+      letter-spacing: 1px; text-transform: uppercase; padding: 4px 10px;
+      border-radius: 20px; white-space: nowrap;
+    }
+
+    h1 { font-size: 27px; font-weight: 700; color: #3fb950; }
+    h2 { font-size: 19px; font-weight: 600; color: #ffa657; margin-bottom: 5px; }
+    h3 { font-size: 14px; font-weight: 600; color: #ffa657; margin-bottom: 4px; }
+
+    .title-slide {
+      justify-content: center; align-items: center; text-align: center;
+      background: radial-gradient(ellipse at 50% 0%, #0a1f10 0%, #0d1117 70%);
+    }
+    .title-slide h1 { font-size: 44px; margin-bottom: 10px; color: #3fb950; }
+    .title-slide .subtitle { font-size: 16px; color: #8b949e; max-width: 720px; line-height: 1.65; }
+    .logo { font-size: 62px; margin-bottom: 14px; }
+    .topic-chips { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 20px; }
+    .chip { background: #161b22; border: 1px solid #30363d; border-radius: 20px; padding: 5px 14px; font-size: 12.5px; color: #8b949e; }
+
+    .content { flex: 1; display: flex; flex-direction: column; gap: 14px; }
+    .two-col   { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+
+    .card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 14px 16px; }
+    .card.accent-red    { border-left: 4px solid #f85149; }
+    .card.accent-blue   { border-left: 4px solid #1f6feb; }
+    .card.accent-green  { border-left: 4px solid #3fb950; }
+    .card.accent-orange { border-left: 4px solid #f78166; }
+    .card.accent-purple { border-left: 4px solid #d2a8ff; }
+    .card.accent-yellow { border-left: 4px solid #e3b341; }
+    .card.accent-cyan   { border-left: 4px solid #39d0d8; }
+    .card.accent-pink   { border-left: 4px solid #ff6eb4; }
+
+    p  { font-size: 13.5px; line-height: 1.75; color: #c9d1d9; }
+    li { font-size: 13px; line-height: 1.85; color: #c9d1d9; margin-left: 18px; }
+    ul { padding-left: 4px; }
+    strong { color: #f0f6fc; }
+    code { font-family: 'Consolas', monospace; font-size: 12px; background: #1c2128; color: #79c0ff; padding: 2px 6px; border-radius: 4px; }
+
+    .code-block { background: #1c2128; border: 1px solid #30363d; border-radius: 8px; padding: 14px 16px; overflow-x: auto; flex-shrink: 0; }
+    .code-block pre { font-family: 'Consolas', monospace; font-size: 12.5px; line-height: 1.7; color: #e6edf3; white-space: pre; margin: 0; }
+    .kw  { color: #ff7b72; }
+    .fn  { color: #d2a8ff; }
+    .str { color: #a5d6ff; }
+    .num { color: #79c0ff; }
+    .cmt { color: #8b949e; font-style: italic; }
+    .var { color: #ffa657; }
+    .dec { color: #ff6b6b; }
+    .cls { color: #f0c674; }
+    .int { color: #39d0d8; }
+    .op  { color: #7ee787; }
+    .typ { color: #56d364; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+    th { background: #161b22; color: #d2a8ff; text-align: left; padding: 8px 12px; border-bottom: 2px solid #30363d; font-weight: 600; }
+    td { padding: 7px 12px; border-bottom: 1px solid #21262d; color: #c9d1d9; vertical-align: top; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #161b22; }
+
+    .badge { display: inline-block; padding: 2px 9px; border-radius: 12px; font-size: 11px; font-weight: 700; white-space: nowrap; }
+    .badge-red    { background: #3a1818; color: #f85149; }
+    .badge-green  { background: #1a3c1a; color: #3fb950; }
+    .badge-blue   { background: #0d2340; color: #58a6ff; }
+    .badge-orange { background: #3a2000; color: #ffa657; }
+    .badge-purple { background: #2a1a3e; color: #d2a8ff; }
+    .badge-yellow { background: #2e2200; color: #e3b341; }
+    .badge-cyan   { background: #0a2e2e; color: #39d0d8; }
+
+    .tip-box { background: #1c2a1c; border: 1px solid #3fb950; border-left: 4px solid #3fb950; border-radius: 8px; padding: 10px 14px; }
+    .tip-box .tip-hdr { font-size: 11px; font-weight: 700; color: #3fb950; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 5px; }
+    .tip-box p, .tip-box li { font-size: 12.5px; color: #c9d1d9; }
+
+    .warn-box { background: #2a1a00; border: 1px solid #e3b341; border-left: 4px solid #e3b341; border-radius: 8px; padding: 10px 14px; }
+    .warn-box .warn-hdr { font-size: 11px; font-weight: 700; color: #e3b341; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 5px; }
+    .warn-box p, .warn-box li { font-size: 12.5px; color: #c9d1d9; }
+
+    .mem-box { background: #1e1a2e; border: 1px solid #d2a8ff; border-left: 4px solid #d2a8ff; border-radius: 8px; padding: 10px 14px; }
+    .mem-box .mem-hdr { font-size: 11px; font-weight: 700; color: #d2a8ff; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 5px; }
+    .mem-box p, .mem-box li { font-size: 12.5px; color: #c9d1d9; }
+
+    .del-box { background: #2a1212; border: 1px solid #f85149; border-left: 4px solid #f85149; border-radius: 8px; padding: 10px 14px; }
+    .del-box .del-hdr { font-size: 11px; font-weight: 700; color: #f85149; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 5px; }
+    .del-box p, .del-box li { font-size: 12.5px; color: #c9d1d9; }
+
+    .iq-item { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 12px 15px; margin-bottom: 8px; }
+    .iq-q { font-size: 13.5px; font-weight: 600; color: #3fb950; margin-bottom: 6px; }
+    .iq-a { font-size: 12.5px; color: #c9d1d9; line-height: 1.7; }
+    .iq-tag { font-size: 10px; font-weight: 700; background: #1a3c1a; color: #3fb950; padding: 2px 8px; border-radius: 10px; margin-left: 8px; vertical-align: middle; }
+
+    .flow { display: flex; align-items: center; gap: 0; flex-wrap: nowrap; overflow-x: auto; padding: 6px 0; }
+    .flow-box { background: #1c2128; border: 1px solid #30363d; border-radius: 6px; padding: 7px 12px; font-size: 12px; color: #e6edf3; white-space: nowrap; flex-shrink: 0; }
+    .flow-box.green  { border-color: #3fb950; color: #56d364; }
+    .flow-box.red    { border-color: #f85149; color: #ff7b72; }
+    .flow-box.blue   { border-color: #1f6feb; color: #79c0ff; }
+    .flow-box.purple { border-color: #d2a8ff; color: #d2a8ff; }
+    .flow-box.orange { border-color: #ffa657; color: #ffa657; }
+    .flow-arrow { color: #484f58; font-size: 18px; padding: 0 4px; flex-shrink: 0; }
+
+    .tab-bar { display: flex; gap: 0; border-bottom: 2px solid #21262d; flex-shrink: 0; flex-wrap: wrap; }
+    .tab-btn { padding: 8px 18px; font-size: 13px; font-weight: 600; cursor: pointer; background: none; border: none; color: #8b949e; border-bottom: 3px solid transparent; margin-bottom: -2px; transition: color .2s, border-color .2s; }
+    .tab-btn:hover { color: #e6edf3; }
+    .tab-btn.active { color: #3fb950; border-bottom-color: #3fb950; }
+    .tab-panel { display: none; flex-direction: column; gap: 14px; }
+    .tab-panel.active { display: flex; }
+
+    .step { display: flex; gap: 12px; align-items: flex-start; }
+    .step-num { background: #1a7c3a; color: #fff; font-size: 11px; font-weight: 700; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px; }
+
+    .mnem { background: #1a2a10; border: 1px solid #3fb950; border-radius: 10px; padding: 14px 18px; }
+    .mnem-word { font-size: 28px; font-weight: 700; letter-spacing: 6px; color: #3fb950; margin-bottom: 8px; }
+    .mnem-row { display: flex; gap: 10px; align-items: baseline; margin-bottom: 5px; }
+    .mnem-letter { font-size: 18px; font-weight: 700; color: #ffa657; min-width: 20px; }
+    .mnem-meaning { font-size: 13px; color: #c9d1d9; }
+
+    #nav { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 16px; background: #161b22cc; backdrop-filter: blur(8px); border: 1px solid #30363d; border-radius: 40px; padding: 10px 24px; z-index: 1000; }
+    #nav button { background: none; border: none; color: #8b949e; cursor: pointer; font-size: 20px; padding: 4px 8px; border-radius: 6px; transition: color .2s, background .2s; }
+    #nav button:hover:not(:disabled) { color: #e6edf3; background: #21262d; }
+    #nav button:disabled { opacity: 0.3; cursor: default; }
+    #counter { font-size: 13px; color: #8b949e; min-width: 64px; text-align: center; }
+
+    #progress-bar { position: fixed; top: 0; left: 0; height: 3px; background: #3fb950; transition: width .3s ease; z-index: 999; }
+    #hint { position: fixed; bottom: 20px; right: 24px; font-size: 11px; color: #484f58; }
+    .slide::-webkit-scrollbar { width: 6px; }
+    .slide::-webkit-scrollbar-track { background: transparent; }
+    .slide::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
+  </style>
+</head>
+<body>
+<div id="progress-bar"></div>
+<div id="deck">
+
+  <!-- ══ SLIDE 0 — TITLE ══ -->
+  <div class="slide title-slide active" id="s0">
+    <div class="logo">🌐</div>
+    <h1>Angular SSR</h1>
+    <p class="subtitle">Senior-level deep dive — CSR vs SSR vs SSG, Angular v22 Setup, RenderMode per Route, Non-Destructive Hydration, Pre-rendering, Application Shell, TransferState, SEO, Pitfalls &amp; 20 Interview Q&amp;A</p>
+    <div class="topic-chips">
+      <span class="chip">CSR vs SSR vs SSG</span>
+      <span class="chip">@angular/ssr</span>
+      <span class="chip">server.ts (Express)</span>
+      <span class="chip">RenderMode</span>
+      <span class="chip">app.routes.server.ts</span>
+      <span class="chip">Hydration</span>
+      <span class="chip">Pre-rendering</span>
+      <span class="chip">App Shell</span>
+      <span class="chip">TransferState</span>
+      <span class="chip">SEO / Meta Tags</span>
+      <span class="chip">isPlatformBrowser</span>
+      <span class="chip">Pitfalls</span>
+      <span class="chip">Interview Q&amp;A</span>
+      <span class="chip">Memory Tricks</span>
+    </div>
+    <p style="margin-top:28px; font-size:12px; color:#484f58;">Angular v22 &nbsp;·&nbsp; 10 Years Experience Level &nbsp;·&nbsp; 15 Slides</p>
+  </div>
+
+  <!-- ══ SLIDE 1 — CSR vs SSR vs SSG ══ -->
+  <div class="slide" id="s1">
+    <div class="slide-header"><span class="topic-badge">01</span><h1>CSR vs SSR vs SSG — Core Concepts</h1></div>
+    <div class="content">
+      <div class="three-col">
+        <div class="card accent-red">
+          <h3>🖥 CSR — Client-Side Rendering</h3>
+          <p><strong>Default Angular behaviour.</strong> Server sends a near-empty <code>index.html</code>. Browser downloads JS, executes it, and builds the DOM entirely on the client.</p>
+          <br/>
+          <ul>
+            <li>First paint: blank screen until JS loads</li>
+            <li>Bad for SEO (crawler sees empty HTML)</li>
+            <li>Good for apps behind login (no SEO needed)</li>
+            <li>Fast navigation after initial load</li>
+          </ul>
+        </div>
+        <div class="card accent-green">
+          <h3>🌐 SSR — Server-Side Rendering</h3>
+          <p><strong>Angular SSR (v22).</strong> Server renders the full HTML for every request and sends it to the browser. Browser displays content immediately, then hydrates.</p>
+          <br/>
+          <ul>
+            <li>First paint: full HTML — instant visibility</li>
+            <li>Great for SEO &amp; social media crawlers</li>
+            <li>Best for dynamic, frequently changing pages</li>
+            <li>Requires a running Node.js server</li>
+          </ul>
+        </div>
+        <div class="card accent-blue">
+          <h3>📄 SSG — Static Site Generation (Pre-rendering)</h3>
+          <p><strong>Build-time rendering.</strong> HTML is generated once at <code>ng build</code> and served as static files — no server needed at runtime.</p>
+          <br/>
+          <ul>
+            <li>Fastest possible delivery (CDN-cacheable)</li>
+            <li>Great for content that rarely changes</li>
+            <li>Best for blogs, docs, marketing pages</li>
+            <li>Cannot handle dynamic user-specific data</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="card accent-yellow">
+        <h3>📊 Comparison Table</h3>
+        <table style="margin-top:8px;">
+          <thead><tr><th>Aspect</th><th>CSR</th><th>SSR</th><th>SSG (Pre-render)</th></tr></thead>
+          <tbody>
+            <tr><td>HTML sent to browser</td><td>Empty shell</td><td>Full HTML (per request)</td><td>Full HTML (at build time)</td></tr>
+            <tr><td>Server required at runtime</td><td>❌ No</td><td>✅ Yes (Node.js)</td><td>❌ No (just CDN)</td></tr>
+            <tr><td>SEO / Crawlers</td><td><span class="badge badge-red">Poor</span></td><td><span class="badge badge-green">Excellent</span></td><td><span class="badge badge-green">Excellent</span></td></tr>
+            <tr><td>First Contentful Paint</td><td><span class="badge badge-red">Slow</span></td><td><span class="badge badge-green">Fast</span></td><td><span class="badge badge-green">Fastest</span></td></tr>
+            <tr><td>Dynamic per-user content</td><td>✅ Yes</td><td>✅ Yes</td><td>❌ No</td></tr>
+            <tr><td>Angular v22 support</td><td>Default</td><td><code>RenderMode.Server</code></td><td><code>RenderMode.Prerender</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="tip-box">
+        <div class="tip-hdr">✅ Angular v22 — Mix all three in ONE app per route</div>
+        <p>Using <code>app.routes.server.ts</code> you can configure each route individually: home page as <strong>Prerender</strong>, product page as <strong>Server</strong> (dynamic), admin page as <strong>Client</strong> (no SSR needed). This is the most powerful feature of Angular SSR v19+.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 2 — OLD vs NEW (What Changed) ══ -->
+  <div class="slide" id="s2">
+    <div class="slide-header"><span class="topic-badge">02</span><h1>What Changed — Angular Universal → Angular SSR</h1></div>
+    <div class="content">
+      <p style="font-size:13px;color:#8b949e;">Angular Universal was the old name for Angular's SSR solution. It was renamed and rebuilt as <strong>@angular/ssr</strong> starting Angular v17. Everything below marked ❌ is <strong>deprecated or removed</strong>.</p>
+
+      <div class="two-col">
+        <div class="del-box">
+          <div class="del-hdr">❌ OLD — Angular Universal (deprecated / removed)</div>
+          <ul>
+            <li>Package: <code>@nguniversal/express-engine</code></li>
+            <li>Setup: <code>ng add @nguniversal/express-engine</code></li>
+            <li>Class: <code>AppServerModule</code> — NgModule-based server module</li>
+            <li><code>ServerModule</code> from <code>@angular/platform-server</code></li>
+            <li><code>BrowserModule.withServerTransition({ appId })</code></li>
+            <li><code>renderModule()</code> / <code>renderModuleFactory()</code></li>
+            <li>Two separate <code>main.ts</code> files (browser + server)</li>
+            <li>Manual <code>ngExpressEngine</code> setup in <code>server.ts</code></li>
+          </ul>
+        </div>
+        <div class="tip-box">
+          <div class="tip-hdr">✅ NEW — @angular/ssr (Angular v17+ / v22)</div>
+          <ul>
+            <li>Package: <code>@angular/ssr</code></li>
+            <li>Setup: <code>ng add @angular/ssr</code></li>
+            <li>Standalone API: <code>provideServerRendering()</code></li>
+            <li><code>app.config.server.ts</code> — server-specific providers</li>
+            <li><code>app.routes.server.ts</code> — per-route render mode (v19+)</li>
+            <li><code>RenderMode.Server</code> / <code>RenderMode.Prerender</code> / <code>RenderMode.Client</code></li>
+            <li>Single unified <code>server.ts</code> with Express</li>
+            <li>Non-destructive hydration built-in: <code>provideClientHydration()</code></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="code-block"><pre><span class="cmt">// ── OLD: AppServerModule (Angular Universal — DEPRECATED ❌) ────────────────</span>
+<span class="dec">@NgModule</span>({
+  <span class="var">imports</span>: [<span class="cls">AppModule</span>, <span class="cls">ServerModule</span>],  <span class="cmt">// ❌ ServerModule is removed</span>
+})
+<span class="kw">export class</span> <span class="cls">AppServerModule</span> {}         <span class="cmt">// ❌ Not needed anymore</span>
+
+<span class="cmt">// ── NEW: app.config.server.ts (Angular v22 ✅) ──────────────────────────────</span>
+<span class="kw">import</span> { <span class="fn">mergeApplicationConfig</span>, <span class="cls">ApplicationConfig</span> } <span class="kw">from</span> <span class="str">'@angular/core'</span>;
+<span class="kw">import</span> { <span class="fn">provideServerRendering</span> } <span class="kw">from</span> <span class="str">'@angular/platform-server'</span>;
+<span class="kw">import</span> { <span class="fn">provideServerRoutesConfig</span> } <span class="kw">from</span> <span class="str">'@angular/ssr'</span>;
+<span class="kw">import</span> { <span class="var">serverRoutes</span> } <span class="kw">from</span> <span class="str">'./app.routes.server'</span>;
+<span class="kw">import</span> { <span class="var">appConfig</span> } <span class="kw">from</span> <span class="str">'./app.config'</span>;
+
+<span class="kw">const</span> <span class="var">serverConfig</span>: <span class="cls">ApplicationConfig</span> = {
+  <span class="var">providers</span>: [
+    <span class="fn">provideServerRendering</span>(),              <span class="cmt">// ✅ enables SSR</span>
+    <span class="fn">provideServerRoutesConfig</span>(<span class="var">serverRoutes</span>) <span class="cmt">// ✅ per-route render modes</span>
+  ]
+};
+
+<span class="kw">export const</span> <span class="var">config</span> = <span class="fn">mergeApplicationConfig</span>(<span class="var">appConfig</span>, <span class="var">serverConfig</span>);</pre></div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 3 — SETUP ══ -->
+  <div class="slide" id="s3">
+    <div class="slide-header"><span class="topic-badge">03</span><h1>Setting Up Angular SSR — Files Generated</h1></div>
+    <div class="content">
+      <div class="two-col">
+        <div class="code-block"><pre><span class="cmt"># ── Add SSR to existing Angular v22 project ────</span>
+<span class="fn">ng add</span> @angular/ssr
+
+<span class="cmt"># OR create new project with SSR from scratch:</span>
+<span class="fn">ng new</span> my-app --ssr
+
+<span class="cmt"># Dev server with SSR:</span>
+<span class="fn">ng serve</span>              <span class="cmt">// works the same</span>
+
+<span class="cmt"># Production build:</span>
+<span class="fn">ng build</span>
+<span class="cmt"># Output:</span>
+<span class="op">dist/my-app/</span>
+  <span class="op">browser/</span>         <span class="cmt">// static assets + client JS</span>
+  <span class="op">server/</span>          <span class="cmt">// Node.js server bundle</span>
+    <span class="var">server.mjs</span>     <span class="cmt">// Express server entry</span>
+
+<span class="cmt"># Run production SSR server:</span>
+<span class="fn">node</span> dist/my-app/server/server.mjs</pre></div>
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          <div class="card accent-green">
+            <h3>Files Added by ng add @angular/ssr</h3>
+            <ul>
+              <li><code>server.ts</code> — Express server entry point</li>
+              <li><code>app.config.server.ts</code> — server-side providers</li>
+              <li><code>app.routes.server.ts</code> — per-route render modes</li>
+              <li><code>tsconfig.server.json</code> — TypeScript config for server</li>
+              <li><code>angular.json</code> — updated with SSR builder options</li>
+            </ul>
+          </div>
+          <div class="card accent-blue">
+            <h3>Files Modified</h3>
+            <ul>
+              <li><code>app.config.ts</code> — <code>provideClientHydration()</code> added</li>
+              <li><code>angular.json</code> — <code>server</code> target + SSR options added</li>
+              <li><code>package.json</code> — <code>@angular/ssr</code> + Express added</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="code-block"><pre><span class="cmt">// ── server.ts — Express server (generated by CLI) ───────────────────────────</span>
+<span class="kw">import</span> { <span class="fn">APP_BASE_HREF</span> } <span class="kw">from</span> <span class="str">'@angular/common'</span>;
+<span class="kw">import</span> { <span class="fn">CommonEngine</span> }  <span class="kw">from</span> <span class="str">'@angular/ssr/node'</span>;
+<span class="kw">import express</span> <span class="kw">from</span> <span class="str">'express'</span>;
+<span class="kw">import</span> { <span class="fn">fileURLToPath</span> } <span class="kw">from</span> <span class="str">'node:url'</span>;
+<span class="kw">import</span> { <span class="fn">dirname</span>, <span class="fn">join</span>, <span class="fn">resolve</span> } <span class="kw">from</span> <span class="str">'node:path'</span>;
+<span class="kw">import bootstrap</span> <span class="kw">from</span> <span class="str">'./src/main.server'</span>;
+
+<span class="kw">const</span> <span class="var">serverDistFolder</span> = <span class="fn">dirname</span>(<span class="fn">fileURLToPath</span>(<span class="kw">import</span>.<span class="var">meta</span>.<span class="var">url</span>));
+<span class="kw">const</span> <span class="var">browserDistFolder</span> = <span class="fn">resolve</span>(<span class="var">serverDistFolder</span>, <span class="str">'../browser'</span>);
+<span class="kw">const</span> <span class="var">app</span> = <span class="fn">express</span>();
+<span class="kw">const</span> <span class="var">engine</span> = <span class="kw">new</span> <span class="cls">CommonEngine</span>();
+
+<span class="cmt">// Serve static browser assets</span>
+<span class="var">app</span>.<span class="fn">use</span>(<span class="fn">express</span>.<span class="fn">static</span>(<span class="var">browserDistFolder</span>));
+
+<span class="cmt">// All other routes → render with Angular SSR</span>
+<span class="var">app</span>.<span class="fn">get</span>(<span class="str">'*'</span>, (<span class="var">req</span>, <span class="var">res</span>, <span class="var">next</span>) => {
+  <span class="var">engine</span>.<span class="fn">render</span>({
+    <span class="var">bootstrap</span>,
+    <span class="var">documentFilePath</span>: <span class="fn">join</span>(<span class="var">browserDistFolder</span>, <span class="str">'index.html'</span>),
+    <span class="var">url</span>: <span class="var">req</span>.<span class="var">originalUrl</span>,
+    <span class="var">publicPath</span>: <span class="var">browserDistFolder</span>,
+    <span class="var">providers</span>: [{ <span class="var">provide</span>: <span class="cls">APP_BASE_HREF</span>, <span class="var">useValue</span>: <span class="var">req</span>.<span class="var">baseUrl</span> }]
+  }).<span class="fn">then</span>(<span class="var">html</span> => <span class="var">res</span>.<span class="fn">send</span>(<span class="var">html</span>))
+    .<span class="fn">catch</span>(<span class="var">next</span>);
+});</pre></div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 4 — RENDERMODE PER ROUTE ══ -->
+  <div class="slide" id="s4">
+    <div class="slide-header"><span class="topic-badge">04</span><h1>RenderMode Per Route — Angular v19+ / v22</h1></div>
+    <div class="content">
+      <p style="font-size:13px;color:#8b949e;">The biggest Angular SSR feature since v19. Each route can have its own rendering strategy — <strong>Server</strong>, <strong>Prerender</strong>, or <strong>Client</strong> — all in one app.</p>
+
+      <div class="three-col">
+        <div class="card accent-green">
+          <h3>RenderMode.Prerender</h3>
+          <ul>
+            <li>HTML generated at <strong>build time</strong></li>
+            <li>Served as static file — fastest delivery</li>
+            <li>Best for: home, about, blog listing, product catalogue</li>
+            <li>No Node.js needed for this route</li>
+          </ul>
+        </div>
+        <div class="card accent-blue">
+          <h3>RenderMode.Server</h3>
+          <ul>
+            <li>HTML generated on <strong>every request</strong></li>
+            <li>Can access request headers, cookies, session</li>
+            <li>Best for: product detail (real-time price/stock), user profile</li>
+            <li>Requires running Node.js server</li>
+          </ul>
+        </div>
+        <div class="card accent-purple">
+          <h3>RenderMode.Client</h3>
+          <ul>
+            <li>Standard CSR — no SSR for this route</li>
+            <li>Browser renders entirely client-side</li>
+            <li>Best for: admin panels, dashboards behind auth</li>
+            <li>No SEO needed, heavy interactivity</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="code-block"><pre><span class="cmt">// ── app.routes.server.ts — per-route render mode (Angular v19+ / v22) ───────</span>
+<span class="kw">import</span> { <span class="cls">RenderMode</span>, <span class="cls">ServerRoute</span> } <span class="kw">from</span> <span class="str">'@angular/ssr'</span>;
+
+<span class="kw">export const</span> <span class="var">serverRoutes</span>: <span class="cls">ServerRoute</span>[] = [
+  {
+    <span class="var">path</span>: <span class="str">''</span>,                              <span class="cmt">// home page</span>
+    <span class="var">renderMode</span>: <span class="cls">RenderMode</span>.<span class="var">Prerender</span>      <span class="cmt">// ✅ static HTML at build time</span>
+  },
+  {
+    <span class="var">path</span>: <span class="str">'products'</span>,
+    <span class="var">renderMode</span>: <span class="cls">RenderMode</span>.<span class="var">Prerender</span>      <span class="cmt">// product listing — static</span>
+  },
+  {
+    <span class="var">path</span>: <span class="str">'products/:id'</span>,
+    <span class="var">renderMode</span>: <span class="cls">RenderMode</span>.<span class="var">Server</span>,        <span class="cmt">// dynamic — real-time stock/price</span>
+    <span class="cmt">// fallback if route not prerendered:</span>
+    <span class="var">fallback</span>: <span class="cls">PrerenderFallback</span>.<span class="var">Server</span>
+  },
+  {
+    <span class="var">path</span>: <span class="str">'admin'</span>,
+    <span class="var">renderMode</span>: <span class="cls">RenderMode</span>.<span class="var">Client</span>         <span class="cmt">// CSR — behind auth, no SEO needed</span>
+  },
+  {
+    <span class="var">path</span>: <span class="str">'**'</span>,                             <span class="cmt">// catch-all wildcard</span>
+    <span class="var">renderMode</span>: <span class="cls">RenderMode</span>.<span class="var">Prerender</span>,
+    <span class="var">fallback</span>: <span class="cls">PrerenderFallback</span>.<span class="var">Client</span>    <span class="cmt">// unknown routes fall back to CSR</span>
+  }
+];
+
+<span class="cmt">// ── Prerendering dynamic routes — provide all IDs ────────────────────────────</span>
+{
+  <span class="var">path</span>: <span class="str">'blog/:slug'</span>,
+  <span class="var">renderMode</span>: <span class="cls">RenderMode</span>.<span class="var">Prerender</span>,
+  <span class="kw">async</span> <span class="fn">getPrerenderParams</span>() {
+    <span class="cmt">// fetch slugs from CMS/API at build time</span>
+    <span class="kw">const</span> <span class="var">posts</span> = <span class="kw">await</span> <span class="fn">fetch</span>(<span class="str">'https://api.myblog.com/posts'</span>).<span class="fn">then</span>(<span class="var">r</span> => <span class="var">r</span>.<span class="fn">json</span>());
+    <span class="kw">return</span> <span class="var">posts</span>.<span class="fn">map</span>((<span class="var">p</span>: <span class="typ">any</span>) => ({ <span class="var">slug</span>: <span class="var">p</span>.<span class="var">slug</span> }));
+  }
+}</pre></div>
+
+      <div class="tip-box">
+        <div class="tip-hdr">✅ Senior Pattern — Hybrid Rendering Strategy</div>
+        <p>In a real e-commerce app: <strong>Home + Category</strong> = Prerender (static, CDN-cached), <strong>Product Detail</strong> = Server (real-time price/stock), <strong>Checkout + Dashboard</strong> = Client (auth-protected, no SSR needed). One app, three strategies, maximum performance.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 5 — HOW SSR RENDERING WORKS ══ -->
+  <div class="slide" id="s5">
+    <div class="slide-header"><span class="topic-badge">05</span><h1>How Angular SSR Renders — Under the Hood</h1></div>
+    <div class="content">
+
+      <div class="tab-bar">
+        <button class="tab-btn active" onclick="switchTab(event,'s5','server')">🌐 Server Render Flow</button>
+        <button class="tab-btn"        onclick="switchTab(event,'s5','hydrate')">💧 Hydration Flow</button>
+        <button class="tab-btn"        onclick="switchTab(event,'s5','prerender')">📄 Pre-render Flow</button>
+      </div>
+
+      <!-- Server Render -->
+      <div class="tab-panel active" id="s5-server">
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div class="step"><div class="step-num">1</div><div><strong>Browser sends HTTP GET /products/42</strong><br/><span style="font-size:12px;color:#8b949e;">Request hits your Node.js Express server.</span></div></div>
+          <div class="step"><div class="step-num">2</div><div><strong>CommonEngine.render() is called</strong><br/><span style="font-size:12px;color:#8b949e;">Angular's <code>CommonEngine</code> bootstraps the app <em>in Node.js</em> — no browser DOM. Angular creates a virtual DOM in memory using <code>platform-server</code>.</span></div></div>
+          <div class="step"><div class="step-num">3</div><div><strong>Angular router activates the /products/:id route on the server</strong><br/><span style="font-size:12px;color:#8b949e;">HTTP calls are made from the server (using <code>HttpClient</code>). Resolvers run. Components render to an HTML string.</span></div></div>
+          <div class="step"><div class="step-num">4</div><div><strong>TransferState serialises server data into the HTML</strong><br/><span style="font-size:12px;color:#8b949e;">API response data is embedded as a JSON blob in a <code>&lt;script type="application/json"&gt;</code> tag inside the HTML — so the browser won't re-fetch it.</span></div></div>
+          <div class="step"><div class="step-num">5</div><div><strong>Server sends the complete HTML string to the browser</strong><br/><span style="font-size:12px;color:#8b949e;">Browser displays the full page immediately — First Contentful Paint is instant.</span></div></div>
+          <div class="step"><div class="step-num">6</div><div><strong>Browser downloads main.js and runs Angular bootstrap</strong><br/><span style="font-size:12px;color:#8b949e;">Angular starts on the client side. Instead of destroying the server-rendered DOM and rebuilding (old way), it <strong>hydrates</strong> — attaches event listeners to the existing DOM.</span></div></div>
+        </div>
+        <div class="flow" style="margin-top:8px;">
+          <div class="flow-box blue">HTTP Request</div><div class="flow-arrow">→</div>
+          <div class="flow-box purple">Express Server</div><div class="flow-arrow">→</div>
+          <div class="flow-box orange">CommonEngine.render()</div><div class="flow-arrow">→</div>
+          <div class="flow-box blue">Angular on Node</div><div class="flow-arrow">→</div>
+          <div class="flow-box purple">HTML String</div><div class="flow-arrow">→</div>
+          <div class="flow-box green">Browser displays ✅</div><div class="flow-arrow">→</div>
+          <div class="flow-box green">Hydration ✅</div>
+        </div>
+      </div>
+
+      <!-- Hydration -->
+      <div class="tab-panel" id="s5-hydrate">
+        <div class="two-col">
+          <div class="card accent-red">
+            <h3>❌ Old Hydration (Destructive)</h3>
+            <p>After the Angular client bundle loaded, it would <strong>completely throw away the server-rendered DOM</strong> and rebuild everything from scratch. This caused a visible flicker, CLS (layout shift), and wasted the SSR effort.</p>
+          </div>
+          <div class="card accent-green">
+            <h3>✅ Non-Destructive Hydration (Angular 16+ / v22)</h3>
+            <p>Angular <strong>reuses the server-rendered DOM</strong>. It only attaches event listeners and fills in any missing pieces. No flicker, no CLS, no wasted server work. Enabled by <code>provideClientHydration()</code>.</p>
+          </div>
+        </div>
+        <div class="code-block"><pre><span class="cmt">// app.config.ts — enable non-destructive hydration ✅</span>
+<span class="kw">import</span> { <span class="fn">provideClientHydration</span>, <span class="fn">withEventReplay</span> } <span class="kw">from</span> <span class="str">'@angular/platform-browser'</span>;
+
+<span class="kw">export const</span> <span class="var">appConfig</span>: <span class="cls">ApplicationConfig</span> = {
+  <span class="var">providers</span>: [
+    <span class="fn">provideRouter</span>(<span class="var">routes</span>),
+    <span class="fn">provideClientHydration</span>(
+      <span class="fn">withEventReplay</span>()   <span class="cmt">// ✅ captures events during hydration gap</span>
+    )
+  ]
+};
+
+<span class="cmt">// withEventReplay() — what problem does it solve?</span>
+<span class="cmt">// Gap between: server HTML displayed → Angular client JS loads</span>
+<span class="cmt">// If user clicks during this gap, the event is LOST without withEventReplay()</span>
+<span class="cmt">// withEventReplay() queues events and replays them once Angular is ready ✅</span></pre></div>
+        <div class="tip-box">
+          <div class="tip-hdr">✅ Incremental Hydration (@defer)</div>
+          <p>In Angular v17+ / v22, parts of the page wrapped in <code>@defer</code> blocks are <strong>hydrated only when needed</strong> (on viewport, on interaction, etc.) — not all at once. This reduces TBT dramatically for content-heavy pages.</p>
+        </div>
+      </div>
+
+      <!-- Prerender -->
+      <div class="tab-panel" id="s5-prerender">
+        <div class="two-col">
+          <div class="card accent-blue">
+            <h3>How Pre-rendering Works</h3>
+            <ul>
+              <li>During <code>ng build</code>, Angular boots the SSR engine once per route</li>
+              <li>Renders each route to a static <code>index.html</code> file</li>
+              <li>No server needed at runtime — serve with any CDN/static host</li>
+              <li>For dynamic routes, <code>getPrerenderParams()</code> provides all parameter combinations</li>
+            </ul>
+          </div>
+          <div class="code-block"><pre><span class="cmt">// Build output with pre-rendering:</span>
+<span class="op">dist/my-app/browser/</span>
+  <span class="var">index.html</span>              <span class="cmt">// /  (home)</span>
+  <span class="op">products/</span>
+    <span class="var">index.html</span>            <span class="cmt">// /products</span>
+  <span class="op">products/1/</span>
+    <span class="var">index.html</span>            <span class="cmt">// /products/1</span>
+  <span class="op">products/2/</span>
+    <span class="var">index.html</span>            <span class="cmt">// /products/2</span>
+  <span class="op">blog/</span>
+    <span class="op">my-first-post/</span>
+      <span class="var">index.html</span>          <span class="cmt">// /blog/my-first-post</span></pre></div>
+        </div>
+        <div class="warn-box">
+          <div class="warn-hdr">⚠️ Pre-rendering Limitation</div>
+          <p>Pre-rendered pages are static — they cannot show user-specific data (logged-in user name, cart count). Use <code>RenderMode.Server</code> for those routes, or use client-side data fetching after hydration for user-specific parts.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 6 — APPLICATION SHELL ══ -->
+  <div class="slide" id="s6">
+    <div class="slide-header"><span class="topic-badge">06</span><h1>Application Shell</h1></div>
+    <div class="content">
+      <div class="two-col">
+        <div class="card accent-cyan">
+          <h3>What is Application Shell?</h3>
+          <p>A minimal version of your app (header, navigation, skeleton layout) that is <strong>pre-rendered and served instantly</strong>, while the rest of the content loads asynchronously. Defined as a separate Angular route rendered at build time.</p>
+          <br/>
+          <p>It is the visible UI <em>wrapper</em> of your app that appears before the actual route content loads. Think of it as the skeleton that's always there.</p>
+        </div>
+        <div class="card accent-orange">
+          <h3>Why use it?</h3>
+          <ul>
+            <li>User sees meaningful content (nav, header) <strong>instantly</strong> — reduces perceived loading time</li>
+            <li>Avoids blank white screen during JS download</li>
+            <li>Excellent for PWA (Progressive Web App) scenarios</li>
+            <li>Shell is cached in Service Worker — available offline</li>
+            <li>Lighthouse scores improve significantly</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="code-block"><pre><span class="cmt">// ── Step 1: Generate App Shell via CLI ──────────────────────────────────────</span>
+<span class="fn">ng generate</span> app-shell
+
+<span class="cmt">// ── Step 2: app-shell.component.ts — minimal shell UI ───────────────────────</span>
+<span class="dec">@Component</span>({
+  <span class="var">standalone</span>: <span class="kw">true</span>,
+  <span class="var">imports</span>: [<span class="cls">RouterLink</span>],
+  <span class="var">template</span>: <span class="str">`
+    &lt;header&gt;
+      &lt;nav&gt;
+        &lt;a routerLink="/"&gt;Home&lt;/a&gt;
+        &lt;a routerLink="/products"&gt;Products&lt;/a&gt;
+      &lt;/nav&gt;
+    &lt;/header&gt;
+    &lt;main&gt;
+      &lt;!-- Skeleton loader shown during content load --&gt;
+      &lt;div class="skeleton-hero"&gt;&lt;/div&gt;
+      &lt;div class="skeleton-cards"&gt;&lt;/div&gt;
+    &lt;/main&gt;
+  `</span>
+})
+<span class="kw">export class</span> <span class="cls">AppShellComponent</span> {}
+
+<span class="cmt">// ── Step 3: app.routes.server.ts — shell route config ───────────────────────</span>
+<span class="kw">export const</span> <span class="var">serverRoutes</span>: <span class="cls">ServerRoute</span>[] = [
+  {
+    <span class="var">path</span>: <span class="str">'shell'</span>,                       <span class="cmt">// special internal route</span>
+    <span class="var">renderMode</span>: <span class="cls">RenderMode</span>.<span class="var">AppShell</span>    <span class="cmt">// ✅ renders this as the shell</span>
+  },
+  <span class="cmt">// ... other routes</span>
+];
+
+<span class="cmt">// ── angular.json — configure app-shell builder ──────────────────────────────</span>
+<span class="str">"app-shell"</span>: {
+  <span class="str">"builder"</span>: <span class="str">"@angular-devkit/build-angular:app-shell"</span>,
+  <span class="str">"options"</span>: {
+    <span class="str">"route"</span>: <span class="str">"shell"</span>   <span class="cmt">// the route that renders the shell HTML</span>
+  }
+}</pre></div>
+
+      <div class="two-col">
+        <div class="tip-box">
+          <div class="tip-hdr">✅ App Shell = Instant Perceived Performance</div>
+          <p>App Shell is pre-rendered once at build time. On every visit the browser gets the shell HTML <em>immediately</em> from Service Worker cache — even on slow networks. Route content then loads into the <code>&lt;router-outlet&gt;</code>.</p>
+        </div>
+        <div class="warn-box">
+          <div class="warn-hdr">⚠️ Keep Shell Minimal</div>
+          <p>Shell should contain <strong>only structural elements</strong> (nav, header, skeleton). Do NOT include any data-dependent components. If the shell is too heavy, it defeats the purpose.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 7 — TRANSFER STATE ══ -->
+  <div class="slide" id="s7">
+    <div class="slide-header"><span class="topic-badge">07</span><h1>TransferState API — Prevent Double HTTP Requests</h1></div>
+    <div class="content">
+      <div class="card accent-yellow">
+        <h3>The Problem — Double HTTP Request</h3>
+        <p>Without TransferState: server renders a page, makes an API call to fetch products, embeds the data in HTML. Then the browser gets the HTML, Angular hydrates, <strong>makes the same API call again</strong> — wasting a network request and causing a re-render flash.</p>
+      </div>
+
+      <div class="two-col">
+        <div class="card accent-red">
+          <h3>❌ Without TransferState</h3>
+          <div class="flow" style="flex-direction:column;gap:6px;margin-top:8px;">
+            <div class="flow-box orange" style="width:100%">Server: GET /api/products → renders HTML</div>
+            <div style="color:#484f58;padding-left:8px;">↓ HTML sent to browser</div>
+            <div class="flow-box blue" style="width:100%">Browser: Angular hydrates</div>
+            <div class="flow-box red" style="width:100%">Browser: GET /api/products AGAIN ❌</div>
+            <div class="flow-box red" style="width:100%">Page re-renders with same data 😤</div>
+          </div>
+        </div>
+        <div class="card accent-green">
+          <h3>✅ With TransferState</h3>
+          <div class="flow" style="flex-direction:column;gap:6px;margin-top:8px;">
+            <div class="flow-box orange" style="width:100%">Server: GET /api/products → renders HTML</div>
+            <div class="flow-box green" style="width:100%">Server: embeds data in &lt;script&gt; tag in HTML</div>
+            <div style="color:#484f58;padding-left:8px;">↓ HTML + embedded data sent to browser</div>
+            <div class="flow-box blue" style="width:100%">Browser: Angular hydrates</div>
+            <div class="flow-box green" style="width:100%">Browser: reads data from &lt;script&gt; tag — no HTTP ✅</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="code-block"><pre><span class="cmt">// ── Angular v22 — HttpClient + TransferState is AUTOMATIC ✅ ────────────────</span>
+<span class="cmt">// Just add withHttpTransferCache() — no manual TransferState code needed!</span>
+
+<span class="cmt">// app.config.ts</span>
+<span class="kw">import</span> { <span class="fn">provideHttpClient</span>, <span class="fn">withFetch</span> } <span class="kw">from</span> <span class="str">'@angular/common/http'</span>;
+<span class="kw">import</span> { <span class="fn">provideClientHydration</span>, <span class="fn">withHttpTransferCache</span> } <span class="kw">from</span> <span class="str">'@angular/platform-browser'</span>;
+
+<span class="kw">export const</span> <span class="var">appConfig</span>: <span class="cls">ApplicationConfig</span> = {
+  <span class="var">providers</span>: [
+    <span class="fn">provideHttpClient</span>(<span class="fn">withFetch</span>()),   <span class="cmt">// use fetch() instead of XMLHttpRequest</span>
+    <span class="fn">provideClientHydration</span>(
+      <span class="fn">withHttpTransferCache</span>()           <span class="cmt">// ✅ auto cache + transfer HTTP responses</span>
+    )
+  ]
+};
+
+<span class="cmt">// ── Manual TransferState (when you need custom data transfer) ───────────────</span>
+<span class="kw">import</span> { <span class="cls">TransferState</span>, <span class="fn">makeStateKey</span> } <span class="kw">from</span> <span class="str">'@angular/core'</span>;
+
+<span class="kw">const</span> <span class="cls">PRODUCTS_KEY</span> = <span class="fn">makeStateKey</span>&lt;<span class="cls">Product</span>[]&gt;(<span class="str">'products'</span>); <span class="cmt">// typed key</span>
+
+<span class="dec">@Injectable</span>({ <span class="var">providedIn</span>: <span class="str">'root'</span> })
+<span class="kw">export class</span> <span class="cls">ProductService</span> {
+  <span class="kw">private</span> <span class="var">state</span>  = <span class="fn">inject</span>(<span class="cls">TransferState</span>);
+  <span class="kw">private</span> <span class="var">http</span>   = <span class="fn">inject</span>(<span class="cls">HttpClient</span>);
+  <span class="kw">private</span> <span class="var">isPlatformBrowser</span> = <span class="fn">isPlatformBrowser</span>(<span class="fn">inject</span>(<span class="cls">PLATFORM_ID</span>));
+
+  <span class="fn">getProducts</span>(): <span class="cls">Observable</span>&lt;<span class="cls">Product</span>[]&gt; {
+    <span class="kw">if</span> (<span class="kw">this</span>.<span class="var">isPlatformBrowser</span> &amp;&amp; <span class="kw">this</span>.<span class="var">state</span>.<span class="fn">hasKey</span>(<span class="cls">PRODUCTS_KEY</span>)) {
+      <span class="kw">const</span> <span class="var">data</span> = <span class="kw">this</span>.<span class="var">state</span>.<span class="fn">get</span>(<span class="cls">PRODUCTS_KEY</span>, []);
+      <span class="kw">this</span>.<span class="var">state</span>.<span class="fn">remove</span>(<span class="cls">PRODUCTS_KEY</span>);   <span class="cmt">// clean up after use</span>
+      <span class="kw">return</span> <span class="fn">of</span>(<span class="var">data</span>);                   <span class="cmt">// return cached — no HTTP ✅</span>
+    }
+    <span class="kw">return</span> <span class="kw">this</span>.<span class="var">http</span>.<span class="fn">get</span>&lt;<span class="cls">Product</span>[]&gt;(<span class="str">'/api/products'</span>).<span class="fn">pipe</span>(
+      <span class="fn">tap</span>(<span class="var">data</span> => <span class="kw">this</span>.<span class="var">state</span>.<span class="fn">set</span>(<span class="cls">PRODUCTS_KEY</span>, <span class="var">data</span>))  <span class="cmt">// store on server</span>
+    );
+  }
+}</pre></div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 8 — SEO ══ -->
+  <div class="slide" id="s8">
+    <div class="slide-header"><span class="topic-badge">08</span><h1>SEO &amp; Social Media Optimization</h1></div>
+    <div class="content">
+      <div class="two-col">
+        <div class="card accent-green">
+          <h3>Why SSR is needed for SEO</h3>
+          <p>Search engine crawlers (Googlebot, Bingbot) and social media bots (Facebook, Twitter/X, LinkedIn) read the initial HTML. With CSR they see an empty <code>&lt;app-root&gt;&lt;/app-root&gt;</code>. With SSR they see full content + meta tags.</p>
+        </div>
+        <div class="card accent-blue">
+          <h3>Angular Services for SEO</h3>
+          <ul>
+            <li><code>Title</code> service — sets <code>&lt;title&gt;</code> tag</li>
+            <li><code>Meta</code> service — sets <code>&lt;meta&gt;</code> tags</li>
+            <li>Both work on server AND client side</li>
+            <li>Set them in component <code>ngOnInit</code> or resolver</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="code-block"><pre><span class="cmt">// ── product-detail.component.ts — complete SEO setup ────────────────────────</span>
+<span class="kw">import</span> { <span class="cls">Component</span>, <span class="fn">inject</span>, <span class="fn">signal</span> } <span class="kw">from</span> <span class="str">'@angular/core'</span>;
+<span class="kw">import</span> { <span class="cls">Meta</span>, <span class="cls">Title</span> } <span class="kw">from</span> <span class="str">'@angular/platform-browser'</span>;
+
+<span class="dec">@Component</span>({ <span class="var">standalone</span>: <span class="kw">true</span>, ... })
+<span class="kw">export class</span> <span class="cls">ProductDetailComponent</span> {
+  <span class="kw">private</span> <span class="var">title</span> = <span class="fn">inject</span>(<span class="cls">Title</span>);
+  <span class="kw">private</span> <span class="var">meta</span>  = <span class="fn">inject</span>(<span class="cls">Meta</span>);
+
+  <span class="fn">ngOnInit</span>() {
+    <span class="kw">const</span> <span class="var">product</span> = <span class="kw">this</span>.<span class="var">product</span>(); <span class="cmt">// signal or resolved data</span>
+
+    <span class="cmt">// 1. Page title (shown in browser tab + Google results)</span>
+    <span class="kw">this</span>.<span class="var">title</span>.<span class="fn">setTitle</span>(<span class="str">`${product.name} | MyShop`</span>);
+
+    <span class="cmt">// 2. Basic SEO meta tags</span>
+    <span class="kw">this</span>.<span class="var">meta</span>.<span class="fn">updateTag</span>({ <span class="var">name</span>: <span class="str">'description'</span>, <span class="var">content</span>: <span class="var">product</span>.<span class="var">description</span> });
+    <span class="kw">this</span>.<span class="var">meta</span>.<span class="fn">updateTag</span>({ <span class="var">name</span>: <span class="str">'keywords'</span>,    <span class="var">content</span>: <span class="var">product</span>.<span class="var">tags</span>.<span class="fn">join</span>(<span class="str">', '</span>) });
+
+    <span class="cmt">// 3. Open Graph — controls how page looks when shared on Facebook/LinkedIn</span>
+    <span class="kw">this</span>.<span class="var">meta</span>.<span class="fn">updateTag</span>({ <span class="var">property</span>: <span class="str">'og:title'</span>,       <span class="var">content</span>: <span class="var">product</span>.<span class="var">name</span> });
+    <span class="kw">this</span>.<span class="var">meta</span>.<span class="fn">updateTag</span>({ <span class="var">property</span>: <span class="str">'og:description'</span>, <span class="var">content</span>: <span class="var">product</span>.<span class="var">description</span> });
+    <span class="kw">this</span>.<span class="var">meta</span>.<span class="fn">updateTag</span>({ <span class="var">property</span>: <span class="str">'og:image'</span>,       <span class="var">content</span>: <span class="var">product</span>.<span class="var">imageUrl</span> });
+    <span class="kw">this</span>.<span class="var">meta</span>.<span class="fn">updateTag</span>({ <span class="var">property</span>: <span class="str">'og:url'</span>,         <span class="var">content</span>: <span class="str">`https://myshop.com/products/${product.id}`</span> });
+    <span class="kw">this</span>.<span class="var">meta</span>.<span class="fn">updateTag</span>({ <span class="var">property</span>: <span class="str">'og:type'</span>,        <span class="var">content</span>: <span class="str">'product'</span> });
+
+    <span class="cmt">// 4. Twitter Card — controls Twitter/X preview</span>
+    <span class="kw">this</span>.<span class="var">meta</span>.<span class="fn">updateTag</span>({ <span class="var">name</span>: <span class="str">'twitter:card'</span>,  <span class="var">content</span>: <span class="str">'summary_large_image'</span> });
+    <span class="kw">this</span>.<span class="var">meta</span>.<span class="fn">updateTag</span>({ <span class="var">name</span>: <span class="str">'twitter:title'</span>, <span class="var">content</span>: <span class="var">product</span>.<span class="var">name</span> });
+    <span class="kw">this</span>.<span class="var">meta</span>.<span class="fn">updateTag</span>({ <span class="var">name</span>: <span class="str">'twitter:image'</span>, <span class="var">content</span>: <span class="var">product</span>.<span class="var">imageUrl</span> });
+  }
+}</pre></div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 9 — PITFALLS ══ -->
+  <div class="slide" id="s9">
+    <div class="slide-header"><span class="topic-badge">09</span><h1>Pitfalls — Browser-Only APIs &amp; Common Mistakes</h1></div>
+    <div class="content">
+      <div class="card accent-red">
+        <h3>⚠️ The Core Problem</h3>
+        <p>Angular SSR runs your code in <strong>Node.js</strong> — there is no <code>window</code>, no <code>document</code>, no <code>localStorage</code>, no <code>navigator</code>. Any code that uses these browser-only globals will <strong>crash the server</strong> with <code>ReferenceError: window is not defined</code>.</p>
+      </div>
+
+      <div class="code-block"><pre><span class="cmt">// ── WRONG — crashes on server ❌ ──────────────────────────────────────────</span>
+<span class="kw">export class</span> <span class="cls">MyComponent</span> {
+  <span class="fn">ngOnInit</span>() {
+    <span class="var">window</span>.<span class="fn">scrollTo</span>(<span class="num">0</span>, <span class="num">0</span>);            <span class="cmt">// ❌ window doesn't exist in Node</span>
+    <span class="var">localStorage</span>.<span class="fn">setItem</span>(<span class="str">'x'</span>, <span class="str">'1'</span>);   <span class="cmt">// ❌ localStorage is undefined</span>
+    <span class="var">document</span>.<span class="fn">getElementById</span>(<span class="str">'app'</span>);   <span class="cmt">// ❌ document doesn't exist in Node</span>
+  }
+}
+
+<span class="cmt">// ── FIX 1: isPlatformBrowser() guard ✅ ─────────────────────────────────────</span>
+<span class="kw">import</span> { <span class="fn">isPlatformBrowser</span> } <span class="kw">from</span> <span class="str">'@angular/common'</span>;
+<span class="kw">import</span> { <span class="cls">PLATFORM_ID</span>, <span class="fn">inject</span> } <span class="kw">from</span> <span class="str">'@angular/core'</span>;
+
+<span class="kw">export class</span> <span class="cls">MyComponent</span> {
+  <span class="kw">private</span> <span class="var">platformId</span> = <span class="fn">inject</span>(<span class="cls">PLATFORM_ID</span>);
+
+  <span class="fn">ngOnInit</span>() {
+    <span class="kw">if</span> (<span class="fn">isPlatformBrowser</span>(<span class="kw">this</span>.<span class="var">platformId</span>)) {
+      <span class="var">window</span>.<span class="fn">scrollTo</span>(<span class="num">0</span>, <span class="num">0</span>);          <span class="cmt">// ✅ only runs in browser</span>
+      <span class="var">localStorage</span>.<span class="fn">setItem</span>(<span class="str">'x'</span>, <span class="str">'1'</span>); <span class="cmt">// ✅</span>
+    }
+  }
+}
+
+<span class="cmt">// ── FIX 2: Inject DOCUMENT token (safe DOM access) ✅ ──────────────────────</span>
+<span class="kw">import</span> { <span class="cls">DOCUMENT</span> } <span class="kw">from</span> <span class="str">'@angular/common'</span>;
+
+<span class="kw">export class</span> <span class="cls">MyComponent</span> {
+  <span class="kw">private</span> <span class="var">doc</span> = <span class="fn">inject</span>(<span class="cls">DOCUMENT</span>);  <span class="cmt">// SSR-safe — Angular provides a mock doc</span>
+
+  <span class="fn">scrollToTop</span>() {
+    <span class="kw">this</span>.<span class="var">doc</span>.<span class="fn">defaultView</span>?.<span class="fn">scrollTo</span>(<span class="num">0</span>, <span class="num">0</span>); <span class="cmt">// null-safe ✅</span>
+  }
+}
+
+<span class="cmt">// ── FIX 3: afterNextRender / afterRender (Angular 16+) ✅ ──────────────────</span>
+<span class="kw">import</span> { <span class="fn">afterNextRender</span> } <span class="kw">from</span> <span class="str">'@angular/core'</span>;
+
+<span class="kw">export class</span> <span class="cls">ChartComponent</span> {
+  <span class="fn">constructor</span>() {
+    <span class="fn">afterNextRender</span>(() => {
+      <span class="cmt">// This ONLY runs in the browser, NEVER on server ✅</span>
+      <span class="kw">new</span> <span class="cls">Chart</span>(<span class="var">document</span>.<span class="fn">getElementById</span>(<span class="str">'myChart'</span>), { ... });
+    });
+  }
+}</pre></div>
+
+      <div class="two-col">
+        <div class="warn-box">
+          <div class="warn-hdr">⚠️ Common Pitfall: setTimeout / setInterval</div>
+          <p>Timers left running on the server prevent the render from completing. Use <code>isPlatformBrowser</code> guard or <code>afterNextRender</code> for any timer logic.</p>
+        </div>
+        <div class="tip-box">
+          <div class="tip-hdr">✅ afterNextRender — Best Practice for DOM Access</div>
+          <p>Prefer <code>afterNextRender()</code> over <code>isPlatformBrowser</code> for DOM manipulation. It's cleaner, explicitly signals "browser-only", and works correctly with SSR + hydration.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 10 — PERFORMANCE CHECKLIST ══ -->
+  <div class="slide" id="s10">
+    <div class="slide-header"><span class="topic-badge">10</span><h1>SSR Performance Checklist (Angular v22)</h1></div>
+    <div class="content">
+      <div class="three-col">
+        <div class="card accent-green">
+          <h3>✅ Setup</h3>
+          <ul>
+            <li><code>@angular/ssr</code> installed (not nguniversal)</li>
+            <li><code>provideClientHydration(withEventReplay())</code></li>
+            <li><code>provideHttpClient(withFetch())</code></li>
+            <li><code>withHttpTransferCache()</code> enabled</li>
+            <li><code>app.routes.server.ts</code> with RenderMode per route</li>
+          </ul>
+        </div>
+        <div class="card accent-blue">
+          <h3>✅ Rendering Strategy</h3>
+          <ul>
+            <li>Static content → <code>RenderMode.Prerender</code></li>
+            <li>Dynamic content → <code>RenderMode.Server</code></li>
+            <li>Auth-protected routes → <code>RenderMode.Client</code></li>
+            <li>Dynamic routes have <code>getPrerenderParams()</code></li>
+            <li><code>PrerenderFallback</code> set for unknown params</li>
+          </ul>
+        </div>
+        <div class="card accent-purple">
+          <h3>✅ Browser API Safety</h3>
+          <ul>
+            <li>No direct <code>window</code> / <code>document</code> access</li>
+            <li>DOM manipulation inside <code>afterNextRender()</code></li>
+            <li>Use <code>DOCUMENT</code> token for document access</li>
+            <li>localStorage accessed via <code>isPlatformBrowser</code></li>
+            <li>Third-party libs checked for SSR compatibility</li>
+          </ul>
+        </div>
+      </div>
+      <div class="three-col">
+        <div class="card accent-cyan">
+          <h3>✅ SEO</h3>
+          <ul>
+            <li><code>Title</code> service set per route in <code>ngOnInit</code></li>
+            <li><code>Meta</code> tags: description, OG, Twitter Card</li>
+            <li>Canonical URL meta tag set</li>
+            <li>Structured data (JSON-LD) in component</li>
+            <li>Test with Google Rich Results tool</li>
+          </ul>
+        </div>
+        <div class="card accent-orange">
+          <h3>✅ Performance</h3>
+          <ul>
+            <li>App Shell configured for instant layout</li>
+            <li>HTTP requests use <code>withFetch()</code> (native, faster)</li>
+            <li>No redundant HTTP calls (TransferState working)</li>
+            <li>Incremental hydration with <code>@defer</code> blocks</li>
+            <li>CDN in front of static pre-rendered pages</li>
+          </ul>
+        </div>
+        <div class="card accent-yellow">
+          <h3>✅ Testing &amp; Verification</h3>
+          <ul>
+            <li><code>curl https://myapp.com</code> → check raw HTML</li>
+            <li>Google Search Console → URL Inspection Tool</li>
+            <li>Lighthouse audit → FCP, LCP, TBT, CLS</li>
+            <li>Facebook Debugger / Twitter Card Validator</li>
+            <li>No <code>window is not defined</code> errors in build</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 11 — INTERVIEW Q&A PART 1 ══ -->
+  <div class="slide" id="s11">
+    <div class="slide-header"><span class="topic-badge">11</span><h1>Senior Interview Q&amp;A — Part 1</h1></div>
+    <div class="content">
+
+      <div class="iq-item">
+        <div class="iq-q">Q1. What is the difference between SSR, SSG, and CSR in Angular? <span class="iq-tag">CONCEPT</span></div>
+        <div class="iq-a"><strong>CSR</strong>: browser downloads JS and builds DOM client-side — fast navigation but slow first paint &amp; bad SEO. <strong>SSR</strong>: Node.js renders full HTML per request — instant first paint, dynamic data, SEO-friendly, requires a server. <strong>SSG</strong>: HTML pre-generated at build time, served as static files — fastest delivery but no dynamic data. Angular v22 lets you mix all three per route using <code>RenderMode</code> in <code>app.routes.server.ts</code>.</div>
+      </div>
+
+      <div class="iq-item">
+        <div class="iq-q">Q2. What replaced Angular Universal in Angular v17+? <span class="iq-tag">MIGRATION</span></div>
+        <div class="iq-a">The <code>@nguniversal/express-engine</code> package was replaced by <code>@angular/ssr</code>. The <code>AppServerModule</code> / <code>ServerModule</code> class-based approach was replaced by the standalone API: <code>provideServerRendering()</code> in <code>app.config.server.ts</code>. The CLI command changed from <code>ng add @nguniversal/express-engine</code> to <code>ng add @angular/ssr</code>.</div>
+      </div>
+
+      <div class="iq-item">
+        <div class="iq-q">Q3. What is non-destructive hydration and why does it matter? <span class="iq-tag">HYDRATION</span></div>
+        <div class="iq-a">Old hydration was <em>destructive</em> — Angular would discard the server-rendered DOM and rebuild it, causing a visible flicker and CLS. Non-destructive hydration (Angular 16+, enabled via <code>provideClientHydration()</code>) reuses the existing server DOM and only attaches event listeners. This eliminates the flicker, improves CLS, and avoids wasted server work. <code>withEventReplay()</code> additionally captures user events during the hydration gap so they aren't lost.</div>
+      </div>
+
+      <div class="iq-item">
+        <div class="iq-q">Q4. What is the TransferState API and when do you use it? <span class="iq-tag">PERFORMANCE</span></div>
+        <div class="iq-a">TransferState prevents double HTTP requests. When Angular SSR renders a page on the server it makes API calls. Without TransferState, the browser makes those same calls again during hydration. TransferState serialises the server API responses into a <code>&lt;script type="application/json"&gt;</code> tag in the HTML. The browser Angular app reads this data instead of re-fetching. In Angular v22 with <code>withHttpTransferCache()</code>, this is automatic for all <code>HttpClient</code> requests — no manual code needed.</div>
+      </div>
+
+      <div class="iq-item">
+        <div class="iq-q">Q5. How do you handle <code>window is not defined</code> errors in Angular SSR? <span class="iq-tag">PITFALL</span></div>
+        <div class="iq-a">Angular SSR runs in Node.js where <code>window</code>, <code>document</code>, <code>localStorage</code> don't exist. Three approaches: (1) <code>isPlatformBrowser(inject(PLATFORM_ID))</code> guard — run browser-only code conditionally. (2) Inject the <code>DOCUMENT</code> token instead of using <code>document</code> directly — Angular provides a server-safe mock. (3) Use <code>afterNextRender()</code> for DOM manipulation — this hook only fires in the browser, never on the server.</div>
+      </div>
+
+      <div class="iq-item">
+        <div class="iq-q">Q6. What is the Application Shell and how does it improve performance? <span class="iq-tag">APP SHELL</span></div>
+        <div class="iq-a">App Shell is a minimal pre-rendered version of the app (navigation, header, skeleton UI) that is generated once at build time and cached in the Service Worker. On every visit, the user sees the shell <em>instantly</em> from cache — even offline. The actual route content then loads into <code>&lt;router-outlet&gt;</code>. It improves perceived loading time and Lighthouse scores by ensuring there's never a blank white screen.</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 12 — INTERVIEW Q&A PART 2 ══ -->
+  <div class="slide" id="s12">
+    <div class="slide-header"><span class="topic-badge">12</span><h1>Senior Interview Q&amp;A — Part 2</h1></div>
+    <div class="content">
+
+      <div class="iq-item">
+        <div class="iq-q">Q7. What is <code>RenderMode</code> in Angular v22 and how do you configure it? <span class="iq-tag">ANGULAR V22</span></div>
+        <div class="iq-a">Introduced in Angular v19, <code>RenderMode</code> lets you assign a rendering strategy per route in <code>app.routes.server.ts</code>. <code>RenderMode.Prerender</code> generates static HTML at build time. <code>RenderMode.Server</code> renders on every request. <code>RenderMode.Client</code> skips SSR entirely for that route. This allows a hybrid strategy — e.g. home as Prerender, product detail as Server, admin as Client — in a single application.</div>
+      </div>
+
+      <div class="iq-item">
+        <div class="iq-q">Q8. How do you pre-render dynamic routes like <code>/products/:id</code>? <span class="iq-tag">PRERENDER</span></div>
+        <div class="iq-a">Use <code>getPrerenderParams()</code> on the server route config. This is an async function that returns an array of parameter objects. During <code>ng build</code>, Angular calls this function, fetches all product IDs (e.g. from your API), and generates a separate HTML file for each combination. Set a <code>fallback: PrerenderFallback.Server</code> or <code>.Client</code> for IDs not included at build time.</div>
+      </div>
+
+      <div class="iq-item">
+        <div class="iq-q">Q9. What does <code>withEventReplay()</code> solve? <span class="iq-tag">HYDRATION</span></div>
+        <div class="iq-a">There's a gap between when the server-rendered HTML is displayed and when Angular's client JS finishes loading and hydrating. If the user interacts (clicks, types) during this gap, those events are normally lost. <code>withEventReplay()</code> captures and queues all events during this gap using a tiny inline script, then replays them once Angular is fully hydrated — ensuring no user interaction is ever lost.</div>
+      </div>
+
+      <div class="iq-item">
+        <div class="iq-q">Q10. Why use <code>provideHttpClient(withFetch())</code> in an SSR app? <span class="iq-tag">PERFORMANCE</span></div>
+        <div class="iq-a">By default, Angular's <code>HttpClient</code> uses <code>XMLHttpRequest</code>. In Node.js (SSR), XHR is not native and requires a polyfill. <code>withFetch()</code> switches HttpClient to use the native <code>fetch()</code> API which is natively available in both Node.js 18+ and browsers. This removes the XHR polyfill, reduces bundle size, and improves server-side HTTP performance.</div>
+      </div>
+
+      <div class="iq-item">
+        <div class="iq-q">Q11. How does SSR impact Angular's change detection? <span class="iq-tag">ADVANCED</span></div>
+        <div class="iq-a">On the server, Angular runs a single synchronous render cycle — there's no zone.js-driven change detection loop (since the server doesn't need to respond to user events). After the initial render stabilises (all async operations complete), Angular serialises the DOM to HTML. This is why you must ensure all server-side HTTP calls complete before render — use resolvers or <code>toSignal</code> with <code>initialValue</code>. Infinite observables or unresolved promises will cause the server to hang.</div>
+      </div>
+
+      <div class="iq-item">
+        <div class="iq-q">Q12. How do you deploy an Angular SSR application? <span class="iq-tag">DEPLOYMENT</span></div>
+        <div class="iq-a"><code>ng build</code> generates two folders: <code>dist/browser/</code> (static assets) and <code>dist/server/</code> (Node.js bundle). Deploy as: (1) <strong>Node.js server</strong> — run <code>node dist/server/server.mjs</code> on any Node hosting (Cloud Run, App Engine, EC2, Render). (2) <strong>Firebase Hosting + Cloud Functions</strong> — Angular CLI has <code>@angular/fire</code> integration. (3) <strong>Netlify / Vercel SSR</strong> — via their Edge functions adapters. Pre-rendered routes can be served from CDN without the Node server.</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 13 — INTERVIEW Q&A PART 3 ══ -->
+  <div class="slide" id="s13">
+    <div class="slide-header"><span class="topic-badge">13</span><h1>Senior Interview Q&amp;A — Part 3</h1></div>
+    <div class="content">
+
+      <div class="iq-item">
+        <div class="iq-q">Q13. What is the difference between <code>afterNextRender</code> and <code>ngAfterViewInit</code> in SSR context? <span class="iq-tag">LIFECYCLE</span></div>
+        <div class="iq-a"><code>ngAfterViewInit</code> runs on <em>both server and browser</em> — so DOM access inside it will crash the server. <code>afterNextRender()</code> is guaranteed to run <strong>only in the browser</strong>, after the first render. It's the safe replacement for any DOM manipulation code you used to put in <code>ngAfterViewInit</code>. Use it for initialising third-party DOM libraries (charts, maps, editors).</div>
+      </div>
+
+      <div class="iq-item">
+        <div class="iq-q">Q14. How does SSR affect Zone.js and signals? <span class="iq-tag">ZONELESS</span></div>
+        <div class="iq-a">Zone.js on the server tracks all pending async tasks. Angular waits for the zone to become stable (no pending tasks) before serialising the HTML. This means all <code>HttpClient</code> calls, timers, and promises must resolve before render completes. With <strong>signals + zoneless</strong> architecture (Angular v18+), the stability check is based on signal reactivity graph instead, making SSR faster and more predictable. Infinite observables prevent render from ever stabilising — always complete them on the server.</div>
+      </div>
+
+      <div class="iq-item">
+        <div class="iq-q">Q15. A colleague says they get duplicate API calls even with <code>withHttpTransferCache()</code>. What could be wrong? <span class="iq-tag">DEBUGGING</span></div>
+        <div class="iq-a">Possible causes: (1) Using <code>XMLHttpRequest</code> directly instead of <code>HttpClient</code> — TransferCache only works with Angular's HttpClient. (2) <code>withFetch()</code> not added — some versions require it. (3) The HTTP call is inside a service with different injection context on server vs client, creating a cache-key mismatch. (4) The request uses <code>POST</code> — TransferCache only works for <code>GET</code> requests. (5) <code>provideClientHydration(withHttpTransferCache())</code> missing from <code>app.config.ts</code>.</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 14 — MEMORY TRICKS ══ -->
+  <div class="slide" id="s14">
+    <div class="slide-header"><span class="topic-badge">14</span><h1>Memory Tricks &amp; Mnemonics</h1></div>
+    <div class="content">
+
+      <div class="two-col">
+        <div class="mnem">
+          <div class="mnem-word">S · P · C</div>
+          <p style="font-size:12px;color:#8b949e;margin-bottom:10px;">Remember the 3 RenderModes</p>
+          <div class="mnem-row"><span class="mnem-letter">S</span><span class="mnem-meaning"><strong>Server</strong> — real-time, dynamic per request</span></div>
+          <div class="mnem-row"><span class="mnem-letter">P</span><span class="mnem-meaning"><strong>Prerender</strong> — baked at build time, static</span></div>
+          <div class="mnem-row"><span class="mnem-letter">C</span><span class="mnem-meaning"><strong>Client</strong> — pure CSR, no server involvement</span></div>
+          <p style="font-size:12px;color:#8b949e;margin-top:8px;">Memory hook: <em>"<strong>S</strong>erver cooks fresh, <strong>P</strong>re-render bakes early, <strong>C</strong>lient cooks itself"</em></p>
+        </div>
+
+        <div class="mnem">
+          <div class="mnem-word">T · A · D</div>
+          <p style="font-size:12px;color:#8b949e;margin-bottom:10px;">3 ways to fix "window is not defined"</p>
+          <div class="mnem-row"><span class="mnem-letter">T</span><span class="mnem-meaning"><strong>Token</strong> — inject <code>DOCUMENT</code> / <code>PLATFORM_ID</code> token</span></div>
+          <div class="mnem-row"><span class="mnem-letter">A</span><span class="mnem-meaning"><strong>afterNextRender()</strong> — browser-only hook</span></div>
+          <div class="mnem-row"><span class="mnem-letter">D</span><span class="mnem-meaning"><strong>isBrowser()</strong> — <code>isPlatformBrowser()</code> guard</span></div>
+          <p style="font-size:12px;color:#8b949e;margin-top:8px;">Memory hook: <em>"<strong>TAD</strong> fixes your bad SSR code"</em></p>
+        </div>
+      </div>
+
+      <div class="two-col">
+        <div class="mnem">
+          <div class="mnem-word">H · E · W</div>
+          <p style="font-size:12px;color:#8b949e;margin-bottom:10px;"><code>provideClientHydration()</code> options</p>
+          <div class="mnem-row"><span class="mnem-letter">H</span><span class="mnem-meaning"><code>withHttpTransferCache()</code> — prevent double API calls</span></div>
+          <div class="mnem-row"><span class="mnem-letter">E</span><span class="mnem-meaning"><code>withEventReplay()</code> — capture clicks during hydration gap</span></div>
+          <div class="mnem-row"><span class="mnem-letter">W</span><span class="mnem-meaning"><code>withFetch()</code> — use native fetch() for HttpClient (in provideHttpClient)</span></div>
+          <p style="font-size:12px;color:#8b949e;margin-top:8px;">Memory hook: <em>"<strong>HEW</strong> the SSR rough edges"</em></p>
+        </div>
+
+        <div class="mnem">
+          <div class="mnem-word">S · T · S · H</div>
+          <p style="font-size:12px;color:#8b949e;margin-bottom:10px;">SSR setup files to remember</p>
+          <div class="mnem-row"><span class="mnem-letter">S</span><span class="mnem-meaning"><code>server.ts</code> — Express entry point</span></div>
+          <div class="mnem-row"><span class="mnem-letter">T</span><span class="mnem-meaning"><code>tsconfig.server.json</code> — server TS config</span></div>
+          <div class="mnem-row"><span class="mnem-letter">S</span><span class="mnem-meaning"><code>app.config.<strong>server</strong>.ts</code> — server providers</span></div>
+          <div class="mnem-row"><span class="mnem-letter">H</span><span class="mnem-meaning"><code>app.routes.<strong>server</strong>.ts</code> — hybrid render modes</span></div>
+          <p style="font-size:12px;color:#8b949e;margin-top:8px;">Memory hook: <em>"<strong>STSH</strong> — ng add adds these 4 files"</em></p>
+        </div>
+      </div>
+
+      <div class="card accent-yellow">
+        <h3>🧠 Quick-fire Associations</h3>
+        <table style="margin-top:6px;">
+          <thead><tr><th>If interviewer asks about…</th><th>Your anchor word</th><th>Full answer</th></tr></thead>
+          <tbody>
+            <tr><td>Prevent double HTTP</td><td><strong>Transfer</strong></td><td><code>withHttpTransferCache()</code> or manual <code>TransferState</code></td></tr>
+            <tr><td>No window in SSR</td><td><strong>TAD</strong></td><td>Token / afterNextRender / isPlatformBrowser</td></tr>
+            <tr><td>Instant visible layout</td><td><strong>Shell</strong></td><td>App Shell + Service Worker cache</td></tr>
+            <tr><td>Events lost during load</td><td><strong>Replay</strong></td><td><code>withEventReplay()</code></td></tr>
+            <tr><td>One app, mixed rendering</td><td><strong>Hybrid</strong></td><td><code>app.routes.server.ts</code> + <code>RenderMode</code></td></tr>
+            <tr><td>DOM flicker on load</td><td><strong>Destructive</strong></td><td>Old destructive hydration → fixed by <code>provideClientHydration()</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /deck -->
+
+<nav id="nav">
+  <button id="btn-first" title="First"    onclick="goTo(0)">&#8676;</button>
+  <button id="btn-prev"  title="Previous" onclick="move(-1)">&#8592;</button>
+  <span id="counter">1 / 15</span>
+  <button id="btn-next"  title="Next"     onclick="move(1)">&#8594;</button>
+  <button id="btn-last"  title="Last"     onclick="goTo(total-1)">&#8677;</button>
+</nav>
+<div id="hint">← → arrow keys</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const total  = slides.length;
+  let cur = 0;
+
+  function goTo(n) {
+    slides[cur].classList.remove('active');
+    cur = Math.max(0, Math.min(n, total - 1));
+    slides[cur].classList.add('active');
+    slides[cur].scrollTop = 0;
+    document.getElementById('counter').textContent = `${cur + 1} / ${total}`;
+    document.getElementById('btn-prev').disabled  = cur === 0;
+    document.getElementById('btn-first').disabled = cur === 0;
+    document.getElementById('btn-next').disabled  = cur === total - 1;
+    document.getElementById('btn-last').disabled  = cur === total - 1;
+    document.getElementById('progress-bar').style.width = `${((cur + 1) / total) * 100}%`;
+  }
+
+  function move(d) { goTo(cur + d); }
+
+  function switchTab(e, slideId, panelId) {
+    const slide = document.getElementById(slideId);
+    slide.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    slide.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(slideId + '-' + panelId).classList.add('active');
+    e.target.classList.add('active');
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') move(1);
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   move(-1);
+    if (e.key === 'Home') goTo(0);
+    if (e.key === 'End')  goTo(total - 1);
+  });
+
+  goTo(0);
+</script>
+</body>
+</html>
