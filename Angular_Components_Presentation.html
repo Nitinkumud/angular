@@ -310,172 +310,292 @@
   <div class="slide-header"><span class="topic-badge">03</span><h1>Signal-based Inputs — input() Function (v22)</h1></div>
   <div class="content">
     <div class="tab-bar">
-      <button class="tab-btn active" onclick="switchTab(event,'s3','basic')">📥 Basic input()</button>
+      <button class="tab-btn active" onclick="switchTab(event,'s3','concept')">🧠 What is a Signal Input?</button>
+      <button class="tab-btn"        onclick="switchTab(event,'s3','basic')">📥 Basic input()</button>
       <button class="tab-btn"        onclick="switchTab(event,'s3','required')">⚡ input.required()</button>
-      <button class="tab-btn"        onclick="switchTab(event,'s3','transform')">🔧 Transforms</button>
-      <button class="tab-btn"        onclick="switchTab(event,'s3','old')">🗂 Old @Input()</button>
+      <button class="tab-btn"        onclick="switchTab(event,'s3','transform')">🔧 Transforms &amp; Alias</button>
+      <button class="tab-btn"        onclick="switchTab(event,'s3','old')">🗂 Old vs New</button>
+    </div>
+
+    <!-- CONCEPT TAB — NEW -->
+    <div class="tab-panel active" id="s3-concept">
+      <div class="two-col">
+        <div class="card accent-blue">
+          <h3>🤔 What is a Signal?</h3>
+          <p>A <strong>signal</strong> is a special wrapper around a value that Angular can <em>track</em>. When the value changes, Angular knows exactly which parts of the UI to update — without checking the entire component tree.</p>
+          <br/>
+          <p>You <strong>read</strong> a signal by calling it as a function: <code>mySignal()</code><br/>
+          You <strong>write</strong> a writable signal with <code>.set()</code> or <code>.update()</code></p>
+          <br/>
+          <p>An <strong>InputSignal</strong> is a <em>read-only</em> signal — the parent sets the value, the child only reads it.</p>
+        </div>
+        <div class="card accent-purple">
+          <h3>🤔 Why input() instead of a plain property?</h3>
+          <p><strong>Before signals</strong>, inputs were plain properties. Angular had no way to know when they changed — it had to check every property on every change detection cycle (<em>expensive</em>).</p>
+          <br/>
+          <p><strong>With input()</strong>, Angular knows <em>exactly</em> which signal changed. Only the parts that depend on that signal re-render. This makes apps faster and enables <strong>zoneless</strong> apps.</p>
+          <br/>
+          <p>Also works directly in <code>computed()</code> and <code>effect()</code> without any extra boilerplate.</p>
+        </div>
+      </div>
+
+      <div class="card accent-yellow">
+        <h3>📖 Step-by-step — What happens when parent passes a value to child</h3>
+        <div class="two-col" style="margin-top:10px; gap:12px;">
+          <div class="code-block"><pre><span class="cmt">// 1️⃣  Child declares an input signal</span>
+<span class="kw">export class</span> <span class="cls">GreetComponent</span> {
+  <span class="var">name</span> = <span class="fn">input</span>(<span class="str">'Guest'</span>);
+  <span class="cmt">//   ↑ default value = 'Guest'</span>
+  <span class="cmt">//   ↑ TypeScript infers: InputSignal&lt;string&gt;</span>
+
+  <span class="cmt">// 2️⃣  Read it in template by calling ()</span>
+  <span class="cmt">//     template: &lt;h1&gt;Hello, {{ name() }}!&lt;/h1&gt;</span>
+}
+
+<span class="cmt">// 3️⃣  Parent binds a value to it</span>
+<span class="cmt">//  &lt;app-greet [name]="'Nitin'" /&gt;</span>
+<span class="cmt">//             ↑ square brackets = property binding</span>
+
+<span class="cmt">// 4️⃣  Angular sets the signal's value to 'Nitin'</span>
+<span class="cmt">// 5️⃣  Template re-renders: Hello, Nitin!</span>
+<span class="cmt">// 6️⃣  If parent changes it → signal updates → UI updates ✅</span></pre></div>
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <div class="output-box">
+              <div class="out-hdr">▶ No binding — uses default</div>
+              <pre>&lt;app-greet /&gt;
+→ Hello, Guest!</pre>
+            </div>
+            <div class="output-box">
+              <div class="out-hdr">▶ With binding</div>
+              <pre>&lt;app-greet [name]="'Nitin'" /&gt;
+→ Hello, Nitin!</pre>
+            </div>
+            <div class="output-box">
+              <div class="out-hdr">▶ With dynamic value</div>
+              <pre>&lt;app-greet [name]="currentUser.name" /&gt;
+→ Hello, {currentUser.name}!
+  (auto-updates when parent changes)</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="two-col">
+        <div class="tip-box">
+          <div class="tip-hdr">✅ Key Rule — Why call it with ()?</div>
+          <p><code>name</code> is not the value — it is the <strong>signal container</strong>. <code>name()</code> calls the signal to get the current value inside it. Think of it like a function that always returns the latest value. This is how Angular tracks which signals are being used in a template or computed expression.</p>
+        </div>
+        <div class="warn-box">
+          <div class="warn-hdr">⚠️ Read-only — child cannot write to it</div>
+          <p>An <code>InputSignal</code> is <strong>read-only</strong>. The child can only read <code>name()</code>. Only the parent can change it via <code>[name]="newValue"</code>. If you need the child to also write back, use <code>model()</code> instead (Slide 7).</p>
+        </div>
+      </div>
     </div>
 
     <!-- Basic -->
-    <div class="tab-panel active" id="s3-basic">
+    <div class="tab-panel" id="s3-basic">
       <div class="two-col">
         <div class="card accent-blue">
-          <h3>input() returns an InputSignal</h3>
-          <ul>
-            <li>Read-only signal — call it like a function: <code>value()</code></li>
-            <li>Use in <code>computed()</code> and <code>effect()</code> reactively</li>
-            <li>Type inferred from default value automatically</li>
-            <li>No default → type is <code>T | undefined</code></li>
-          </ul>
+          <h3>input() — 3 forms</h3>
+          <table style="margin-top:8px;">
+            <thead><tr><th>Syntax</th><th>Type returned</th><th>When to use</th></tr></thead>
+            <tbody>
+              <tr><td><code>input(0)</code></td><td><code>InputSignal&lt;number&gt;</code></td><td>Has a sensible default</td></tr>
+              <tr><td><code>input&lt;string&gt;()</code></td><td><code>InputSignal&lt;string|undefined&gt;</code></td><td>Optional, no default</td></tr>
+              <tr><td><code>input.required&lt;string&gt;()</code></td><td><code>InputSignal&lt;string&gt;</code></td><td>Must always be provided</td></tr>
+            </tbody>
+          </table>
         </div>
         <div class="card accent-green">
-          <h3>Usage in parent template</h3>
-          <p>Binding is identical to <code>@Input()</code> — use square bracket syntax:</p>
-          <div class="code-block" style="margin-top:8px;"><pre><span class="cmt">&lt;!-- parent template --&gt;</span>
-<span class="int">&lt;app-rating</span>
-  <span class="op">[value]</span>=<span class="str">"productRating"</span>
-  <span class="op">[label]</span>=<span class="str">"'Quality'"</span>
-<span class="int">/&gt;</span></pre></div>
+          <h3>computed() with input()</h3>
+          <p><code>computed()</code> creates a <strong>derived value</strong> that automatically recalculates whenever the signals it reads change. It's like a formula in a spreadsheet.</p>
+          <br/>
+          <p>When <code>value()</code> changes → <code>stars()</code> automatically recalculates → template updates.</p>
         </div>
       </div>
-      <div class="code-block"><pre><span class="cmt">// ── rating.component.ts ──────────────────────────────────────────────────────</span>
+      <div class="code-block"><pre><span class="cmt">// ── rating.component.ts — full working example ───────────────────────────────</span>
 <span class="kw">import</span> { <span class="cls">Component</span>, <span class="fn">input</span>, <span class="fn">computed</span> } <span class="kw">from</span> <span class="str">'@angular/core'</span>;
 
 <span class="dec">@Component</span>({
   <span class="var">selector</span>: <span class="str">'app-rating'</span>,
   <span class="var">template</span>: <span class="tpl">`
     &lt;div&gt;
-      &lt;span&gt;{{ label() }}: &lt;/span&gt;
-      &lt;span&gt;{{ stars() }}&lt;/span&gt;
+      &lt;p&gt;{{ label() ?? 'Rating' }}: {{ stars() }}&lt;/p&gt;
+      &lt;small&gt;Score: {{ value() }} / 5&lt;/small&gt;
     &lt;/div&gt;
   `</span>
 })
 <span class="kw">export class</span> <span class="cls">RatingComponent</span> {
-  <span class="cmt">// input() with default value — TypeScript infers type as number</span>
-  <span class="var">value</span> = <span class="fn">input</span>(<span class="num">0</span>);                  <span class="cmt">// InputSignal&lt;number&gt;</span>
+  <span class="cmt">// ── Form 1: input with default ─────────────────────────────────────</span>
+  <span class="var">value</span> = <span class="fn">input</span>(<span class="num">0</span>);
+  <span class="cmt">//       ↑ default = 0      → InputSignal&lt;number&gt;</span>
+  <span class="cmt">//  Parent:  &lt;app-rating /&gt;           → value() is 0</span>
+  <span class="cmt">//  Parent:  &lt;app-rating [value]="4" /&gt; → value() is 4</span>
 
-  <span class="cmt">// input() with explicit type and no default → value is number | undefined</span>
-  <span class="var">label</span> = <span class="fn">input</span>&lt;<span class="typ">string</span>&gt;();           <span class="cmt">// InputSignal&lt;string | undefined&gt;</span>
+  <span class="cmt">// ── Form 2: input with no default (optional) ───────────────────────</span>
+  <span class="var">label</span> = <span class="fn">input</span>&lt;<span class="typ">string</span>&gt;();
+  <span class="cmt">//       ↑ no default → InputSignal&lt;string | undefined&gt;</span>
+  <span class="cmt">//  Parent:  &lt;app-rating /&gt;                   → label() is undefined</span>
+  <span class="cmt">//  Parent:  &lt;app-rating [label]="'Quality'" /&gt; → label() is 'Quality'</span>
 
-  <span class="cmt">// Use input signal inside computed()</span>
-  <span class="var">stars</span> = <span class="fn">computed</span>(() =>
-    <span class="str">'⭐'</span>.<span class="fn">repeat</span>(<span class="fn">Math</span>.<span class="fn">min</span>(<span class="kw">this</span>.<span class="var">value</span>(), <span class="num">5</span>))  <span class="cmt">// read signal by calling it</span>
-  );
+  <span class="cmt">// ── computed: auto-recalculates when value() changes ───────────────</span>
+  <span class="var">stars</span> = <span class="fn">computed</span>(() => {
+    <span class="kw">const</span> <span class="var">n</span> = <span class="fn">Math</span>.<span class="fn">min</span>(<span class="kw">this</span>.<span class="var">value</span>(), <span class="num">5</span>); <span class="cmt">// reads the signal</span>
+    <span class="kw">return</span> <span class="str">'⭐'</span>.<span class="fn">repeat</span>(<span class="var">n</span>) || <span class="str">'No rating'</span>;
+  });
+  <span class="cmt">// value() = 0 → stars() = 'No rating'</span>
+  <span class="cmt">// value() = 3 → stars() = '⭐⭐⭐'</span>
+  <span class="cmt">// value() = 4 → stars() = '⭐⭐⭐⭐'   (auto, no manual update needed)</span>
 }</pre></div>
       <div class="output-box">
-        <div class="out-hdr">▶ Output — with [value]="4" [label]="'Quality'"</div>
-        <pre>Quality: ⭐⭐⭐⭐</pre>
+        <div class="out-hdr">▶ Parent: &lt;app-rating [value]="4" [label]="'Quality'" /&gt;</div>
+        <pre>Quality: ⭐⭐⭐⭐
+Score: 4 / 5</pre>
       </div>
     </div>
 
     <!-- Required -->
     <div class="tab-panel" id="s3-required">
-      <div class="code-block"><pre><span class="cmt">// ── input.required() — build-time enforcement ────────────────────────────────</span>
-<span class="dec">@Component</span>({ <span class="var">selector</span>: <span class="str">'app-product-card'</span>, <span class="var">template</span>: <span class="tpl">`
-  &lt;h3&gt;{{ product().name }}&lt;/h3&gt;
-  &lt;p&gt;Price: ₹{{ product().price }}&lt;/p&gt;
-`</span> })
+      <div class="two-col">
+        <div class="card accent-red">
+          <h3>The Problem — forgetting required inputs</h3>
+          <p>Without <code>input.required()</code>, if the parent forgets to pass a value, your component gets <code>undefined</code> at runtime — causing silent bugs or crashes that are hard to trace.</p>
+        </div>
+        <div class="card accent-green">
+          <h3>The Solution — compile-time error</h3>
+          <p><code>input.required()</code> tells Angular the compiler to throw a <strong>build error</strong> if the parent doesn't provide the value. You catch the bug before the app even runs.</p>
+        </div>
+      </div>
+      <div class="code-block"><pre><span class="cmt">// ── product-card.component.ts ────────────────────────────────────────────────</span>
 <span class="kw">export class</span> <span class="cls">ProductCardComponent</span> {
-  <span class="cmt">// Required input — Angular throws BUILD ERROR if not provided</span>
+  <span class="cmt">// input.required() — MUST be provided by parent — no default, no undefined</span>
   <span class="var">product</span> = <span class="fn">input</span>.<span class="fn">required</span>&lt;{ <span class="var">name</span>: <span class="typ">string</span>; <span class="var">price</span>: <span class="typ">number</span> }&gt;();
-  <span class="cmt">// Returns InputSignal&lt;{name:string, price:number}&gt; — no undefined</span>
+  <span class="cmt">//                 ↑ explicit generic type since there's no default to infer from</span>
+  <span class="cmt">//   Returns: InputSignal&lt;{name:string, price:number}&gt;  ← NO undefined</span>
 
-  <span class="cmt">// input.required() with alias</span>
-  <span class="var">productId</span> = <span class="fn">input</span>.<span class="fn">required</span>&lt;<span class="typ">number</span>&gt;({ <span class="var">alias</span>: <span class="str">'id'</span> });
+  <span class="cmt">// Read it safely — TypeScript KNOWS it will never be undefined</span>
+  <span class="cmt">// template: &lt;h3&gt;{{ product().name }}&lt;/h3&gt;  ← no null check needed ✅</span>
 }
 
-<span class="cmt">// ── Parent template ───────────────────────────────────────────────────────────</span>
-<span class="cmt">&lt;!-- ✅ Correct --&gt;</span>
-<span class="int">&lt;app-product-card</span> <span class="op">[product]</span>=<span class="str">"selectedProduct"</span> <span class="op">[id]</span>=<span class="str">"42"</span> <span class="int">/&gt;</span>
+<span class="cmt">// ── parent template ───────────────────────────────────────────────────────────</span>
 
-<span class="cmt">&lt;!-- ❌ Error at build time: Required input 'product' not provided --&gt;</span>
-<span class="int">&lt;app-product-card /&gt;</span></pre></div>
+<span class="cmt">// ✅ Correct — product is provided</span>
+<span class="int">&lt;app-product-card</span> <span class="op">[product]</span>=<span class="str">"{ name: 'Laptop', price: 55000 }"</span> <span class="int">/&gt;</span>
+
+<span class="cmt">// ❌ BUILD ERROR — "Required input 'product' from component ProductCardComponent must be specified."</span>
+<span class="int">&lt;app-product-card /&gt;</span>
+<span class="cmt">// ↑ Angular stops the build — you CANNOT miss it</span>
+
+<span class="cmt">// ── Difference in TypeScript types ───────────────────────────────────────────</span>
+<span class="var">optionalInput</span> = <span class="fn">input</span>&lt;<span class="typ">string</span>&gt;();          <span class="cmt">// InputSignal&lt;string | undefined&gt;</span>
+<span class="cmt">// Must null-check:  optionalInput()?.toUpperCase()</span>
+
+<span class="var">requiredInput</span> = <span class="fn">input</span>.<span class="fn">required</span>&lt;<span class="typ">string</span>&gt;(); <span class="cmt">// InputSignal&lt;string&gt;</span>
+<span class="cmt">// Safe to use directly: requiredInput().toUpperCase()  ✅</span></pre></div>
       <div class="output-box">
-        <div class="out-hdr">▶ Output — with [product]="{name:'Laptop', price:55000}"</div>
+        <div class="out-hdr">▶ With [product]="{name:'Laptop', price:55000}"</div>
         <pre>Laptop
 Price: ₹55000</pre>
-      </div>
-      <div class="tip-box">
-        <div class="tip-hdr">✅ Build-time safety</div>
-        <p><code>input.required()</code> catches missing inputs at <strong>compile time</strong> — not at runtime. This is a major advantage over the old <code>@Input({ required: true })</code> which only warned in some tools.</p>
       </div>
     </div>
 
     <!-- Transforms -->
     <div class="tab-panel" id="s3-transform">
-      <div class="code-block"><pre><span class="cmt">// ── Input Transforms — coerce/sanitise incoming values ──────────────────────</span>
-<span class="kw">import</span> { <span class="cls">Component</span>, <span class="fn">input</span>, <span class="fn">booleanAttribute</span>, <span class="fn">numberAttribute</span> } <span class="kw">from</span> <span class="str">'@angular/core'</span>;
+      <div class="card accent-cyan">
+        <h3>🤔 Why do we need transforms?</h3>
+        <p>HTML attributes always come as <strong>strings</strong>. When you write <code>&lt;app-toggle disabled /&gt;</code>, HTML passes the string <code>"disabled"</code> or an empty string — not a boolean. Transforms <strong>automatically convert</strong> the incoming value before it's stored in the signal, so your component always gets the right type.</p>
+      </div>
+      <div class="code-block"><pre><span class="cmt">// ── transforms — coerce incoming values before storing ───────────────────────</span>
+<span class="kw">import</span> { <span class="fn">input</span>, <span class="fn">booleanAttribute</span>, <span class="fn">numberAttribute</span> } <span class="kw">from</span> <span class="str">'@angular/core'</span>;
 
-<span class="dec">@Component</span>({ <span class="var">selector</span>: <span class="str">'app-toggle'</span>, <span class="var">template</span>: <span class="tpl">`
-  &lt;div [class.disabled]="disabled()"&gt;
-    &lt;div [style.width]="widthPx()"&gt;...&lt;/div&gt;
-  &lt;/div&gt;
-`</span> })
-<span class="kw">export class</span> <span class="cls">ToggleComponent</span> {
-  <span class="cmt">// Built-in: booleanAttribute — treats presence of attribute as true</span>
-  <span class="cmt">// &lt;app-toggle disabled /&gt;  →  disabled = true  ✅</span>
-  <span class="cmt">// &lt;app-toggle disabled="false" /&gt;  →  disabled = false</span>
+<span class="kw">export class</span> <span class="cls">ButtonComponent</span> {
+
+  <span class="cmt">// ── booleanAttribute transform ────────────────────────────────────────</span>
+  <span class="cmt">// Problem without transform:</span>
+  <span class="cmt">//   &lt;app-btn disabled /&gt;  → disabled receives ""  (empty string) ← falsy bug!</span>
+  <span class="cmt">// With booleanAttribute transform:</span>
+  <span class="cmt">//   &lt;app-btn disabled /&gt;        → disabled() = true   ✅</span>
+  <span class="cmt">//   &lt;app-btn disabled="false" /&gt; → disabled() = false  ✅  (special case)</span>
+  <span class="cmt">//   &lt;app-btn [disabled]="true" /&gt;→ disabled() = true   ✅</span>
   <span class="var">disabled</span> = <span class="fn">input</span>(<span class="kw">false</span>, { <span class="var">transform</span>: <span class="fn">booleanAttribute</span> });
 
-  <span class="cmt">// Built-in: numberAttribute — coerces string to number</span>
-  <span class="cmt">// &lt;app-toggle width="200" /&gt;  →  widthPx = '200px'  ✅</span>
-  <span class="var">width</span> = <span class="fn">input</span>(<span class="num">100</span>, { <span class="var">transform</span>: <span class="fn">numberAttribute</span> });
+  <span class="cmt">// ── numberAttribute transform ─────────────────────────────────────────</span>
+  <span class="cmt">// Problem without transform:</span>
+  <span class="cmt">//   &lt;app-btn size="3" /&gt; → size receives "3" (string) → "3" * 2 = NaN!</span>
+  <span class="cmt">// With numberAttribute transform:</span>
+  <span class="cmt">//   &lt;app-btn size="3" /&gt;    → size() = 3   (number) ✅</span>
+  <span class="cmt">//   &lt;app-btn [size]="3" /&gt;  → size() = 3   (number) ✅</span>
+  <span class="cmt">//   &lt;app-btn size="abc" /&gt;  → size() = NaN (parse failed)</span>
+  <span class="var">size</span> = <span class="fn">input</span>(<span class="num">1</span>, { <span class="var">transform</span>: <span class="fn">numberAttribute</span> });
 
-  <span class="cmt">// Custom transform function</span>
-  <span class="var">widthPx</span> = <span class="fn">input</span>(<span class="str">''</span>, { <span class="var">transform</span>: (<span class="var">v</span>: <span class="typ">number</span>) => <span class="str">`</span><span class="tpl">${v}px</span><span class="str">`</span> });
+  <span class="cmt">// ── Custom transform — your own conversion function ───────────────────</span>
+  <span class="cmt">// Accepts a number from parent, stores as 'Xpx' string</span>
+  <span class="cmt">//   &lt;app-btn [width]="200" /&gt; → widthPx() = '200px'</span>
+  <span class="var">widthPx</span> = <span class="fn">input</span>(<span class="str">'0px'</span>, { <span class="var">transform</span>: (<span class="var">v</span>: <span class="typ">number</span>) => <span class="str">`</span><span class="tpl">${v}px</span><span class="str">`</span> });
 
-  <span class="cmt">// Alias — template uses 'isDisabled', class uses 'disabled'</span>
-  <span class="var">label</span> = <span class="fn">input</span>(<span class="str">''</span>, { <span class="var">alias</span>: <span class="str">'toggleLabel'</span> });
-  <span class="cmt">// &lt;app-toggle [toggleLabel]="'Dark Mode'" /&gt;</span>
+  <span class="cmt">// ── Alias — different name in template vs class ───────────────────────</span>
+  <span class="cmt">// Class uses 'label', template uses 'btnLabel'</span>
+  <span class="cmt">//   &lt;app-btn [btnLabel]="'Save'" /&gt; → label() = 'Save'</span>
+  <span class="var">label</span> = <span class="fn">input</span>(<span class="str">''</span>, { <span class="var">alias</span>: <span class="str">'btnLabel'</span> });
 }</pre></div>
       <div class="output-box">
-        <div class="out-hdr">▶ Template usage examples</div>
-        <pre>&lt;app-toggle disabled /&gt;               → disabled() = true
-&lt;app-toggle disabled="false" /&gt;       → disabled() = false
-&lt;app-toggle [width]="200" /&gt;          → width() = 200 (number)
-&lt;app-toggle width="200" /&gt;            → width() = 200 (coerced ✅)</pre>
+        <div class="out-hdr">▶ All transform examples</div>
+        <pre>&lt;app-btn disabled /&gt;          → disabled() = true  ✅ (not "" or undefined)
+&lt;app-btn size="3" /&gt;          → size() = 3          ✅ (number, not string "3")
+&lt;app-btn [width]="200" /&gt;     → widthPx() = '200px' ✅ (auto-converted)
+&lt;app-btn [btnLabel]="'Save'"&gt; → label() = 'Save'    ✅ (alias resolved)</pre>
       </div>
     </div>
 
-    <!-- Old @Input -->
+    <!-- Old vs New -->
     <div class="tab-panel" id="s3-old">
-      <div class="two-col">
-        <div class="card accent-orange">
-          <h3>🗂 Old Way — @Input() decorator (still works)</h3>
-          <p>Decorator-based approach. Still fully supported but Angular team recommends <code>input()</code> function for new code.</p>
-        </div>
-        <div class="card accent-green">
-          <h3>✅ New Way — input() function (recommended)</h3>
-          <p>Signal-based. Reactive, type-safe, tree-shakeable. Works with <code>computed()</code>, <code>effect()</code>, and zoneless.</p>
-        </div>
-      </div>
-      <div class="code-block"><pre><span class="cmt">// ── OLD: @Input() decorator ──────────────────────────────────────────────────</span>
-<span class="kw">import</span> { <span class="cls">Input</span> } <span class="kw">from</span> <span class="str">'@angular/core'</span>;
+      <div class="code-block"><pre><span class="cmt">// ════════════ OLD WAY — @Input() decorator ═══════════════════════════════════</span>
+<span class="kw">export class</span> <span class="cls">OldSliderComponent</span> {
+  <span class="dec">@Input</span>() <span class="var">value</span> = <span class="num">0</span>;           <span class="cmt">// plain class property — NOT a signal</span>
 
-<span class="kw">export class</span> <span class="cls">OldComponent</span> {
-  <span class="dec">@Input</span>() <span class="var">value</span> = <span class="num">0</span>;                         <span class="cmt">// plain property</span>
-  <span class="dec">@Input</span>({ <span class="var">required</span>: <span class="kw">true</span> }) <span class="var">name</span>!: <span class="typ">string</span>;  <span class="cmt">// required (less strict)</span>
-  <span class="dec">@Input</span>({ <span class="var">alias</span>: <span class="str">'userId'</span> }) <span class="var">id</span>!: <span class="typ">number</span>;  <span class="cmt">// aliased</span>
-
+  <span class="cmt">// ❌ Problem 1: To react to changes, you need ngOnChanges boilerplate</span>
   <span class="fn">ngOnChanges</span>(<span class="var">changes</span>: <span class="cls">SimpleChanges</span>) {
-    <span class="cmt">// Must use ngOnChanges to react to value changes</span>
-    <span class="kw">if</span> (<span class="var">changes</span>[<span class="str">'value'</span>]) { <span class="kw">this</span>.<span class="fn">doSomething</span>(); }
+    <span class="kw">if</span> (<span class="var">changes</span>[<span class="str">'value'</span>]) {
+      <span class="var">console</span>.<span class="fn">log</span>(<span class="str">'value changed to'</span>, <span class="var">changes</span>[<span class="str">'value'</span>].<span class="var">currentValue</span>);
+    }
   }
+
+  <span class="cmt">// ❌ Problem 2: Can't use directly in computed()</span>
+  <span class="cmt">// ❌ Problem 3: Angular must check this property every CD cycle (slow)</span>
+  <span class="cmt">// ❌ Problem 4: No type-safe required enforcement at build time</span>
 }
 
-<span class="cmt">// ── NEW: input() signal ✅ ───────────────────────────────────────────────────</span>
-<span class="kw">import</span> { <span class="fn">input</span>, <span class="fn">effect</span> } <span class="kw">from</span> <span class="str">'@angular/core'</span>;
+<span class="cmt">// ════════════ NEW WAY — input() signal ✅ ════════════════════════════════════</span>
+<span class="kw">export class</span> <span class="cls">NewSliderComponent</span> {
+  <span class="var">value</span> = <span class="fn">input</span>(<span class="num">0</span>);             <span class="cmt">// InputSignal — reactive, tracked by Angular</span>
 
-<span class="kw">export class</span> <span class="cls">NewComponent</span> {
-  <span class="var">value</span>  = <span class="fn">input</span>(<span class="num">0</span>);                         <span class="cmt">// signal — read as value()</span>
-  <span class="var">name</span>   = <span class="fn">input</span>.<span class="fn">required</span>&lt;<span class="typ">string</span>&gt;();          <span class="cmt">// build-time required</span>
-  <span class="var">id</span>     = <span class="fn">input</span>.<span class="fn">required</span>&lt;<span class="typ">number</span>&gt;({ <span class="var">alias</span>: <span class="str">'userId'</span> });
-
+  <span class="cmt">// ✅ React to changes with effect() — clean, no boilerplate method needed</span>
   <span class="fn">constructor</span>() {
-    <span class="cmt">// React to value changes with effect() — no ngOnChanges needed</span>
-    <span class="fn">effect</span>(() => { <span class="kw">this</span>.<span class="fn">doSomething</span>(<span class="kw">this</span>.<span class="var">value</span>()); });
+    <span class="fn">effect</span>(() => {
+      <span class="var">console</span>.<span class="fn">log</span>(<span class="str">'value changed to'</span>, <span class="kw">this</span>.<span class="var">value</span>()); <span class="cmt">// auto-tracks</span>
+    });
   }
+
+  <span class="cmt">// ✅ Use directly in computed() — recalculates automatically</span>
+  <span class="var">doubled</span> = <span class="fn">computed</span>(() => <span class="kw">this</span>.<span class="var">value</span>() * <span class="num">2</span>);
+
+  <span class="cmt">// ✅ Angular only updates when this signal changes (fast, zoneless-ready)</span>
+  <span class="cmt">// ✅ input.required() gives build-time safety</span>
 }</pre></div>
+      <div class="card accent-blue" style="margin-top:4px;">
+        <h3>📊 Quick Comparison</h3>
+        <table style="margin-top:8px;">
+          <thead><tr><th>Feature</th><th>@Input() (old)</th><th>input() signal (new ✅)</th></tr></thead>
+          <tbody>
+            <tr><td>React to changes</td><td><code>ngOnChanges</code> required</td><td><code>effect()</code> or <code>computed()</code></td></tr>
+            <tr><td>Use in computed()</td><td>❌ Not directly</td><td>✅ Yes, natively</td></tr>
+            <tr><td>Required enforcement</td><td>Runtime warning only</td><td>✅ Build-time error</td></tr>
+            <tr><td>Type safety</td><td>Partial</td><td>✅ Full — no undefined in required</td></tr>
+            <tr><td>Read in template</td><td><code>{{ value }}</code></td><td><code>{{ value() }}</code></td></tr>
+            <tr><td>Performance</td><td>Checked every CD cycle</td><td>✅ Only when signal changes</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 </div>
