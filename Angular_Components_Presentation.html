@@ -155,7 +155,7 @@
     <span class="chip">contentChild()</span>
     <span class="chip">Interview Q&amp;A</span>
   </div>
-  <p style="margin-top:28px;font-size:12px;color:#484f58;">Angular v22 (v22.0.6) &nbsp;·&nbsp; Source: angular.dev &nbsp;·&nbsp; 15 Slides</p>
+  <p style="margin-top:28px;font-size:12px;color:#484f58;">Angular v22 (v22.0.6) &nbsp;·&nbsp; Source: angular.dev &nbsp;·&nbsp; 17 Slides</p>
 </div>
 
 <!-- ══ SLIDE 1 — ANATOMY ══ -->
@@ -1171,9 +1171,91 @@ CartIcon:     🛒 1    ← auto-updated, no event needed ✅</pre>
   </div>
 </div>
 
-<!-- ══ SLIDE 15 — CHEAT SHEET ══ -->
+<!-- ══ SLIDE 15 — VIEW ENCAPSULATION ══ -->
 <div class="slide" id="s15">
-  <div class="slide-header"><span class="topic-badge">15</span><h1>Quick Reference Cheat Sheet</h1></div>
+  <div class="slide-header"><span class="topic-badge">15</span><h1>ViewEncapsulation — Style Scoping</h1></div>
+  <div class="content">
+    <p style="font-size:13px;color:#8b949e;">Angular controls how component styles are applied to the DOM via <code>encapsulation</code> in <code>@Component</code>. Choosing the wrong mode is a common cause of style leaking bugs.</p>
+
+    <div class="three-col">
+      <div class="card accent-blue">
+        <h3>Emulated <span class="badge badge-green">Default</span></h3>
+        <p>Angular <strong>rewrites CSS selectors</strong> by appending a unique attribute (e.g. <code>_ngcontent-abc-c1</code>) to every rule. Styles are scoped to the component — they never leak out.</p>
+        <br/>
+        <p>Works in all browsers. No native Shadow DOM required.</p>
+      </div>
+      <div class="card accent-red">
+        <h3>None</h3>
+        <p>Styles are added to the <code>&lt;head&gt;</code> as <strong>global CSS</strong>. They affect every element in the entire app — including child and sibling components.</p>
+        <br/>
+        <p>Use only when you intentionally want global styles (e.g. a theme component).</p>
+      </div>
+      <div class="card accent-purple">
+        <h3>ShadowDom</h3>
+        <p>Uses the browser's native <strong>Shadow DOM API</strong>. Styles are truly isolated inside a shadow root. External CSS (even global) cannot penetrate in.</p>
+        <br/>
+        <p>Strictest isolation. Not compatible with some CSS-in-JS or global UI libraries.</p>
+      </div>
+    </div>
+
+    <div class="code-block"><pre><span class="kw">import</span> { <span class="cls">Component</span>, <span class="cls">ViewEncapsulation</span> } <span class="kw">from</span> <span class="str">'@angular/core'</span>;
+
+<span class="cmt">// ── Emulated (DEFAULT) ───────────────────────────────────────────────────────</span>
+<span class="dec">@Component</span>({
+  <span class="var">selector</span>: <span class="str">'app-card'</span>,
+  <span class="var">template</span>: <span class="tpl">`&lt;p class="text"&gt;Hello&lt;/p&gt;`</span>,
+  <span class="var">styles</span>: <span class="tpl">`p { color: red; }`</span>,
+  <span class="cmt">// encapsulation: ViewEncapsulation.Emulated  ← this is the default, no need to write it</span>
+})
+<span class="kw">export class</span> <span class="cls">CardComponent</span> {}
+<span class="cmt">// Angular emits:  p[_ngcontent-abc-c1] { color: red; }</span>
+<span class="cmt">// Only &lt;p&gt; tags INSIDE this component are red ✅</span>
+
+<span class="cmt">// ── None ─────────────────────────────────────────────────────────────────────</span>
+<span class="dec">@Component</span>({
+  <span class="var">encapsulation</span>: <span class="cls">ViewEncapsulation</span>.<span class="var">None</span>,
+  <span class="var">styles</span>: <span class="tpl">`p { color: red; }`</span>  <span class="cmt">// ← applies to ALL &lt;p&gt; tags in the app ⚠️</span>
+})
+<span class="kw">export class</span> <span class="cls">ThemeComponent</span> {}
+
+<span class="cmt">// ── ShadowDom ────────────────────────────────────────────────────────────────</span>
+<span class="dec">@Component</span>({
+  <span class="var">encapsulation</span>: <span class="cls">ViewEncapsulation</span>.<span class="var">ShadowDom</span>,
+  <span class="var">styles</span>: <span class="tpl">`p { color: red; }`</span>  <span class="cmt">// only inside shadow root — true isolation</span>
+})
+<span class="kw">export class</span> <span class="cls">IsolatedComponent</span> {}
+
+<span class="cmt">// ── :host — style the component's own host element ──────────────────────────</span>
+<span class="cmt">// Works in Emulated and ShadowDom modes</span>
+<span class="kw">styles</span>: <span class="tpl">`
+  :host { display: block; border: 1px solid #30363d; }  /* targets &lt;app-card&gt; itself */
+  :host(.active) { border-color: #3fb950; }             /* when host has .active class */
+  :host-context(.dark-theme) p { color: white; }        /* when ancestor has .dark-theme */
+`</span></pre></div>
+
+    <div class="two-col">
+      <div class="warn-box">
+        <div class="warn-hdr">⚠️ ::ng-deep — use with caution</div>
+        <p><code>::ng-deep .child-class {}</code> pierces encapsulation to style child component elements. It is <strong>deprecated</strong> but still works. A better approach is to expose a CSS custom property (CSS variable) from the child: <code>color: var(--card-text-color, black)</code> and let the parent set it: <code>app-card { --card-text-color: red; }</code>.</p>
+      </div>
+      <div class="card accent-yellow">
+        <h3>📊 Quick Comparison</h3>
+        <table style="margin-top:6px;">
+          <thead><tr><th>Mode</th><th>Scope</th><th>Shadow DOM</th><th>Use When</th></tr></thead>
+          <tbody>
+            <tr><td><code>Emulated</code></td><td>Component only</td><td>No</td><td>Default — always</td></tr>
+            <tr><td><code>None</code></td><td>Global app</td><td>No</td><td>Intentional global styles</td></tr>
+            <tr><td><code>ShadowDom</code></td><td>Shadow root</td><td>Yes</td><td>Web components / max isolation</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SLIDE 16 — CHEAT SHEET ══ -->
+<div class="slide" id="s16">
+  <div class="slide-header"><span class="topic-badge">16</span><h1>Quick Reference Cheat Sheet</h1></div>
   <div class="content">
     <div class="two-col">
       <div class="code-block"><pre><span class="cmt">// ── Complete Component API (Angular v22) ─────────</span>
@@ -1257,7 +1339,7 @@ CartIcon:     🛒 1    ← auto-updated, no event needed ✅</pre>
 <nav id="nav">
   <button id="btn-first" onclick="goTo(0)">&#8676;</button>
   <button id="btn-prev"  onclick="move(-1)">&#8592;</button>
-  <span id="counter">1 / 16</span>
+  <span id="counter">1 / 17</span>
   <button id="btn-next"  onclick="move(1)">&#8594;</button>
   <button id="btn-last"  onclick="goTo(total-1)">&#8677;</button>
 </nav>
