@@ -1181,6 +1181,82 @@ On mouseenter: controls bar shows   (parent calls child.show())
 On mouseleave: controls bar hides   (parent calls child.hide())
 On [🔄 Reset]: volume back to 80%  (parent calls child.setVolume(80))</pre>
       </div>
+
+      <!-- ── LIVE UI PREVIEW ── -->
+      <div style="background:#0d1117;border:1px solid #30363d;border-radius:10px;padding:14px 16px;">
+        <div style="font-size:10px;font-weight:700;color:#58a6ff;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;">🎬 LIVE DEMO — Hover over the player to see viewChild in action</div>
+        <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;">
+
+          <!-- Video Player mock -->
+          <div id="vc-player"
+               style="width:320px;background:#000;border-radius:8px;overflow:hidden;position:relative;cursor:pointer;border:2px solid #30363d;flex-shrink:0;"
+               onmouseenter="vcShowControls()" onmouseleave="vcHideControls()">
+
+            <!-- Fake video screen -->
+            <div style="width:100%;height:160px;background:linear-gradient(135deg,#0a1628,#1a2a4a);display:flex;align-items:center;justify-content:center;">
+              <div style="text-align:center;">
+                <div style="font-size:42px;">🎬</div>
+                <div style="font-size:11px;color:#8b949e;margin-top:6px;">movie.mp4</div>
+                <div style="font-size:10px;color:#484f58;margin-top:2px;">← Hover to show ControlsBarComponent</div>
+              </div>
+            </div>
+
+            <!-- ControlsBarComponent (child) -->
+            <div id="vc-controls"
+                 style="background:rgba(0,0,0,0.85);padding:8px 12px;display:flex;align-items:center;gap:10px;transition:opacity 0.3s;opacity:1;">
+              <button onclick="event.stopPropagation()" style="background:#1f6feb;border:none;color:#fff;border-radius:4px;padding:4px 10px;cursor:pointer;font-size:13px;">⏮</button>
+              <button onclick="event.stopPropagation()" style="background:#3fb950;border:none;color:#fff;border-radius:4px;padding:4px 12px;cursor:pointer;font-size:13px;">▶ Play</button>
+              <button onclick="event.stopPropagation()" style="background:#1f6feb;border:none;color:#fff;border-radius:4px;padding:4px 10px;cursor:pointer;font-size:13px;">⏭</button>
+              <span style="margin-left:auto;font-size:12px;color:#c9d1d9;">🔊 <span id="vc-vol">50</span>%</span>
+            </div>
+          </div>
+
+          <!-- Controls panel -->
+          <div style="flex:1;min-width:200px;">
+            <div style="font-size:12px;font-weight:600;color:#ffa657;margin-bottom:10px;">Parent calls on ControlsBarComponent:</div>
+
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <button onclick="vcSetVolume(50)" style="background:#161b22;border:1px solid #1f6feb;color:#79c0ff;border-radius:6px;padding:7px 12px;cursor:pointer;font-size:12px;text-align:left;">
+                controls().setVolume(50) &nbsp;<span style="color:#484f58;font-size:11px;">← called on load</span>
+              </button>
+              <button onclick="vcSetVolume(80)" style="background:#161b22;border:1px solid #3fb950;color:#56d364;border-radius:6px;padding:7px 12px;cursor:pointer;font-size:12px;text-align:left;">
+                🔄 controls().setVolume(80) &nbsp;<span style="color:#484f58;font-size:11px;">← resetVolume()</span>
+              </button>
+              <button onclick="vcShowControls()" style="background:#161b22;border:1px solid #d2a8ff;color:#d2a8ff;border-radius:6px;padding:7px 12px;cursor:pointer;font-size:12px;text-align:left;">
+                controls().show() &nbsp;<span style="color:#484f58;font-size:11px;">← onHover(true)</span>
+              </button>
+              <button onclick="vcHideControls()" style="background:#161b22;border:1px solid #f85149;color:#ff7b72;border-radius:6px;padding:7px 12px;cursor:pointer;font-size:12px;text-align:left;">
+                controls().hide() &nbsp;<span style="color:#484f58;font-size:11px;">← onHover(false)</span>
+              </button>
+            </div>
+
+            <!-- Log -->
+            <div style="margin-top:10px;background:#0d1117;border:1px solid #21262d;border-radius:6px;padding:8px 10px;font-size:11px;font-family:Consolas,monospace;color:#8b949e;min-height:50px;">
+              <div style="color:#484f58;margin-bottom:4px;">// parent action log</div>
+              <div id="vc-log" style="color:#3fb950;">→ setVolume(50) called on load ✅</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <script>
+        function vcLog(msg) {
+          document.getElementById('vc-log').textContent = '→ ' + msg;
+        }
+        function vcShowControls() {
+          document.getElementById('vc-controls').style.opacity = '1';
+          vcLog('controls().show() ✅ — controls visible');
+        }
+        function vcHideControls() {
+          document.getElementById('vc-controls').style.opacity = '0';
+          vcLog('controls().hide() ✅ — controls hidden');
+        }
+        function vcSetVolume(v) {
+          document.getElementById('vc-vol').textContent = v;
+          vcLog('controls().setVolume(' + v + ') ✅ — volume = ' + v + '%');
+        }
+      </script>
+
     </div>
 
     <!-- CONTENTCHILD FULL EXAMPLE -->
