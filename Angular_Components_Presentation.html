@@ -1042,64 +1042,282 @@ CartIcon:     🛒 1    ← auto-updated, no event needed ✅</pre>
 <div class="slide" id="s10">
   <div class="slide-header"><span class="topic-badge">10</span><h1>viewChild() &amp; contentChild() Queries</h1></div>
   <div class="content">
-    <div class="two-col">
-      <div class="card accent-orange">
-        <h3>viewChild() — query own template</h3>
-        <p>Access a child component, directive, or DOM element declared in <strong>this component's own template</strong>. Result is available from <code>ngAfterViewInit</code> onwards.</p>
+
+    <p style="font-size:13px;color:#8b949e;">Queries let a parent component get a <strong>direct reference</strong> to a child component, directive, or DOM element — so it can read its properties or call its methods directly.</p>
+
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab(event,'s10','concept')">🧠 Concept — What &amp; Why</button>
+      <button class="tab-btn"        onclick="switchTab(event,'s10','viewchild')">👁 viewChild() — Full Example</button>
+      <button class="tab-btn"        onclick="switchTab(event,'s10','contentchild')">📦 contentChild() — Full Example</button>
+      <button class="tab-btn"        onclick="switchTab(event,'s10','diff')">⚖ viewChild vs contentChild</button>
+    </div>
+
+    <!-- CONCEPT -->
+    <div class="tab-panel active" id="s10-concept">
+      <div class="two-col">
+        <div class="card accent-orange">
+          <h3>👁 viewChild() — queries YOUR OWN template</h3>
+          <p>The parent asks: <em>"Give me a reference to this child component/element that I wrote in my own template."</em></p>
+          <br/>
+          <ul>
+            <li>Targets components/elements inside <code>template: `...`</code> of the same component</li>
+            <li>Ready after <code>ngAfterViewInit</code> (use <code>afterNextRender</code> for safety)</li>
+            <li>Used to: call child methods, read child state, focus DOM elements, init JS libraries</li>
+          </ul>
+        </div>
+        <div class="card accent-pink">
+          <h3>📦 contentChild() — queries PROJECTED content</h3>
+          <p>The parent asks: <em>"Give me a reference to the content that someone ELSE placed between my opening and closing tags."</em></p>
+          <br/>
+          <ul>
+            <li>Targets components/elements projected via <code>&lt;ng-content /&gt;</code></li>
+            <li>Ready after <code>ngAfterContentInit</code></li>
+            <li>Used to: respond to what the consumer passes in (e.g. a card that checks if a header was provided)</li>
+          </ul>
+        </div>
       </div>
-      <div class="card accent-pink">
-        <h3>contentChild() — query projected content</h3>
-        <p>Access a child component or element <strong>projected via ng-content</strong> by the parent. Result is available from <code>ngAfterContentInit</code> onwards.</p>
+      <div class="card accent-yellow">
+        <h3>🎯 Simple Mental Model</h3>
+        <table style="margin-top:8px;">
+          <thead><tr><th>Analogy</th><th>viewChild()</th><th>contentChild()</th></tr></thead>
+          <tbody>
+            <tr><td>Who wrote the content?</td><td>The component itself</td><td>The parent / consumer</td></tr>
+            <tr><td>Where does it live?</td><td>Inside <code>template: `...`</code></td><td>Between <code>&lt;app-card&gt;...&lt;/app-card&gt;</code></td></tr>
+            <tr><td>HTML equivalent</td><td>querySelector inside shadow DOM</td><td>querySelector of slot content</td></tr>
+            <tr><td>Available from</td><td><code>ngAfterViewInit</code></td><td><code>ngAfterContentInit</code></td></tr>
+            <tr><td>Returns</td><td>Signal (read with <code>()</code>)</td><td>Signal (read with <code>()</code>)</td></tr>
+          </tbody>
+        </table>
       </div>
     </div>
 
-    <div class="code-block"><pre><span class="cmt">// ── parent.component.ts — query child components ─────────────────────────────</span>
-<span class="kw">import</span> { <span class="cls">Component</span>, <span class="fn">viewChild</span>, <span class="fn">viewChildren</span>,
-         <span class="fn">contentChild</span>, <span class="fn">afterNextRender</span> } <span class="kw">from</span> <span class="str">'@angular/core'</span>;
+    <!-- VIEWCHILD FULL EXAMPLE -->
+    <div class="tab-panel" id="s10-viewchild">
+      <p style="font-size:12.5px;color:#8b949e;margin-bottom:4px;">Scenario: A <code>VideoPlayerComponent</code> has a child <code>ControlsBarComponent</code>. The parent needs to call <code>show()</code>/<code>hide()</code> on the controls bar directly.</p>
+      <div class="two-col">
+        <div class="code-block"><pre><span class="cmt">// ── controls-bar.component.ts (CHILD) ────────────</span>
+<span class="kw">import</span> { <span class="cls">Component</span>, <span class="fn">signal</span> } <span class="kw">from</span> <span class="str">'@angular/core'</span>;
 
 <span class="dec">@Component</span>({
+  <span class="var">selector</span>: <span class="str">'app-controls-bar'</span>,
   <span class="var">template</span>: <span class="tpl">`
-    &lt;app-chart #chart /&gt;
-    &lt;input #searchInput type="text" /&gt;
-    @for (item of items(); track item) {
-      &lt;app-list-item /&gt;
+    @if (visible()) {
+      &lt;div class="controls"&gt;
+        &lt;button&gt;⏮&lt;/button&gt;
+        &lt;button&gt;▶ Play&lt;/button&gt;
+        &lt;button&gt;⏭&lt;/button&gt;
+        &lt;span&gt;{{ volume() }}%&lt;/span&gt;
+      &lt;/div&gt;
     }
-    &lt;ng-content /&gt;
   `</span>
 })
-<span class="kw">export class</span> <span class="cls">ParentComponent</span> {
-  <span class="cmt">// viewChild — query single child by component type or template reference</span>
-  <span class="var">chart</span>       = <span class="fn">viewChild</span>.<span class="fn">required</span>(<span class="cls">ChartComponent</span>);    <span class="cmt">// by type</span>
-  <span class="var">searchInput</span> = <span class="fn">viewChild</span>&lt;<span class="cls">ElementRef</span>&gt;(<span class="str">'searchInput'</span>);    <span class="cmt">// by template ref</span>
+<span class="kw">export class</span> <span class="cls">ControlsBarComponent</span> {
+  <span class="cmt">// internal state</span>
+  <span class="var">visible</span> = <span class="fn">signal</span>(<span class="kw">true</span>);
+  <span class="var">volume</span>  = <span class="fn">signal</span>(<span class="num">80</span>);
 
-  <span class="cmt">// viewChildren — query ALL matching children</span>
-  <span class="var">listItems</span>   = <span class="fn">viewChildren</span>(<span class="cls">ListItemComponent</span>);        <span class="cmt">// Signal&lt;readonly ListItemComponent[]&gt;</span>
-
-  <span class="cmt">// contentChild — query projected child (from ng-content)</span>
-  <span class="var">projectedHeader</span> = <span class="fn">contentChild</span>(<span class="cls">HeaderComponent</span>);
-
-  <span class="fn">constructor</span>() {
-    <span class="fn">afterNextRender</span>(() => {
-      <span class="cmt">// viewChild is a Signal — read with ()</span>
-      <span class="kw">this</span>.<span class="var">chart</span>().<span class="fn">refresh</span>();                         <span class="cmt">// call child method</span>
-      <span class="kw">this</span>.<span class="var">searchInput</span>()?.nativeElement.<span class="fn">focus</span>();      <span class="cmt">// DOM access</span>
-
-      <span class="var">console</span>.<span class="fn">log</span>(<span class="str">'Items count:'</span>, <span class="kw">this</span>.<span class="var">listItems</span>().<span class="var">length</span>);
-    });
+  <span class="cmt">// Public methods parent can call</span>
+  <span class="fn">show</span>() { <span class="kw">this</span>.<span class="var">visible</span>.<span class="fn">set</span>(<span class="kw">true</span>); }
+  <span class="fn">hide</span>() { <span class="kw">this</span>.<span class="var">visible</span>.<span class="fn">set</span>(<span class="kw">false</span>); }
+  <span class="fn">setVolume</span>(<span class="var">v</span>: <span class="typ">number</span>) {
+    <span class="kw">this</span>.<span class="var">volume</span>.<span class="fn">set</span>(<span class="var">v</span>);
   }
 }</pre></div>
 
-    <div class="output-box">
-      <div class="out-hdr">▶ Console output after render</div>
-      <pre>Items count: 5
-(search input auto-focused)
-(chart.refresh() called on child)</pre>
+        <div class="code-block"><pre><span class="cmt">// ── video-player.component.ts (PARENT) ───────────</span>
+<span class="kw">import</span> { <span class="cls">Component</span>, <span class="fn">viewChild</span>,
+         <span class="fn">afterNextRender</span>, <span class="cls">ElementRef</span> } <span class="kw">from</span> <span class="str">'@angular/core'</span>;
+<span class="kw">import</span> { <span class="cls">ControlsBarComponent</span> } <span class="kw">from</span> <span class="str">'./controls-bar.component'</span>;
+
+<span class="dec">@Component</span>({
+  <span class="var">selector</span>: <span class="str">'app-video-player'</span>,
+  <span class="var">imports</span>: [<span class="cls">ControlsBarComponent</span>],
+  <span class="var">template</span>: <span class="tpl">`
+    &lt;video #videoEl src="movie.mp4"
+      (mouseenter)="onHover(true)"
+      (mouseleave)="onHover(false)"&gt;
+    &lt;/video&gt;
+    &lt;app-controls-bar /&gt;
+    &lt;button (click)="resetVolume()"&gt;🔄 Reset&lt;/button&gt;
+  `</span>
+})
+<span class="kw">export class</span> <span class="cls">VideoPlayerComponent</span> {
+
+  <span class="cmt">// 1️⃣  Query child COMPONENT by type</span>
+  <span class="var">controls</span> = <span class="fn">viewChild</span>.<span class="fn">required</span>(<span class="cls">ControlsBarComponent</span>);
+  <span class="cmt">//   ↑ returns Signal&lt;ControlsBarComponent&gt;</span>
+  <span class="cmt">//   ↑ .required = build error if not found</span>
+
+  <span class="cmt">// 2️⃣  Query DOM element by #templateRef</span>
+  <span class="var">videoEl</span> = <span class="fn">viewChild</span>&lt;<span class="cls">ElementRef</span>&lt;<span class="cls">HTMLVideoElement</span>&gt;&gt;(<span class="str">'videoEl'</span>);
+  <span class="cmt">//   ↑ returns Signal&lt;ElementRef | undefined&gt;</span>
+
+  <span class="fn">constructor</span>() {
+    <span class="fn">afterNextRender</span>(() => {
+      <span class="cmt">// Read signal with ()  ← this is mandatory</span>
+      <span class="kw">this</span>.<span class="var">controls</span>().<span class="fn">setVolume</span>(<span class="num">50</span>);     <span class="cmt">// call child method</span>
+
+      <span class="kw">const</span> <span class="var">vid</span> = <span class="kw">this</span>.<span class="var">videoEl</span>()?.nativeElement;
+      <span class="var">console</span>.<span class="fn">log</span>(<span class="str">'Video duration:'</span>, <span class="var">vid</span>?.duration);
+    });
+  }
+
+  <span class="fn">onHover</span>(<span class="var">entering</span>: <span class="typ">boolean</span>) {
+    <span class="cmt">// Call show/hide on the child directly</span>
+    <span class="var">entering</span>
+      ? <span class="kw">this</span>.<span class="var">controls</span>().<span class="fn">show</span>()
+      : <span class="kw">this</span>.<span class="var">controls</span>().<span class="fn">hide</span>();
+  }
+
+  <span class="fn">resetVolume</span>() {
+    <span class="kw">this</span>.<span class="var">controls</span>().<span class="fn">setVolume</span>(<span class="num">80</span>);
+  }
+}</pre></div>
+      </div>
+      <div class="output-box">
+        <div class="out-hdr">▶ Behaviour</div>
+        <pre>On load:       volume set to 50% via parent calling child.setVolume(50)
+On mouseenter: controls bar shows   (parent calls child.show())
+On mouseleave: controls bar hides   (parent calls child.hide())
+On [🔄 Reset]: volume back to 80%  (parent calls child.setVolume(80))</pre>
+      </div>
     </div>
 
-    <div class="tip-box">
-      <div class="tip-hdr">✅ viewChild() is now a Signal (v17+)</div>
-      <p>The new <code>viewChild()</code> function returns a <strong>Signal</strong> — read it with <code>this.chart()</code>. The old <code>@ViewChild()</code> decorator returns a plain property. Both work, but the signal version integrates with <code>effect()</code> and <code>computed()</code> reactively.</p>
+    <!-- CONTENTCHILD FULL EXAMPLE -->
+    <div class="tab-panel" id="s10-contentchild">
+      <p style="font-size:12.5px;color:#8b949e;margin-bottom:4px;">Scenario: A reusable <code>ExpansionPanelComponent</code> checks whether the consumer projected a <code>PanelHeaderComponent</code> so it knows what to display.</p>
+      <div class="two-col">
+        <div class="code-block"><pre><span class="cmt">// ── panel-header.component.ts ─────────────────────</span>
+<span class="dec">@Component</span>({
+  <span class="var">selector</span>: <span class="str">'app-panel-header'</span>,
+  <span class="var">template</span>: <span class="tpl">`
+    &lt;div class="header"&gt;
+      &lt;ng-content /&gt;
+    &lt;/div&gt;
+  `</span>
+})
+<span class="kw">export class</span> <span class="cls">PanelHeaderComponent</span> {
+  <span class="var">icon</span> = <span class="fn">input</span>(<span class="str">'▶'</span>);
+}
+
+<span class="cmt">// ── expansion-panel.component.ts (queries projected) ─</span>
+<span class="kw">import</span> { <span class="cls">Component</span>, <span class="fn">contentChild</span>,
+         <span class="fn">signal</span>, <span class="fn">effect</span> } <span class="kw">from</span> <span class="str">'@angular/core'</span>;
+
+<span class="dec">@Component</span>({
+  <span class="var">selector</span>: <span class="str">'app-expansion-panel'</span>,
+  <span class="var">template</span>: <span class="tpl">`
+    &lt;div class="panel"&gt;
+
+      &lt;!-- Slot for header (projected by consumer) --&gt;
+      &lt;div class="panel-header" (click)="toggle()"&gt;
+        &lt;ng-content select="app-panel-header" /&gt;
+
+        &lt;!-- Fallback if no header projected --&gt;
+        @if (!header()) {
+          &lt;span&gt;Click to expand&lt;/span&gt;
+        }
+        &lt;span&gt;{{ open() ? '▲' : '▼' }}&lt;/span&gt;
+      &lt;/div&gt;
+
+      &lt;!-- Body content --&gt;
+      @if (open()) {
+        &lt;div class="panel-body"&gt;
+          &lt;ng-content /&gt;
+        &lt;/div&gt;
+      }
+    &lt;/div&gt;
+  `</span>
+})
+<span class="kw">export class</span> <span class="cls">ExpansionPanelComponent</span> {
+  <span class="var">open</span> = <span class="fn">signal</span>(<span class="kw">false</span>);
+
+  <span class="cmt">// contentChild — queries what the CONSUMER projected</span>
+  <span class="var">header</span> = <span class="fn">contentChild</span>(<span class="cls">PanelHeaderComponent</span>);
+  <span class="cmt">// Signal&lt;PanelHeaderComponent | undefined&gt;</span>
+  <span class="cmt">// undefined = consumer didn't project a header</span>
+
+  <span class="fn">constructor</span>() {
+    <span class="fn">effect</span>(() => {
+      <span class="kw">if</span> (<span class="kw">this</span>.<span class="var">header</span>()) {
+        <span class="var">console</span>.<span class="fn">log</span>(<span class="str">'Header icon:'</span>, <span class="kw">this</span>.<span class="var">header</span>()!.<span class="fn">icon</span>());
+      }
+    });
+  }
+
+  <span class="fn">toggle</span>() { <span class="kw">this</span>.<span class="var">open</span>.<span class="fn">update</span>(<span class="var">v</span> => !<span class="var">v</span>); }
+}</pre></div>
+
+        <div class="code-block"><pre><span class="cmt">// ── page.component.ts (CONSUMER of expansion panel) ──</span>
+<span class="dec">@Component</span>({
+  <span class="var">imports</span>: [<span class="cls">ExpansionPanelComponent</span>, <span class="cls">PanelHeaderComponent</span>],
+  <span class="var">template</span>: <span class="tpl">`
+    &lt;h1&gt;FAQ Page&lt;/h1&gt;
+
+    &lt;!-- Panel WITH a projected header --&gt;
+    &lt;app-expansion-panel&gt;
+      &lt;app-panel-header icon="📦"&gt;
+        What is Angular SSR?
+      &lt;/app-panel-header&gt;
+
+      &lt;p&gt;
+        SSR renders your Angular app on the
+        server for faster first paint and SEO.
+      &lt;/p&gt;
+    &lt;/app-expansion-panel&gt;
+
+    &lt;!-- Panel WITHOUT a header (fallback shows) --&gt;
+    &lt;app-expansion-panel&gt;
+      &lt;p&gt;This panel has no custom header.&lt;/p&gt;
+    &lt;/app-expansion-panel&gt;
+  `</span>
+})
+<span class="kw">export class</span> <span class="cls">PageComponent</span> {}</pre></div>
+      </div>
+      <div class="output-box">
+        <div class="out-hdr">▶ Rendered output</div>
+        <pre>┌─────────────────────────────────────────┐
+│  📦 What is Angular SSR?          ▼     │  ← header() signal has value
+└─────────────────────────────────────────┘
+  (click expands body)
+
+┌─────────────────────────────────────────┐
+│  Click to expand                  ▼     │  ← header() = undefined → fallback
+└─────────────────────────────────────────┘
+
+Console: Header icon: 📦</pre>
+      </div>
     </div>
+
+    <!-- DIFF TAB -->
+    <div class="tab-panel" id="s10-diff">
+      <table>
+        <thead><tr><th>Question</th><th>viewChild()</th><th>contentChild()</th></tr></thead>
+        <tbody>
+          <tr><td><strong>What does it query?</strong></td><td>Elements in the component's own <code>template</code></td><td>Elements projected by consumer via <code>&lt;ng-content&gt;</code></td></tr>
+          <tr><td><strong>When is it available?</strong></td><td>After <code>ngAfterViewInit</code></td><td>After <code>ngAfterContentInit</code></td></tr>
+          <tr><td><strong>Safe access hook</strong></td><td><code>afterNextRender()</code></td><td><code>afterNextRender()</code></td></tr>
+          <tr><td><strong>Returns</strong></td><td><code>Signal&lt;T | undefined&gt;</code></td><td><code>Signal&lt;T | undefined&gt;</code></td></tr>
+          <tr><td><strong>.required version</strong></td><td>✅ <code>viewChild.required()</code></td><td>✅ <code>contentChild.required()</code></td></tr>
+          <tr><td><strong>Query multiple</strong></td><td><code>viewChildren()</code> → <code>Signal&lt;T[]&gt;</code></td><td><code>contentChildren()</code> → <code>Signal&lt;T[]&gt;</code></td></tr>
+          <tr><td><strong>Query by type</strong></td><td><code>viewChild(ChildComponent)</code></td><td><code>contentChild(ChildComponent)</code></td></tr>
+          <tr><td><strong>Query by #ref</strong></td><td><code>viewChild&lt;ElementRef&gt;('myRef')</code></td><td>Not applicable</td></tr>
+          <tr><td><strong>Old decorator equivalent</strong></td><td><code>@ViewChild()</code></td><td><code>@ContentChild()</code></td></tr>
+          <tr><td><strong>Primary use case</strong></td><td>Call child methods, focus DOM, init charts</td><td>Adapt layout based on what consumer projected</td></tr>
+        </tbody>
+      </table>
+      <div class="two-col" style="margin-top:12px;">
+        <div class="warn-box">
+          <div class="warn-hdr">⚠️ Never access before it's ready</div>
+          <p>Reading <code>this.controls()</code> in <code>ngOnInit</code> returns <code>undefined</code> — the child hasn't rendered yet. Always read queries inside <code>afterNextRender()</code>, <code>ngAfterViewInit</code>, or reactively via <code>effect()</code>.</p>
+        </div>
+        <div class="tip-box">
+          <div class="tip-hdr">✅ Use effect() for reactive access</div>
+          <p>Since queries return signals, you can use <code>effect(() =&gt; { this.controls()?.setVolume(50); })</code> — it runs whenever the signal changes (e.g. when a child is dynamically added or removed).</p>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 
