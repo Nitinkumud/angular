@@ -1,0 +1,1304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Angular Components – Senior Interview Deep Dive (v22)</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; overflow: hidden; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0d1117; color: #e6edf3; }
+
+    #deck { width: 100vw; height: 100vh; position: relative; }
+    .slide {
+      display: none; flex-direction: column; justify-content: flex-start;
+      padding: 44px 58px 76px; width: 100%; height: 100%;
+      overflow-y: auto; gap: 14px; animation: fadeIn .35s ease;
+    }
+    .slide.active { display: flex; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+
+    .slide-header { display: flex; align-items: center; gap: 14px; border-bottom: 2px solid #21262d; padding-bottom: 12px; flex-shrink: 0; }
+    .topic-badge { background: #0a2a4a; color: #58a6ff; font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; padding: 4px 10px; border-radius: 20px; white-space: nowrap; }
+
+    h1 { font-size: 27px; font-weight: 700; color: #58a6ff; }
+    h3 { font-size: 14px; font-weight: 600; color: #ffa657; margin-bottom: 4px; }
+
+    .title-slide { justify-content: center; align-items: center; text-align: center; background: radial-gradient(ellipse at 50% 0%, #071020 0%, #0d1117 70%); }
+    .title-slide h1 { font-size: 44px; margin-bottom: 10px; color: #58a6ff; }
+    .title-slide .subtitle { font-size: 16px; color: #8b949e; max-width: 720px; line-height: 1.65; }
+    .logo { font-size: 62px; margin-bottom: 14px; }
+    .topic-chips { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 20px; }
+    .chip { background: #161b22; border: 1px solid #30363d; border-radius: 20px; padding: 5px 14px; font-size: 12.5px; color: #8b949e; }
+
+    .content { flex: 1; display: flex; flex-direction: column; gap: 14px; }
+    .two-col   { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+
+    .card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 14px 16px; }
+    .card.accent-red    { border-left: 4px solid #f85149; }
+    .card.accent-blue   { border-left: 4px solid #1f6feb; }
+    .card.accent-green  { border-left: 4px solid #3fb950; }
+    .card.accent-orange { border-left: 4px solid #f78166; }
+    .card.accent-purple { border-left: 4px solid #d2a8ff; }
+    .card.accent-yellow { border-left: 4px solid #e3b341; }
+    .card.accent-cyan   { border-left: 4px solid #39d0d8; }
+    .card.accent-pink   { border-left: 4px solid #ff6eb4; }
+
+    p  { font-size: 13.5px; line-height: 1.75; color: #c9d1d9; }
+    li { font-size: 13px; line-height: 1.85; color: #c9d1d9; margin-left: 18px; }
+    ul { padding-left: 4px; }
+    strong { color: #f0f6fc; }
+    code { font-family: 'Consolas', monospace; font-size: 12px; background: #1c2128; color: #79c0ff; padding: 2px 6px; border-radius: 4px; }
+
+    .code-block { background: #1c2128; border: 1px solid #30363d; border-radius: 8px; padding: 14px 16px; overflow-x: auto; flex-shrink: 0; }
+    .code-block pre { font-family: 'Consolas', monospace; font-size: 12.5px; line-height: 1.7; color: #e6edf3; white-space: pre; margin: 0; }
+
+    /* syntax colours */
+    .kw  { color: #ff7b72; }
+    .fn  { color: #d2a8ff; }
+    .str { color: #a5d6ff; }
+    .num { color: #79c0ff; }
+    .cmt { color: #8b949e; font-style: italic; }
+    .var { color: #ffa657; }
+    .dec { color: #ff6b6b; }
+    .cls { color: #f0c674; }
+    .int { color: #39d0d8; }
+    .op  { color: #7ee787; }
+    .typ { color: #56d364; }
+    .tpl { color: #a5d6ff; }
+
+    /* output box */
+    .output-box { background: #0d1f0d; border: 1px solid #3fb950; border-left: 4px solid #3fb950; border-radius: 8px; padding: 10px 14px; }
+    .output-box .out-hdr { font-size: 10px; font-weight: 700; color: #3fb950; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
+    .output-box pre { font-family: 'Consolas', monospace; font-size: 12.5px; color: #56d364; white-space: pre; line-height: 1.7; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+    th { background: #161b22; color: #d2a8ff; text-align: left; padding: 8px 12px; border-bottom: 2px solid #30363d; font-weight: 600; }
+    td { padding: 7px 12px; border-bottom: 1px solid #21262d; color: #c9d1d9; vertical-align: top; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #161b22; }
+
+    .badge { display: inline-block; padding: 2px 9px; border-radius: 12px; font-size: 11px; font-weight: 700; white-space: nowrap; }
+    .badge-red    { background: #3a1818; color: #f85149; }
+    .badge-green  { background: #1a3c1a; color: #3fb950; }
+    .badge-blue   { background: #0d2340; color: #58a6ff; }
+    .badge-orange { background: #3a2000; color: #ffa657; }
+    .badge-purple { background: #2a1a3e; color: #d2a8ff; }
+    .badge-yellow { background: #2e2200; color: #e3b341; }
+
+    .tip-box { background: #1c2a1c; border: 1px solid #3fb950; border-left: 4px solid #3fb950; border-radius: 8px; padding: 10px 14px; }
+    .tip-box .tip-hdr { font-size: 11px; font-weight: 700; color: #3fb950; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 5px; }
+    .tip-box p, .tip-box li { font-size: 12.5px; color: #c9d1d9; }
+
+    .warn-box { background: #2a1a00; border: 1px solid #e3b341; border-left: 4px solid #e3b341; border-radius: 8px; padding: 10px 14px; }
+    .warn-box .warn-hdr { font-size: 11px; font-weight: 700; color: #e3b341; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 5px; }
+    .warn-box p, .warn-box li { font-size: 12.5px; color: #c9d1d9; }
+
+    .mem-box { background: #1e1a2e; border: 1px solid #d2a8ff; border-left: 4px solid #d2a8ff; border-radius: 8px; padding: 10px 14px; }
+    .mem-box .mem-hdr { font-size: 11px; font-weight: 700; color: #d2a8ff; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 5px; }
+    .mem-box p, .mem-box li { font-size: 12.5px; color: #c9d1d9; }
+
+    .iq-item { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 12px 15px; margin-bottom: 8px; }
+    .iq-q { font-size: 13.5px; font-weight: 600; color: #58a6ff; margin-bottom: 6px; }
+    .iq-a { font-size: 12.5px; color: #c9d1d9; line-height: 1.7; }
+    .iq-tag { font-size: 10px; font-weight: 700; background: #0d2340; color: #58a6ff; padding: 2px 8px; border-radius: 10px; margin-left: 8px; vertical-align: middle; }
+
+    .flow { display: flex; align-items: center; gap: 0; flex-wrap: nowrap; overflow-x: auto; padding: 6px 0; }
+    .flow-box { background: #1c2128; border: 1px solid #30363d; border-radius: 6px; padding: 7px 12px; font-size: 12px; color: #e6edf3; white-space: nowrap; flex-shrink: 0; }
+    .flow-box.green  { border-color: #3fb950; color: #56d364; }
+    .flow-box.blue   { border-color: #1f6feb; color: #79c0ff; }
+    .flow-box.purple { border-color: #d2a8ff; color: #d2a8ff; }
+    .flow-box.orange { border-color: #ffa657; color: #ffa657; }
+    .flow-arrow { color: #484f58; font-size: 18px; padding: 0 4px; flex-shrink: 0; }
+
+    .tab-bar { display: flex; gap: 0; border-bottom: 2px solid #21262d; flex-shrink: 0; flex-wrap: wrap; }
+    .tab-btn { padding: 8px 18px; font-size: 13px; font-weight: 600; cursor: pointer; background: none; border: none; color: #8b949e; border-bottom: 3px solid transparent; margin-bottom: -2px; transition: color .2s, border-color .2s; }
+    .tab-btn:hover { color: #e6edf3; }
+    .tab-btn.active { color: #58a6ff; border-bottom-color: #58a6ff; }
+    .tab-panel { display: none; flex-direction: column; gap: 14px; }
+    .tab-panel.active { display: flex; }
+
+    #nav { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 16px; background: #161b22cc; backdrop-filter: blur(8px); border: 1px solid #30363d; border-radius: 40px; padding: 10px 24px; z-index: 1000; }
+    #nav button { background: none; border: none; color: #8b949e; cursor: pointer; font-size: 20px; padding: 4px 8px; border-radius: 6px; transition: color .2s, background .2s; }
+    #nav button:hover:not(:disabled) { color: #e6edf3; background: #21262d; }
+    #nav button:disabled { opacity: 0.3; cursor: default; }
+    #counter { font-size: 13px; color: #8b949e; min-width: 64px; text-align: center; }
+    #progress-bar { position: fixed; top: 0; left: 0; height: 3px; background: #1f6feb; transition: width .3s ease; z-index: 999; }
+    #hint { position: fixed; bottom: 20px; right: 24px; font-size: 11px; color: #484f58; }
+    .slide::-webkit-scrollbar { width: 6px; }
+    .slide::-webkit-scrollbar-track { background: transparent; }
+    .slide::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
+  </style>
+</head>
+<body>
+<div id="progress-bar"></div>
+<div id="deck">
+
+<!-- ══ SLIDE 0 — TITLE ══ -->
+<div class="slide title-slide active" id="s0">
+  <div class="logo">🧩</div>
+  <h1>Angular Components</h1>
+  <p class="subtitle">Senior-level deep dive — Anatomy, Lifecycle, Signal Inputs, Outputs, Two-way Binding, Parent↔Child↔Sibling data sharing, ng-content, ViewChild, ContentChild &amp; 16 Interview Q&amp;A</p>
+  <div class="topic-chips">
+    <span class="chip">Anatomy</span>
+    <span class="chip">Lifecycle Hooks</span>
+    <span class="chip">input() signal</span>
+    <span class="chip">input.required()</span>
+    <span class="chip">output() function</span>
+    <span class="chip">model() two-way</span>
+    <span class="chip">Parent → Child</span>
+    <span class="chip">Child → Parent</span>
+    <span class="chip">Sibling via Service</span>
+    <span class="chip">ng-content</span>
+    <span class="chip">viewChild()</span>
+    <span class="chip">contentChild()</span>
+    <span class="chip">Interview Q&amp;A</span>
+  </div>
+  <p style="margin-top:28px;font-size:12px;color:#484f58;">Angular v22 (v22.0.6) &nbsp;·&nbsp; Source: angular.dev &nbsp;·&nbsp; 15 Slides</p>
+</div>
+
+<!-- ══ SLIDE 1 — ANATOMY ══ -->
+<div class="slide" id="s1">
+  <div class="slide-header"><span class="topic-badge">01</span><h1>Anatomy of a Component</h1></div>
+  <div class="content">
+    <div class="three-col">
+      <div class="card accent-blue">
+        <h3>Three Required Parts</h3>
+        <ul>
+          <li><strong>TypeScript class</strong> — logic, state, methods</li>
+          <li><strong>HTML template</strong> — what renders in the DOM</li>
+          <li><strong>CSS selector</strong> — how it's used in other templates</li>
+        </ul>
+      </div>
+      <div class="card accent-green">
+        <h3>Standalone (Default v19+)</h3>
+        <p>Every component is standalone by default since Angular v19. No NgModule needed. Just add it to the <code>imports</code> array of the parent component.</p>
+      </div>
+      <div class="card accent-purple">
+        <h3>Component Tree</h3>
+        <p>Your app is a <strong>tree of components</strong>. Each component manages its own view. Parent-child relationships define data flow and DI scope.</p>
+      </div>
+    </div>
+
+    <div class="code-block"><pre><span class="cmt">// ── Minimal component (Angular v22) ─────────────────────────────────────────</span>
+<span class="kw">import</span> { <span class="cls">Component</span>, <span class="fn">signal</span>, <span class="fn">computed</span> } <span class="kw">from</span> <span class="str">'@angular/core'</span>;
+
+<span class="dec">@Component</span>({
+  <span class="var">selector</span>: <span class="str">'app-user-card'</span>,          <span class="cmt">// used as &lt;app-user-card /&gt; in templates</span>
+
+  <span class="cmt">// Inline template (or use templateUrl: './user-card.component.html')</span>
+  <span class="var">template</span>: <span class="tpl">`
+    &lt;div class="card"&gt;
+      &lt;h2&gt;{{ fullName() }}&lt;/h2&gt;
+      &lt;p&gt;Age: {{ age() }}&lt;/p&gt;
+      &lt;button (click)="birthday()"&gt;🎂 Birthday&lt;/button&gt;
+    &lt;/div&gt;
+  `</span>,
+
+  <span class="cmt">// Inline styles (or use styleUrl: './user-card.component.css')</span>
+  <span class="var">styles</span>: <span class="tpl">`
+    .card { background: #1a1a2e; padding: 16px; border-radius: 8px; }
+    h2    { color: #58a6ff; }
+  `</span>
+})
+<span class="kw">export class</span> <span class="cls">UserCardComponent</span> {
+  <span class="cmt">// State as signals</span>
+  <span class="var">firstName</span> = <span class="fn">signal</span>(<span class="str">'Nitin'</span>);
+  <span class="var">lastName</span>  = <span class="fn">signal</span>(<span class="str">'Kumar'</span>);
+  <span class="var">age</span>       = <span class="fn">signal</span>(<span class="num">30</span>);
+
+  <span class="cmt">// Derived state via computed</span>
+  <span class="var">fullName</span> = <span class="fn">computed</span>(() => <span class="str">`</span><span class="tpl">${this.firstName()} ${this.lastName()}</span><span class="str">`</span>);
+
+  <span class="fn">birthday</span>() { <span class="kw">this</span>.<span class="var">age</span>.<span class="fn">update</span>(<span class="var">a</span> => <span class="var">a</span> + <span class="num">1</span>); }
+}</pre></div>
+
+    <div class="two-col">
+      <div class="output-box">
+        <div class="out-hdr">▶ Output in browser</div>
+        <pre>┌─────────────────────────┐
+│  Nitin Kumar            │
+│  Age: 30                │
+│  [🎂 Birthday]          │
+│                         │
+│  (After click →)        │
+│  Age: 31  ✅            │
+└─────────────────────────┘</pre>
+      </div>
+      <div class="tip-box">
+        <div class="tip-hdr">✅ v22 — styleUrl (singular)</div>
+        <p>Angular v17+ uses <code>styleUrl</code> (singular string) instead of the old <code>styleUrls</code> (array). Both still work but the new singular form is preferred for single-file components.</p>
+        <br/>
+        <p>Angular v22.0.6 is the current stable version as of July 2026.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SLIDE 2 — LIFECYCLE HOOKS ══ -->
+<div class="slide" id="s2">
+  <div class="slide-header"><span class="topic-badge">02</span><h1>Component Lifecycle Hooks</h1></div>
+  <div class="content">
+    <div class="flow">
+      <div class="flow-box blue">constructor()</div><div class="flow-arrow">→</div>
+      <div class="flow-box purple">ngOnChanges()</div><div class="flow-arrow">→</div>
+      <div class="flow-box blue">ngOnInit()</div><div class="flow-arrow">→</div>
+      <div class="flow-box purple">ngDoCheck()</div><div class="flow-arrow">→</div>
+      <div class="flow-box blue">ngAfterContentInit()</div><div class="flow-arrow">→</div>
+      <div class="flow-box purple">ngAfterContentChecked()</div><div class="flow-arrow">→</div>
+      <div class="flow-box blue">ngAfterViewInit()</div><div class="flow-arrow">→</div>
+      <div class="flow-box purple">ngAfterViewChecked()</div><div class="flow-arrow">→</div>
+      <div class="flow-box orange">ngOnDestroy()</div>
+    </div>
+
+    <div class="code-block"><pre><span class="kw">import</span> { <span class="cls">Component</span>, <span class="cls">OnInit</span>, <span class="cls">OnDestroy</span>, <span class="cls">OnChanges</span>,
+         <span class="cls">AfterViewInit</span>, <span class="cls">SimpleChanges</span>, <span class="fn">input</span> } <span class="kw">from</span> <span class="str">'@angular/core'</span>;
+
+<span class="dec">@Component</span>({ <span class="var">selector</span>: <span class="str">'app-demo'</span>, <span class="var">template</span>: <span class="str">'...'</span> })
+<span class="kw">export class</span> <span class="cls">DemoComponent</span> <span class="kw">implements</span> <span class="cls">OnInit</span>, <span class="cls">OnChanges</span>, <span class="cls">AfterViewInit</span>, <span class="cls">OnDestroy</span> {
+  <span class="var">userId</span> = <span class="fn">input</span>&lt;<span class="typ">number</span>&gt;();
+
+  <span class="cmt">// 1. Called ONCE — before ngOnInit. Avoid heavy logic here.</span>
+  <span class="fn">constructor</span>() { <span class="var">console</span>.<span class="fn">log</span>(<span class="str">'1. constructor'</span>); }
+
+  <span class="cmt">// 2. Called when @Input / input() signal value changes (decorator-based only)</span>
+  <span class="fn">ngOnChanges</span>(<span class="var">changes</span>: <span class="cls">SimpleChanges</span>) {
+    <span class="var">console</span>.<span class="fn">log</span>(<span class="str">'2. ngOnChanges'</span>, <span class="var">changes</span>);
+  }
+
+  <span class="cmt">// 3. Called ONCE after first ngOnChanges — best place for init logic</span>
+  <span class="fn">ngOnInit</span>() { <span class="var">console</span>.<span class="fn">log</span>(<span class="str">'3. ngOnInit — fetch data here'</span>); }
+
+  <span class="cmt">// 4. Called after Angular checks child views — DOM is ready</span>
+  <span class="fn">ngAfterViewInit</span>() { <span class="var">console</span>.<span class="fn">log</span>(<span class="str">'4. ngAfterViewInit — DOM ready'</span>); }
+
+  <span class="cmt">// 5. Cleanup — unsubscribe, cancel timers, detach listeners</span>
+  <span class="fn">ngOnDestroy</span>() { <span class="var">console</span>.<span class="fn">log</span>(<span class="str">'5. ngOnDestroy — cleanup'</span>); }
+}</pre></div>
+
+    <div class="two-col">
+      <div class="output-box">
+        <div class="out-hdr">▶ Console output (component mount)</div>
+        <pre>1. constructor
+2. ngOnChanges { userId: {currentValue:42...} }
+3. ngOnInit — fetch data here
+4. ngAfterViewInit — DOM ready
+
+(On input change →)
+2. ngOnChanges { userId: {previousValue:42, currentValue:99...} }
+
+(On component destroy →)
+5. ngOnDestroy — cleanup</pre>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div class="warn-box">
+          <div class="warn-hdr">⚠️ ngOnChanges + signal inputs</div>
+          <p><code>ngOnChanges</code> only fires for <strong>decorator-based</strong> <code>@Input()</code> properties. Signal-based <code>input()</code> changes are tracked reactively via <code>effect()</code> or <code>computed()</code> — not via ngOnChanges.</p>
+        </div>
+        <div class="tip-box">
+          <div class="tip-hdr">✅ New: afterNextRender / afterRender</div>
+          <p>Angular v16+ adds <code>afterNextRender()</code> (runs once after first render) and <code>afterRender()</code> (runs after every render) as SSR-safe alternatives to <code>ngAfterViewInit</code>.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SLIDE 3 — SIGNAL INPUTS ══ -->
+<div class="slide" id="s3">
+  <div class="slide-header"><span class="topic-badge">03</span><h1>Signal-based Inputs — input() Function (v22)</h1></div>
+  <div class="content">
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab(event,'s3','basic')">📥 Basic input()</button>
+      <button class="tab-btn"        onclick="switchTab(event,'s3','required')">⚡ input.required()</button>
+      <button class="tab-btn"        onclick="switchTab(event,'s3','transform')">🔧 Transforms</button>
+      <button class="tab-btn"        onclick="switchTab(event,'s3','old')">🗂 Old @Input()</button>
+    </div>
+
+    <!-- Basic -->
+    <div class="tab-panel active" id="s3-basic">
+      <div class="two-col">
+        <div class="card accent-blue">
+          <h3>input() returns an InputSignal</h3>
+          <ul>
+            <li>Read-only signal — call it like a function: <code>value()</code></li>
+            <li>Use in <code>computed()</code> and <code>effect()</code> reactively</li>
+            <li>Type inferred from default value automatically</li>
+            <li>No default → type is <code>T | undefined</code></li>
+          </ul>
+        </div>
+        <div class="card accent-green">
+          <h3>Usage in parent template</h3>
+          <p>Binding is identical to <code>@Input()</code> — use square bracket syntax:</p>
+          <div class="code-block" style="margin-top:8px;"><pre><span class="cmt">&lt;!-- parent template --&gt;</span>
+<span class="int">&lt;app-rating</span>
+  <span class="op">[value]</span>=<span class="str">"productRating"</span>
+  <span class="op">[label]</span>=<span class="str">"'Quality'"</span>
+<span class="int">/&gt;</span></pre></div>
+        </div>
+      </div>
+      <div class="code-block"><pre><span class="cmt">// ── rating.component.ts ──────────────────────────────────────────────────────</span>
+<span class="kw">import</span> { <span class="cls">Component</span>, <span class="fn">input</span>, <span class="fn">computed</span> } <span class="kw">from</span> <span class="str">'@angular/core'</span>;
+
+<span class="dec">@Component</span>({
+  <span class="var">selector</span>: <span class="str">'app-rating'</span>,
+  <span class="var">template</span>: <span class="tpl">`
+    &lt;div&gt;
+      &lt;span&gt;{{ label() }}: &lt;/span&gt;
+      &lt;span&gt;{{ stars() }}&lt;/span&gt;
+    &lt;/div&gt;
+  `</span>
+})
+<span class="kw">export class</span> <span class="cls">RatingComponent</span> {
+  <span class="cmt">// input() with default value — TypeScript infers type as number</span>
+  <span class="var">value</span> = <span class="fn">input</span>(<span class="num">0</span>);                  <span class="cmt">// InputSignal&lt;number&gt;</span>
+
+  <span class="cmt">// input() with explicit type and no default → value is number | undefined</span>
+  <span class="var">label</span> = <span class="fn">input</span>&lt;<span class="typ">string</span>&gt;();           <span class="cmt">// InputSignal&lt;string | undefined&gt;</span>
+
+  <span class="cmt">// Use input signal inside computed()</span>
+  <span class="var">stars</span> = <span class="fn">computed</span>(() =>
+    <span class="str">'⭐'</span>.<span class="fn">repeat</span>(<span class="fn">Math</span>.<span class="fn">min</span>(<span class="kw">this</span>.<span class="var">value</span>(), <span class="num">5</span>))  <span class="cmt">// read signal by calling it</span>
+  );
+}</pre></div>
+      <div class="output-box">
+        <div class="out-hdr">▶ Output — with [value]="4" [label]="'Quality'"</div>
+        <pre>Quality: ⭐⭐⭐⭐</pre>
+      </div>
+    </div>
+
+    <!-- Required -->
+    <div class="tab-panel" id="s3-required">
+      <div class="code-block"><pre><span class="cmt">// ── input.required() — build-time enforcement ────────────────────────────────</span>
+<span class="dec">@Component</span>({ <span class="var">selector</span>: <span class="str">'app-product-card'</span>, <span class="var">template</span>: <span class="tpl">`
+  &lt;h3&gt;{{ product().name }}&lt;/h3&gt;
+  &lt;p&gt;Price: ₹{{ product().price }}&lt;/p&gt;
+`</span> })
+<span class="kw">export class</span> <span class="cls">ProductCardComponent</span> {
+  <span class="cmt">// Required input — Angular throws BUILD ERROR if not provided</span>
+  <span class="var">product</span> = <span class="fn">input</span>.<span class="fn">required</span>&lt;{ <span class="var">name</span>: <span class="typ">string</span>; <span class="var">price</span>: <span class="typ">number</span> }&gt;();
+  <span class="cmt">// Returns InputSignal&lt;{name:string, price:number}&gt; — no undefined</span>
+
+  <span class="cmt">// input.required() with alias</span>
+  <span class="var">productId</span> = <span class="fn">input</span>.<span class="fn">required</span>&lt;<span class="typ">number</span>&gt;({ <span class="var">alias</span>: <span class="str">'id'</span> });
+}
+
+<span class="cmt">// ── Parent template ───────────────────────────────────────────────────────────</span>
+<span class="cmt">&lt;!-- ✅ Correct --&gt;</span>
+<span class="int">&lt;app-product-card</span> <span class="op">[product]</span>=<span class="str">"selectedProduct"</span> <span class="op">[id]</span>=<span class="str">"42"</span> <span class="int">/&gt;</span>
+
+<span class="cmt">&lt;!-- ❌ Error at build time: Required input 'product' not provided --&gt;</span>
+<span class="int">&lt;app-product-card /&gt;</span></pre></div>
+      <div class="output-box">
+        <div class="out-hdr">▶ Output — with [product]="{name:'Laptop', price:55000}"</div>
+        <pre>Laptop
+Price: ₹55000</pre>
+      </div>
+      <div class="tip-box">
+        <div class="tip-hdr">✅ Build-time safety</div>
+        <p><code>input.required()</code> catches missing inputs at <strong>compile time</strong> — not at runtime. This is a major advantage over the old <code>@Input({ required: true })</code> which only warned in some tools.</p>
+      </div>
+    </div>
+
+    <!-- Transforms -->
+    <div class="tab-panel" id="s3-transform">
+      <div class="code-block"><pre><span class="cmt">// ── Input Transforms — coerce/sanitise incoming values ──────────────────────</span>
+<span class="kw">import</span> { <span class="cls">Component</span>, <span class="fn">input</span>, <span class="fn">booleanAttribute</span>, <span class="fn">numberAttribute</span> } <span class="kw">from</span> <span class="str">'@angular/core'</span>;
+
+<span class="dec">@Component</span>({ <span class="var">selector</span>: <span class="str">'app-toggle'</span>, <span class="var">template</span>: <span class="tpl">`
+  &lt;div [class.disabled]="disabled()"&gt;
+    &lt;div [style.width]="widthPx()"&gt;...&lt;/div&gt;
+  &lt;/div&gt;
+`</span> })
+<span class="kw">export class</span> <span class="cls">ToggleComponent</span> {
+  <span class="cmt">// Built-in: booleanAttribute — treats presence of attribute as true</span>
+  <span class="cmt">// &lt;app-toggle disabled /&gt;  →  disabled = true  ✅</span>
+  <span class="cmt">// &lt;app-toggle disabled="false" /&gt;  →  disabled = false</span>
+  <span class="var">disabled</span> = <span class="fn">input</span>(<span class="kw">false</span>, { <span class="var">transform</span>: <span class="fn">booleanAttribute</span> });
+
+  <span class="cmt">// Built-in: numberAttribute — coerces string to number</span>
+  <span class="cmt">// &lt;app-toggle width="200" /&gt;  →  widthPx = '200px'  ✅</span>
+  <span class="var">width</span> = <span class="fn">input</span>(<span class="num">100</span>, { <span class="var">transform</span>: <span class="fn">numberAttribute</span> });
+
+  <span class="cmt">// Custom transform function</span>
+  <span class="var">widthPx</span> = <span class="fn">input</span>(<span class="str">''</span>, { <span class="var">transform</span>: (<span class="var">v</span>: <span class="typ">number</span>) => <span class="str">`</span><span class="tpl">${v}px</span><span class="str">`</span> });
+
+  <span class="cmt">// Alias — template uses 'isDisabled', class uses 'disabled'</span>
+  <span class="var">label</span> = <span class="fn">input</span>(<span class="str">''</span>, { <span class="var">alias</span>: <span class="str">'toggleLabel'</span> });
+  <span class="cmt">// &lt;app-toggle [toggleLabel]="'Dark Mode'" /&gt;</span>
+}</pre></div>
+      <div class="output-box">
+        <div class="out-hdr">▶ Template usage examples</div>
+        <pre>&lt;app-toggle disabled /&gt;               → disabled() = true
+&lt;app-toggle disabled="false" /&gt;       → disabled() = false
+&lt;app-toggle [width]="200" /&gt;          → width() = 200 (number)
+&lt;app-toggle width="200" /&gt;            → width() = 200 (coerced ✅)</pre>
+      </div>
+    </div>
+
+    <!-- Old @Input -->
+    <div class="tab-panel" id="s3-old">
+      <div class="two-col">
+        <div class="card accent-orange">
+          <h3>🗂 Old Way — @Input() decorator (still works)</h3>
+          <p>Decorator-based approach. Still fully supported but Angular team recommends <code>input()</code> function for new code.</p>
+        </div>
+        <div class="card accent-green">
+          <h3>✅ New Way — input() function (recommended)</h3>
+          <p>Signal-based. Reactive, type-safe, tree-shakeable. Works with <code>computed()</code>, <code>effect()</code>, and zoneless.</p>
+        </div>
+      </div>
+      <div class="code-block"><pre><span class="cmt">// ── OLD: @Input() decorator ──────────────────────────────────────────────────</span>
+<span class="kw">import</span> { <span class="cls">Input</span> } <span class="kw">from</span> <span class="str">'@angular/core'</span>;
+
+<span class="kw">export class</span> <span class="cls">OldComponent</span> {
+  <span class="dec">@Input</span>() <span class="var">value</span> = <span class="num">0</span>;                         <span class="cmt">// plain property</span>
+  <span class="dec">@Input</span>({ <span class="var">required</span>: <span class="kw">true</span> }) <span class="var">name</span>!: <span class="typ">string</span>;  <span class="cmt">// required (less strict)</span>
+  <span class="dec">@Input</span>({ <span class="var">alias</span>: <span class="str">'userId'</span> }) <span class="var">id</span>!: <span class="typ">number</span>;  <span class="cmt">// aliased</span>
+
+  <span class="fn">ngOnChanges</span>(<span class="var">changes</span>: <span class="cls">SimpleChanges</span>) {
+    <span class="cmt">// Must use ngOnChanges to react to value changes</span>
+    <span class="kw">if</span> (<span class="var">changes</span>[<span class="str">'value'</span>]) { <span class="kw">this</span>.<span class="fn">doSomething</span>(); }
+  }
+}
+
+<span class="cmt">// ── NEW: input() signal ✅ ───────────────────────────────────────────────────</span>
+<span class="kw">import</span> { <span class="fn">input</span>, <span class="fn">effect</span> } <span class="kw">from</span> <span class="str">'@angular/core'</span>;
+
+<span class="kw">export class</span> <span class="cls">NewComponent</span> {
+  <span class="var">value</span>  = <span class="fn">input</span>(<span class="num">0</span>);                         <span class="cmt">// signal — read as value()</span>
+  <span class="var">name</span>   = <span class="fn">input</span>.<span class="fn">required</span>&lt;<span class="typ">string</span>&gt;();          <span class="cmt">// build-time required</span>
+  <span class="var">id</span>     = <span class="fn">input</span>.<span class="fn">required</span>&lt;<span class="typ">number</span>&gt;({ <span class="var">alias</span>: <span class="str">'userId'</span> });
+
+  <span class="fn">constructor</span>() {
+    <span class="cmt">// React to value changes with effect() — no ngOnChanges needed</span>
+    <span class="fn">effect</span>(() => { <span class="kw">this</span>.<span class="fn">doSomething</span>(<span class="kw">this</span>.<span class="var">value</span>()); });
+  }
+}</pre></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SLIDE 4 — OUTPUTS ══ -->
+<div class="slide" id="s4">
+  <div class="slide-header"><span class="topic-badge">04</span><h1>Custom Events with output() Function (v22)</h1></div>
+  <div class="content">
+    <div class="two-col">
+      <div class="card accent-purple">
+        <h3>output() returns an OutputEmitterRef</h3>
+        <ul>
+          <li>Call <code>.emit(value)</code> to fire the event</li>
+          <li>Parent listens with <code>(eventName)="handler($event)"</code></li>
+          <li>Events do <strong>not bubble</strong> up the DOM (unlike native events)</li>
+          <li>Output names are <strong>case-sensitive</strong></li>
+        </ul>
+      </div>
+      <div class="card accent-orange">
+        <h3>Old @Output() vs New output()</h3>
+        <table style="margin-top:6px;">
+          <thead><tr><th></th><th>@Output() + EventEmitter</th><th>output() ✅</th></tr></thead>
+          <tbody>
+            <tr><td>Returns</td><td>EventEmitter</td><td>OutputEmitterRef</td></tr>
+            <tr><td>RxJS needed?</td><td>Yes</td><td>No</td></tr>
+            <tr><td>Recommended</td><td>Legacy</td><td>✅ v14+</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="code-block"><pre><span class="cmt">// ── counter.component.ts — emits events to parent ────────────────────────────</span>
+<span class="kw">import</span> { <span class="cls">Component</span>, <span class="fn">signal</span>, <span class="fn">output</span> } <span class="kw">from</span> <span class="str">'@angular/core'</span>;
+
+<span class="dec">@Component</span>({
+  <span class="var">selector</span>: <span class="str">'app-counter'</span>,
+  <span class="var">template</span>: <span class="tpl">`
+    &lt;div&gt;
+      &lt;button (click)="decrement()"&gt;−&lt;/button&gt;
+      &lt;span&gt; {{ count() }} &lt;/span&gt;
+      &lt;button (click)="increment()"&gt;+&lt;/button&gt;
+    &lt;/div&gt;
+  `</span>
+})
+<span class="kw">export class</span> <span class="cls">CounterComponent</span> {
+  <span class="var">count</span> = <span class="fn">signal</span>(<span class="num">0</span>);
+
+  <span class="cmt">// Declare output events using output() function</span>
+  <span class="var">countChanged</span> = <span class="fn">output</span>&lt;<span class="typ">number</span>&gt;();         <span class="cmt">// emits a number</span>
+  <span class="var">limitReached</span> = <span class="fn">output</span>&lt;<span class="kw">void</span>&gt;();           <span class="cmt">// emits nothing (void)</span>
+
+  <span class="fn">increment</span>() {
+    <span class="kw">this</span>.<span class="var">count</span>.<span class="fn">update</span>(<span class="var">c</span> => <span class="var">c</span> + <span class="num">1</span>);
+    <span class="kw">this</span>.<span class="var">countChanged</span>.<span class="fn">emit</span>(<span class="kw">this</span>.<span class="var">count</span>());   <span class="cmt">// emit new value</span>
+    <span class="kw">if</span> (<span class="kw">this</span>.<span class="var">count</span>() >= <span class="num">10</span>) <span class="kw">this</span>.<span class="var">limitReached</span>.<span class="fn">emit</span>();
+  }
+
+  <span class="fn">decrement</span>() {
+    <span class="kw">this</span>.<span class="var">count</span>.<span class="fn">update</span>(<span class="var">c</span> => <span class="var">c</span> - <span class="num">1</span>);
+    <span class="kw">this</span>.<span class="var">countChanged</span>.<span class="fn">emit</span>(<span class="kw">this</span>.<span class="var">count</span>());
+  }
+}
+
+<span class="cmt">// ── app.component.ts — parent listens to events ──────────────────────────────</span>
+<span class="dec">@Component</span>({
+  <span class="var">imports</span>: [<span class="cls">CounterComponent</span>],
+  <span class="var">template</span>: <span class="tpl">`
+    &lt;app-counter
+      (countChanged)="onCountChange($event)"
+      (limitReached)="onLimit()"
+    /&gt;
+    &lt;p&gt;Parent sees: {{ parentCount() }}&lt;/p&gt;
+  `</span>
+})
+<span class="kw">export class</span> <span class="cls">AppComponent</span> {
+  <span class="var">parentCount</span> = <span class="fn">signal</span>(<span class="num">0</span>);
+
+  <span class="fn">onCountChange</span>(<span class="var">value</span>: <span class="typ">number</span>) { <span class="kw">this</span>.<span class="var">parentCount</span>.<span class="fn">set</span>(<span class="var">value</span>); }
+  <span class="fn">onLimit</span>() { <span class="var">alert</span>(<span class="str">'Limit of 10 reached!'</span>); }
+}</pre></div>
+
+    <div class="output-box">
+      <div class="out-hdr">▶ Output — user clicks + three times</div>
+      <pre>Counter shows:  − 3 +
+Parent sees: 3
+
+(At 10) → alert: "Limit of 10 reached!"</pre>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SLIDE 5 — DATA SHARING PARENT → CHILD ══ -->
+<div class="slide" id="s5">
+  <div class="slide-header"><span class="topic-badge">05</span><h1>Data Sharing — Parent → Child (via Inputs)</h1></div>
+  <div class="content">
+    <p style="font-size:13px;color:#8b949e;">Parent passes data <strong>down</strong> to child using property binding <code>[property]="value"</code>. The child declares the input. This is the most common pattern.</p>
+
+    <div class="code-block"><pre><span class="cmt">// ── user-profile.component.ts (CHILD) ────────────────────────────────────────</span>
+<span class="dec">@Component</span>({
+  <span class="var">selector</span>: <span class="str">'app-user-profile'</span>,
+  <span class="var">template</span>: <span class="tpl">`
+    &lt;div class="profile"&gt;
+      &lt;img [src]="avatarUrl()" [alt]="name()" /&gt;
+      &lt;h3&gt;{{ name() }}&lt;/h3&gt;
+      &lt;p&gt;{{ role() | uppercase }}&lt;/p&gt;
+      @if (isAdmin()) {
+        &lt;span class="badge"&gt;⚡ Admin&lt;/span&gt;
+      }
+    &lt;/div&gt;
+  `</span>
+})
+<span class="kw">export class</span> <span class="cls">UserProfileComponent</span> {
+  <span class="var">name</span>      = <span class="fn">input</span>.<span class="fn">required</span>&lt;<span class="typ">string</span>&gt;();
+  <span class="var">role</span>      = <span class="fn">input</span>.<span class="fn">required</span>&lt;<span class="typ">string</span>&gt;();
+  <span class="var">avatarUrl</span> = <span class="fn">input</span>(<span class="str">'/assets/default-avatar.png'</span>);
+  <span class="var">isAdmin</span>   = <span class="fn">input</span>(<span class="kw">false</span>, { <span class="var">transform</span>: <span class="fn">booleanAttribute</span> });
+}
+
+<span class="cmt">// ── dashboard.component.ts (PARENT) ──────────────────────────────────────────</span>
+<span class="dec">@Component</span>({
+  <span class="var">imports</span>: [<span class="cls">UserProfileComponent</span>],
+  <span class="var">template</span>: <span class="tpl">`
+    &lt;h1&gt;Dashboard&lt;/h1&gt;
+
+    &lt;!-- Pass static values --&gt;
+    &lt;app-user-profile name="Nitin" role="developer" isAdmin /&gt;
+
+    &lt;!-- Pass dynamic values from parent's signals --&gt;
+    &lt;app-user-profile
+      [name]="currentUser().name"
+      [role]="currentUser().role"
+      [avatarUrl]="currentUser().avatar"
+      [isAdmin]="currentUser().isAdmin"
+    /&gt;
+
+    &lt;!-- Loop through users --&gt;
+    @for (user of users(); track user.id) {
+      &lt;app-user-profile [name]="user.name" [role]="user.role" /&gt;
+    }
+  `</span>
+})
+<span class="kw">export class</span> <span class="cls">DashboardComponent</span> {
+  <span class="var">currentUser</span> = <span class="fn">signal</span>({ <span class="var">name</span>: <span class="str">'Nitin'</span>, <span class="var">role</span>: <span class="str">'Senior Dev'</span>, <span class="var">avatar</span>: <span class="str">'/img/nitin.jpg'</span>, <span class="var">isAdmin</span>: <span class="kw">true</span> });
+  <span class="var">users</span>       = <span class="fn">signal</span>([...]);
+}</pre></div>
+
+    <div class="output-box">
+      <div class="out-hdr">▶ Rendered output</div>
+      <pre>[Avatar] Nitin Kumar
+         SENIOR DEV
+         ⚡ Admin</pre>
+    </div>
+
+    <div class="mem-box">
+      <div class="mem-hdr">🔑 Data Flow Rule</div>
+      <p><strong>Parent → Child = Input.</strong> Data flows <em>downward</em> via <code>[property]="value"</code>. Child never modifies the input directly. This enforces one-way data flow and makes debugging predictable.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SLIDE 6 — CHILD → PARENT ══ -->
+<div class="slide" id="s6">
+  <div class="slide-header"><span class="topic-badge">06</span><h1>Data Sharing — Child → Parent (via Outputs)</h1></div>
+  <div class="content">
+    <p style="font-size:13px;color:#8b949e;">Child notifies parent using <strong>custom events</strong> via <code>output()</code>. Parent listens with <code>(event)="handler($event)"</code>. Data flows <em>upward</em>.</p>
+
+    <div class="code-block"><pre><span class="cmt">// ── search-bar.component.ts (CHILD) ──────────────────────────────────────────</span>
+<span class="dec">@Component</span>({
+  <span class="var">selector</span>: <span class="str">'app-search-bar'</span>,
+  <span class="var">template</span>: <span class="tpl">`
+    &lt;input
+      type="text"
+      [value]="query()"
+      (input)="onType($event)"
+      (keydown.enter)="onSearch()"
+      placeholder="Search..."
+    /&gt;
+    &lt;button (click)="onSearch()"&gt;🔍 Search&lt;/button&gt;
+    &lt;button (click)="onClear()"&gt;✕&lt;/button&gt;
+  `</span>
+})
+<span class="kw">export class</span> <span class="cls">SearchBarComponent</span> {
+  <span class="var">query</span>    = <span class="fn">signal</span>(<span class="str">''</span>);
+
+  <span class="cmt">// ↑ emit typed search term to parent</span>
+  <span class="var">searched</span> = <span class="fn">output</span>&lt;<span class="typ">string</span>&gt;();
+  <span class="var">cleared</span>  = <span class="fn">output</span>&lt;<span class="kw">void</span>&gt;();
+
+  <span class="fn">onType</span>(<span class="var">e</span>: <span class="cls">Event</span>) {
+    <span class="kw">this</span>.<span class="var">query</span>.<span class="fn">set</span>((<span class="var">e</span>.<span class="var">target</span> <span class="kw">as</span> <span class="cls">HTMLInputElement</span>).<span class="var">value</span>);
+  }
+
+  <span class="fn">onSearch</span>() { <span class="kw">this</span>.<span class="var">searched</span>.<span class="fn">emit</span>(<span class="kw">this</span>.<span class="var">query</span>()); } <span class="cmt">// ↑ notify parent</span>
+  <span class="fn">onClear</span>()  { <span class="kw">this</span>.<span class="var">query</span>.<span class="fn">set</span>(<span class="str">''</span>); <span class="kw">this</span>.<span class="var">cleared</span>.<span class="fn">emit</span>(); }
+}
+
+<span class="cmt">// ── products-page.component.ts (PARENT) ──────────────────────────────────────</span>
+<span class="dec">@Component</span>({
+  <span class="var">imports</span>: [<span class="cls">SearchBarComponent</span>],
+  <span class="var">template</span>: <span class="tpl">`
+    &lt;app-search-bar
+      (searched)="loadResults($event)"
+      (cleared)="resetResults()"
+    /&gt;
+    &lt;p&gt;Results for: "{{ activeQuery() }}"&lt;/p&gt;
+    &lt;ul&gt;
+      @for (r of results(); track r.id) { &lt;li&gt;{{ r.name }}&lt;/li&gt; }
+    &lt;/ul&gt;
+  `</span>
+})
+<span class="kw">export class</span> <span class="cls">ProductsPageComponent</span> {
+  <span class="var">activeQuery</span> = <span class="fn">signal</span>(<span class="str">''</span>);
+  <span class="var">results</span>     = <span class="fn">signal</span>&lt;<span class="typ">any</span>[]&gt;([]);
+
+  <span class="fn">loadResults</span>(<span class="var">query</span>: <span class="typ">string</span>) {
+    <span class="kw">this</span>.<span class="var">activeQuery</span>.<span class="fn">set</span>(<span class="var">query</span>);
+    <span class="cmt">// call API with query...</span>
+  }
+  <span class="fn">resetResults</span>() { <span class="kw">this</span>.<span class="var">activeQuery</span>.<span class="fn">set</span>(<span class="str">''</span>); <span class="kw">this</span>.<span class="var">results</span>.<span class="fn">set</span>([]); }
+}</pre></div>
+
+    <div class="output-box">
+      <div class="out-hdr">▶ User types "Angular" and presses Search</div>
+      <pre>[Angular  ] [🔍 Search] [✕]
+
+Results for: "Angular"
+• Angular Docs
+• Angular Tutorial</pre>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SLIDE 7 — TWO-WAY BINDING model() ══ -->
+<div class="slide" id="s7">
+  <div class="slide-header"><span class="topic-badge">07</span><h1>Two-way Binding — model() Function</h1></div>
+  <div class="content">
+    <div class="two-col">
+      <div class="card accent-cyan">
+        <h3>What is model()?</h3>
+        <p>A special signal input that allows the <strong>child to write back to the parent</strong>. It auto-creates a corresponding output named <code>valueChange</code>. Use the <strong>banana-in-a-box</strong> <code>[(value)]</code> syntax in the parent template.</p>
+      </div>
+      <div class="card accent-purple">
+        <h3>When to use model()?</h3>
+        <ul>
+          <li>Custom form controls (date picker, slider, toggle)</li>
+          <li>Any component that modifies a value based on user interaction</li>
+          <li>Replaces the manual <code>@Input() + @Output() valueChange</code> pattern</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="code-block"><pre><span class="cmt">// ── star-rating.component.ts — uses model() ───────────────────────────────────</span>
+<span class="kw">import</span> { <span class="cls">Component</span>, <span class="fn">model</span> } <span class="kw">from</span> <span class="str">'@angular/core'</span>;
+
+<span class="dec">@Component</span>({
+  <span class="var">selector</span>: <span class="str">'app-star-rating'</span>,
+  <span class="var">template</span>: <span class="tpl">`
+    @for (star of stars; track star) {
+      &lt;span
+        [class.filled]="star &lt;= rating()"
+        (click)="setRating(star)"
+        style="cursor:pointer;font-size:24px"
+      &gt;{{ star &lt;= rating() ? '⭐' : '☆' }}&lt;/span&gt;
+    }
+  `</span>
+})
+<span class="kw">export class</span> <span class="cls">StarRatingComponent</span> {
+  <span class="cmt">// model() — writable signal input with auto-created 'ratingChange' output</span>
+  <span class="var">rating</span> = <span class="fn">model</span>(<span class="num">0</span>);   <span class="cmt">// ModelSignal&lt;number&gt;</span>
+
+  <span class="var">stars</span> = [<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>, <span class="num">4</span>, <span class="num">5</span>];
+
+  <span class="fn">setRating</span>(<span class="var">star</span>: <span class="typ">number</span>) {
+    <span class="kw">this</span>.<span class="var">rating</span>.<span class="fn">set</span>(<span class="var">star</span>);    <span class="cmt">// ← writes new value, propagates to parent</span>
+  }
+}
+
+<span class="cmt">// ── product-review.component.ts (PARENT) ─────────────────────────────────────</span>
+<span class="dec">@Component</span>({
+  <span class="var">imports</span>: [<span class="cls">StarRatingComponent</span>],
+  <span class="var">template</span>: <span class="tpl">`
+    &lt;h3&gt;Rate this product&lt;/h3&gt;
+
+    &lt;!-- banana-in-a-box [(rating)] = two-way binding ✅ --&gt;
+    &lt;app-star-rating [(rating)]="productRating" /&gt;
+
+    &lt;p&gt;You rated: {{ productRating() }} / 5&lt;/p&gt;
+
+    &lt;!-- Also works with plain property (non-signal) --&gt;
+    &lt;app-star-rating [(rating)]="plainRating" /&gt;
+  `</span>
+})
+<span class="kw">export class</span> <span class="cls">ProductReviewComponent</span> {
+  <span class="var">productRating</span> = <span class="fn">signal</span>(<span class="num">3</span>);  <span class="cmt">// signal binding</span>
+  <span class="var">plainRating</span>   = <span class="num">3</span>;           <span class="cmt">// plain property binding also works</span>
+}</pre></div>
+
+    <div class="output-box">
+      <div class="out-hdr">▶ User clicks 4th star</div>
+      <pre>☆ ☆ ☆ ☆ ☆  (initial)
+⭐⭐⭐⭐☆  (after click on 4th star)
+
+Parent: You rated: 4 / 5  ✅ (auto-synced via model())</pre>
+    </div>
+
+    <div class="tip-box">
+      <div class="tip-hdr">✅ model() auto-creates the change output</div>
+      <p>When you declare <code>rating = model(0)</code>, Angular automatically creates an output named <code>ratingChange</code>. The <code>[(rating)]</code> syntax in the parent is shorthand for <code>[rating]="val" (ratingChange)="val = $event"</code>.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SLIDE 8 — SIBLING VIA SERVICE ══ -->
+<div class="slide" id="s8">
+  <div class="slide-header"><span class="topic-badge">08</span><h1>Sibling Communication — Shared Service + Signals</h1></div>
+  <div class="content">
+    <p style="font-size:13px;color:#8b949e;">Sibling components have no direct connection. They communicate via a <strong>shared service</strong> injected into both. In Angular v22, signals in services are the cleanest approach.</p>
+
+    <div class="code-block"><pre><span class="cmt">// ── cart.service.ts — shared state service ────────────────────────────────────</span>
+<span class="kw">import</span> { <span class="cls">Injectable</span>, <span class="fn">signal</span>, <span class="fn">computed</span> } <span class="kw">from</span> <span class="str">'@angular/core'</span>;
+
+<span class="dec">@Injectable</span>({ <span class="var">providedIn</span>: <span class="str">'root'</span> })       <span class="cmt">// singleton — shared across all components</span>
+<span class="kw">export class</span> <span class="cls">CartService</span> {
+  <span class="kw">private</span> <span class="var">items</span> = <span class="fn">signal</span>&lt;<span class="cls">CartItem</span>[]&gt;([]);
+
+  <span class="cmt">// Public read-only derived signals</span>
+  <span class="var">itemCount</span> = <span class="fn">computed</span>(() => <span class="kw">this</span>.<span class="var">items</span>().<span class="fn">length</span>);
+  <span class="var">total</span>     = <span class="fn">computed</span>(() => <span class="kw">this</span>.<span class="var">items</span>().<span class="fn">reduce</span>((<span class="var">s</span>, <span class="var">i</span>) => <span class="var">s</span> + <span class="var">i</span>.<span class="var">price</span>, <span class="num">0</span>));
+  <span class="var">cartItems</span> = <span class="kw">this</span>.<span class="var">items</span>.<span class="fn">asReadonly</span>();   <span class="cmt">// expose as read-only</span>
+
+  <span class="fn">addItem</span>(<span class="var">item</span>: <span class="cls">CartItem</span>) {
+    <span class="kw">this</span>.<span class="var">items</span>.<span class="fn">update</span>(<span class="var">list</span> => [...<span class="var">list</span>, <span class="var">item</span>]);
+  }
+  <span class="fn">removeItem</span>(<span class="var">id</span>: <span class="typ">number</span>) {
+    <span class="kw">this</span>.<span class="var">items</span>.<span class="fn">update</span>(<span class="var">list</span> => <span class="var">list</span>.<span class="fn">filter</span>(<span class="var">i</span> => <span class="var">i</span>.<span class="var">id</span> !== <span class="var">id</span>));
+  }
+}
+
+<span class="cmt">// ── product-list.component.ts (SIBLING A) — adds items ───────────────────────</span>
+<span class="dec">@Component</span>({ <span class="var">template</span>: <span class="tpl">`
+  @for (p of products(); track p.id) {
+    &lt;div&gt;{{ p.name }} &lt;button (click)="addToCart(p)"&gt;Add to Cart&lt;/button&gt;&lt;/div&gt;
+  }
+`</span> })
+<span class="kw">export class</span> <span class="cls">ProductListComponent</span> {
+  <span class="kw">private</span> <span class="var">cart</span> = <span class="fn">inject</span>(<span class="cls">CartService</span>);
+  <span class="var">products</span>     = <span class="fn">signal</span>([{ <span class="var">id</span>:<span class="num">1</span>, <span class="var">name</span>:<span class="str">'Laptop'</span>, <span class="var">price</span>:<span class="num">55000</span> }]);
+
+  <span class="fn">addToCart</span>(<span class="var">p</span>: <span class="typ">any</span>) { <span class="kw">this</span>.<span class="var">cart</span>.<span class="fn">addItem</span>(<span class="var">p</span>); }
+}
+
+<span class="cmt">// ── cart-icon.component.ts (SIBLING B) — shows count ─────────────────────────</span>
+<span class="dec">@Component</span>({ <span class="var">template</span>: <span class="tpl">`&lt;button&gt;🛒 {{ count() }}&lt;/button&gt;`</span> })
+<span class="kw">export class</span> <span class="cls">CartIconComponent</span> {
+  <span class="kw">private</span> <span class="var">cart</span> = <span class="fn">inject</span>(<span class="cls">CartService</span>);
+  <span class="var">count</span>        = <span class="kw">this</span>.<span class="var">cart</span>.<span class="var">itemCount</span>;   <span class="cmt">// reactive signal — auto-updates ✅</span>
+}</pre></div>
+
+    <div class="output-box">
+      <div class="out-hdr">▶ After clicking "Add to Cart" on Laptop</div>
+      <pre>ProductList:  Laptop [Add to Cart]
+CartIcon:     🛒 1    ← auto-updated, no event needed ✅</pre>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SLIDE 9 — NG-CONTENT ══ -->
+<div class="slide" id="s9">
+  <div class="slide-header"><span class="topic-badge">09</span><h1>Content Projection — ng-content</h1></div>
+  <div class="content">
+    <div class="two-col">
+      <div class="card accent-cyan">
+        <h3>What is ng-content?</h3>
+        <p>Allows a component to accept and render HTML/components passed <strong>between its opening and closing tags</strong> by the parent. Think of it as a slot system — like Vue's <code>&lt;slot&gt;</code> or React's <code>children</code> prop.</p>
+      </div>
+      <div class="card accent-purple">
+        <h3>Three Types</h3>
+        <ul>
+          <li><strong>Default slot</strong> — single <code>&lt;ng-content /&gt;</code></li>
+          <li><strong>Named slots</strong> — <code>&lt;ng-content select="[header]" /&gt;</code></li>
+          <li><strong>Fallback content</strong> — shown when nothing is projected</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="code-block"><pre><span class="cmt">// ── card-layout.component.ts — defines slots ─────────────────────────────────</span>
+<span class="dec">@Component</span>({
+  <span class="var">selector</span>: <span class="str">'app-card'</span>,
+  <span class="var">template</span>: <span class="tpl">`
+    &lt;div class="card"&gt;
+
+      &lt;!-- Named slot: content with [header] attribute goes here --&gt;
+      &lt;div class="card-header"&gt;
+        &lt;ng-content select="[header]" /&gt;
+      &lt;/div&gt;
+
+      &lt;!-- Default slot: everything else goes here --&gt;
+      &lt;div class="card-body"&gt;
+        &lt;ng-content /&gt;
+      &lt;/div&gt;
+
+      &lt;!-- Named slot for footer --&gt;
+      &lt;div class="card-footer"&gt;
+        &lt;ng-content select="[footer]"&gt;
+          &lt;span&gt;Default footer&lt;/span&gt;  &lt;!-- fallback --&gt;
+        &lt;/ng-content&gt;
+      &lt;/div&gt;
+
+    &lt;/div&gt;
+  `</span>
+})
+<span class="kw">export class</span> <span class="cls">CardComponent</span> {}
+
+<span class="cmt">// ── parent template — projects content into slots ─────────────────────────────</span>
+<span class="int">&lt;app-card&gt;</span>
+  <span class="int">&lt;h2</span> <span class="op">header</span><span class="int">&gt;</span>User Profile<span class="int">&lt;/h2&gt;</span>           <span class="cmt">&lt;!-- → card-header slot --&gt;</span>
+
+  <span class="int">&lt;p&gt;</span>Name: Nitin Kumar<span class="int">&lt;/p&gt;</span>                 <span class="cmt">&lt;!-- → default slot (card-body) --&gt;</span>
+  <span class="int">&lt;p&gt;</span>Role: Senior Developer<span class="int">&lt;/p&gt;</span>
+
+  <span class="int">&lt;button</span> <span class="op">footer</span><span class="int">&gt;</span>Edit Profile<span class="int">&lt;/button&gt;</span>      <span class="cmt">&lt;!-- → footer slot --&gt;</span>
+<span class="int">&lt;/app-card&gt;</span></pre></div>
+
+    <div class="output-box">
+      <div class="out-hdr">▶ Rendered Output</div>
+      <pre>┌────────────────────────────┐
+│ [Header] User Profile      │
+├────────────────────────────┤
+│ Name: Nitin Kumar          │
+│ Role: Senior Developer     │
+├────────────────────────────┤
+│ [Footer] [Edit Profile]    │
+└────────────────────────────┘</pre>
+    </div>
+
+    <div class="tip-box">
+      <div class="tip-hdr">✅ Use cases for ng-content</div>
+      <p>UI component libraries (cards, modals, accordions, tabs). Any reusable wrapper that needs to be flexible about what it displays inside. If every instance always shows the same content, use <code>@Input()</code> instead.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SLIDE 10 — VIEWCHILD / CONTENTCHILD ══ -->
+<div class="slide" id="s10">
+  <div class="slide-header"><span class="topic-badge">10</span><h1>viewChild() &amp; contentChild() Queries</h1></div>
+  <div class="content">
+    <div class="two-col">
+      <div class="card accent-orange">
+        <h3>viewChild() — query own template</h3>
+        <p>Access a child component, directive, or DOM element declared in <strong>this component's own template</strong>. Result is available from <code>ngAfterViewInit</code> onwards.</p>
+      </div>
+      <div class="card accent-pink">
+        <h3>contentChild() — query projected content</h3>
+        <p>Access a child component or element <strong>projected via ng-content</strong> by the parent. Result is available from <code>ngAfterContentInit</code> onwards.</p>
+      </div>
+    </div>
+
+    <div class="code-block"><pre><span class="cmt">// ── parent.component.ts — query child components ─────────────────────────────</span>
+<span class="kw">import</span> { <span class="cls">Component</span>, <span class="fn">viewChild</span>, <span class="fn">viewChildren</span>,
+         <span class="fn">contentChild</span>, <span class="fn">afterNextRender</span> } <span class="kw">from</span> <span class="str">'@angular/core'</span>;
+
+<span class="dec">@Component</span>({
+  <span class="var">template</span>: <span class="tpl">`
+    &lt;app-chart #chart /&gt;
+    &lt;input #searchInput type="text" /&gt;
+    @for (item of items(); track item) {
+      &lt;app-list-item /&gt;
+    }
+    &lt;ng-content /&gt;
+  `</span>
+})
+<span class="kw">export class</span> <span class="cls">ParentComponent</span> {
+  <span class="cmt">// viewChild — query single child by component type or template reference</span>
+  <span class="var">chart</span>       = <span class="fn">viewChild</span>.<span class="fn">required</span>(<span class="cls">ChartComponent</span>);    <span class="cmt">// by type</span>
+  <span class="var">searchInput</span> = <span class="fn">viewChild</span>&lt;<span class="cls">ElementRef</span>&gt;(<span class="str">'searchInput'</span>);    <span class="cmt">// by template ref</span>
+
+  <span class="cmt">// viewChildren — query ALL matching children</span>
+  <span class="var">listItems</span>   = <span class="fn">viewChildren</span>(<span class="cls">ListItemComponent</span>);        <span class="cmt">// Signal&lt;readonly ListItemComponent[]&gt;</span>
+
+  <span class="cmt">// contentChild — query projected child (from ng-content)</span>
+  <span class="var">projectedHeader</span> = <span class="fn">contentChild</span>(<span class="cls">HeaderComponent</span>);
+
+  <span class="fn">constructor</span>() {
+    <span class="fn">afterNextRender</span>(() => {
+      <span class="cmt">// viewChild is a Signal — read with ()</span>
+      <span class="kw">this</span>.<span class="var">chart</span>().<span class="fn">refresh</span>();                         <span class="cmt">// call child method</span>
+      <span class="kw">this</span>.<span class="var">searchInput</span>()?.nativeElement.<span class="fn">focus</span>();      <span class="cmt">// DOM access</span>
+
+      <span class="var">console</span>.<span class="fn">log</span>(<span class="str">'Items count:'</span>, <span class="kw">this</span>.<span class="var">listItems</span>().<span class="var">length</span>);
+    });
+  }
+}</pre></div>
+
+    <div class="output-box">
+      <div class="out-hdr">▶ Console output after render</div>
+      <pre>Items count: 5
+(search input auto-focused)
+(chart.refresh() called on child)</pre>
+    </div>
+
+    <div class="tip-box">
+      <div class="tip-hdr">✅ viewChild() is now a Signal (v17+)</div>
+      <p>The new <code>viewChild()</code> function returns a <strong>Signal</strong> — read it with <code>this.chart()</code>. The old <code>@ViewChild()</code> decorator returns a plain property. Both work, but the signal version integrates with <code>effect()</code> and <code>computed()</code> reactively.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SLIDE 11 — DATA SHARING SUMMARY ══ -->
+<div class="slide" id="s11">
+  <div class="slide-header"><span class="topic-badge">11</span><h1>Data Sharing — Complete Strategy Guide</h1></div>
+  <div class="content">
+    <table>
+      <thead>
+        <tr>
+          <th>Scenario</th>
+          <th>Mechanism</th>
+          <th>API</th>
+          <th>Direction</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Parent → Child</strong></td>
+          <td>Input binding</td>
+          <td><code>input()</code> / <code>@Input()</code></td>
+          <td>⬇️ Down</td>
+        </tr>
+        <tr>
+          <td><strong>Child → Parent</strong></td>
+          <td>Custom event</td>
+          <td><code>output()</code> / <code>@Output()</code></td>
+          <td>⬆️ Up</td>
+        </tr>
+        <tr>
+          <td><strong>Parent ↔ Child (2-way)</strong></td>
+          <td>Two-way binding</td>
+          <td><code>model()</code> + <code>[(prop)]</code></td>
+          <td>↕️ Both</td>
+        </tr>
+        <tr>
+          <td><strong>Sibling ↔ Sibling</strong></td>
+          <td>Shared service</td>
+          <td><code>signal()</code> in <code>@Injectable</code> service</td>
+          <td>↔️ Horizontal</td>
+        </tr>
+        <tr>
+          <td><strong>Deeply nested → ancestor</strong></td>
+          <td>Dependency Injection</td>
+          <td><code>inject(MyService)</code></td>
+          <td>⬆️ Any level</td>
+        </tr>
+        <tr>
+          <td><strong>Parent ↔ Child (DOM/method)</strong></td>
+          <td>Template reference / Query</td>
+          <td><code>viewChild()</code> / <code>#ref</code></td>
+          <td>⬇️ Parent calls child method</td>
+        </tr>
+        <tr>
+          <td><strong>Cross-feature / global</strong></td>
+          <td>State management</td>
+          <td>NgRx Store / signal store</td>
+          <td>🌐 Global</td>
+        </tr>
+        <tr>
+          <td><strong>Content projection data</strong></td>
+          <td>ng-content + contentChild</td>
+          <td><code>&lt;ng-content&gt;</code> + <code>contentChild()</code></td>
+          <td>⬇️ Slot-based</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="two-col">
+      <div class="tip-box">
+        <div class="tip-hdr">✅ Choose the right tool</div>
+        <ul>
+          <li>1–2 levels apart → <strong>input / output</strong></li>
+          <li>Many levels deep → <strong>inject() service</strong></li>
+          <li>Form control → <strong>model()</strong></li>
+          <li>Sibling → <strong>shared service signals</strong></li>
+          <li>App-wide → <strong>NgRx or global signal store</strong></li>
+        </ul>
+      </div>
+      <div class="warn-box">
+        <div class="warn-hdr">⚠️ Avoid prop drilling</div>
+        <p>Passing data through 3+ levels of intermediate components just to reach the final consumer is called <strong>prop drilling</strong>. Use a shared service or NgRx instead. It makes code unmaintainable.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SLIDE 12 — INTERVIEW Q&A 1 ══ -->
+<div class="slide" id="s12">
+  <div class="slide-header"><span class="topic-badge">12</span><h1>Senior Interview Q&amp;A — Part 1</h1></div>
+  <div class="content">
+
+    <div class="iq-item">
+      <div class="iq-q">Q1. What is the difference between <code>input()</code> and <code>@Input()</code> in Angular v22? <span class="iq-tag">INPUTS</span></div>
+      <div class="iq-a"><code>input()</code> is the new signal-based API introduced in Angular 17. It returns a read-only <code>InputSignal</code> — reactive, works with <code>computed()</code> and <code>effect()</code>, and is tree-shakeable. <code>@Input()</code> is the decorator-based approach — returns a plain property, requires <code>ngOnChanges</code> to react to changes. Angular recommends <code>input()</code> for all new code. Both have identical template binding syntax: <code>[value]="x"</code>.</div>
+    </div>
+
+    <div class="iq-item">
+      <div class="iq-q">Q2. How does <code>input.required()</code> differ from <code>@Input({ required: true })</code>? <span class="iq-tag">REQUIRED</span></div>
+      <div class="iq-a"><code>input.required()</code> enforces the input at <strong>compile time</strong> — Angular throws a build error if the parent doesn't provide it. The returned <code>InputSignal</code> type does NOT include <code>undefined</code> (it's <code>InputSignal&lt;T&gt;</code> not <code>InputSignal&lt;T|undefined&gt;</code>). <code>@Input({ required: true })</code> only enforces in some IDEs/tools — no strict build-time guarantee. <code>input.required()</code> is the safer, stricter choice.</div>
+    </div>
+
+    <div class="iq-item">
+      <div class="iq-q">Q3. What is <code>ngOnChanges</code> and when does it NOT fire? <span class="iq-tag">LIFECYCLE</span></div>
+      <div class="iq-a"><code>ngOnChanges</code> fires whenever a bound <code>@Input()</code> property changes. It does NOT fire for: (1) Signal-based <code>input()</code> — use <code>effect()</code> instead. (2) Changes to object/array properties (mutation) — only fires when the reference changes. (3) Properties not decorated with <code>@Input()</code>. Use <code>effect(() =&gt; this.value())</code> to react to signal input changes.</div>
+    </div>
+
+    <div class="iq-item">
+      <div class="iq-q">Q4. What is the difference between <code>output()</code> and <code>@Output() + EventEmitter</code>? <span class="iq-tag">OUTPUTS</span></div>
+      <div class="iq-a"><code>output()</code> returns an <code>OutputEmitterRef</code> — no RxJS dependency, lighter weight, consistent with the signal API. <code>@Output() EventEmitter</code> extends <code>Subject</code> from RxJS — adds overhead. Both use identical template binding <code>(event)="handler($event)"</code>. The <code>output()</code> function also auto-cleans subscriptions when the component is destroyed. For new code, always use <code>output()</code>.</div>
+    </div>
+
+    <div class="iq-item">
+      <div class="iq-q">Q5. What is <code>model()</code> and how does it differ from combining <code>@Input()</code> + <code>@Output()</code>? <span class="iq-tag">TWO-WAY</span></div>
+      <div class="iq-a"><code>model()</code> is a writable signal that auto-creates a corresponding change output. It's equivalent to writing <code>@Input() value = 0</code> + <code>@Output() valueChange = new EventEmitter&lt;number&gt;()</code>, but in a single declaration. The child writes new values with <code>this.value.set(x)</code>, and they automatically propagate to the parent. The parent uses banana-in-a-box syntax: <code>[(value)]="myVar"</code>.</div>
+    </div>
+
+    <div class="iq-item">
+      <div class="iq-q">Q6. How do sibling components communicate in Angular? <span class="iq-tag">COMMUNICATION</span></div>
+      <div class="iq-a">Siblings have no direct connection. Best approaches: (1) <strong>Shared service with signals</strong> — inject the same service in both siblings. Signal state auto-updates both. (2) <strong>Lift state up</strong> — move shared state to the common parent, pass via inputs/outputs. (3) <strong>NgRx Store</strong> — for app-wide state. Signal-based shared service is the recommended modern approach in Angular v22.</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══ SLIDE 13 — INTERVIEW Q&A 2 ══ -->
+<div class="slide" id="s13">
+  <div class="slide-header"><span class="topic-badge">13</span><h1>Senior Interview Q&amp;A — Part 2</h1></div>
+  <div class="content">
+
+    <div class="iq-item">
+      <div class="iq-q">Q7. What is the difference between <code>viewChild()</code> and <code>contentChild()</code>? <span class="iq-tag">QUERIES</span></div>
+      <div class="iq-a"><code>viewChild()</code> queries elements defined in the <strong>component's own template</strong>. Available from <code>ngAfterViewInit</code>. <code>contentChild()</code> queries elements <strong>projected via ng-content</strong> from the parent. Available from <code>ngAfterContentInit</code>. Both return signals in Angular v17+ — read them with <code>this.chart()</code>. <code>viewChild.required()</code> throws if the element is not found.</div>
+    </div>
+
+    <div class="iq-item">
+      <div class="iq-q">Q8. What is ng-content and what are its limitations? <span class="iq-tag">PROJECTION</span></div>
+      <div class="iq-a"><code>ng-content</code> projects DOM content passed between a component's tags into named or default slots. Limitations: (1) Projected content is created in the <strong>parent's context</strong> — the child cannot access its data directly. (2) Cannot conditionally show/hide projected content from the child. (3) <code>ng-content</code> cannot be combined with <code>*ngIf</code> on itself. Use <code>ngTemplateOutlet</code> with <code>@ContentChild</code> when you need conditional content.</div>
+    </div>
+
+    <div class="iq-item">
+      <div class="iq-q">Q9. Why should you avoid direct DOM manipulation in <code>ngAfterViewInit</code> in an SSR app? <span class="iq-tag">SSR</span></div>
+      <div class="iq-a"><code>ngAfterViewInit</code> runs on <strong>both server and browser</strong>. In Node.js (SSR), there's no real DOM — accessing <code>document</code> or <code>window</code> inside it crashes the server. Use <code>afterNextRender()</code> instead — it is browser-only guaranteed. For accessing child component references, <code>viewChild()</code> signals are safe to read in both environments (they're just object references, not DOM queries).</div>
+    </div>
+
+    <div class="iq-item">
+      <div class="iq-q">Q10. What is "prop drilling" and how do you avoid it? <span class="iq-tag">ARCHITECTURE</span></div>
+      <div class="iq-a">Prop drilling is passing data through multiple intermediate components that don't need it, just to reach a deeply nested component. In Angular v22: (1) <strong>Inject a shared service</strong> with signal state — any component at any level can inject it directly. (2) <strong>DI with route-level providers</strong> — provide a scoped service at the route level. (3) <strong>NgRx</strong> for complex global state. Prop drilling makes refactoring painful and creates unnecessary coupling.</div>
+    </div>
+
+    <div class="iq-item">
+      <div class="iq-q">Q11. What is the component host element and how do you style it? <span class="iq-tag">HOST</span></div>
+      <div class="iq-a">The host element is the DOM element matching a component's selector. When you use <code>&lt;app-card&gt;</code>, the <code>&lt;app-card&gt;</code> element itself is the host. Style it using the <code>:host</code> CSS selector in the component's styles, or using the <code>host</code> property in <code>@Component</code>: <code>host: { class: 'my-card', '[attr.role]': '"region"' }</code>. In templates, use <code>@HostBinding</code> (decorator) or the <code>host</code> metadata for dynamic host properties.</div>
+    </div>
+
+    <div class="iq-item">
+      <div class="iq-q">Q12. What is the difference between <code>OnPush</code> and <code>Default</code> change detection for a component? <span class="iq-tag">PERFORMANCE</span></div>
+      <div class="iq-a"><strong>Default</strong>: Angular checks the component on every change detection cycle — any event, timer, or HTTP call. <strong>OnPush</strong>: Angular only checks when (1) an <code>@Input()</code> reference changes, (2) an event originates from within the component, (3) you manually call <code>markForCheck()</code> / <code>detectChanges()</code>. With signal-based components in v22, change detection is automatic and granular — signals tell Angular exactly what changed, making OnPush essentially the default behaviour without explicit configuration.</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══ SLIDE 14 — INTERVIEW Q&A 3 ══ -->
+<div class="slide" id="s14">
+  <div class="slide-header"><span class="topic-badge">14</span><h1>Senior Interview Q&amp;A — Part 3</h1></div>
+  <div class="content">
+
+    <div class="iq-item">
+      <div class="iq-q">Q13. Can you call <code>input()</code> or <code>output()</code> inside a method? <span class="iq-tag">RESTRICTIONS</span></div>
+      <div class="iq-a">No. The <code>input()</code>, <code>output()</code>, <code>model()</code>, <code>viewChild()</code>, and <code>contentChild()</code> functions can <strong>only be called in class property initializers</strong> — not inside methods, constructors conditionally, or lifecycle hooks. This is a compiler restriction — Angular statically analyses these calls at build time to generate optimised code. Calling them anywhere else results in a runtime error.</div>
+    </div>
+
+    <div class="iq-item">
+      <div class="iq-q">Q14. When would you use <code>input transforms</code>? Give a real example. <span class="iq-tag">TRANSFORMS</span></div>
+      <div class="iq-a">Input transforms coerce or sanitise values before they're stored. Real examples: (1) <code>booleanAttribute</code> — a button component accepts <code>&lt;app-btn disabled /&gt;</code> (no value) as <code>true</code>. (2) <code>numberAttribute</code> — an input like <code>&lt;app-slider width="200" /&gt;</code> passes a string from the template, transform coerces to number. (3) Custom trim transform — a label input auto-trims whitespace. Transforms are statically analysable and must be pure functions.</div>
+    </div>
+
+    <div class="iq-item">
+      <div class="iq-q">Q15. How do you communicate between deeply nested components without prop drilling? <span class="iq-tag">DEEP NESTING</span></div>
+      <div class="iq-a">Three patterns: (1) <strong>Shared service + inject()</strong> — the cleanest. Declare state in a service, inject it in any component at any depth. Signal-based state auto-updates all consumers. (2) <strong>Route-level providers</strong> — provide a scoped service at the route level using the route's <code>providers</code> array; all child components in that route tree can inject it. (3) <strong>NgRx</strong> — for complex enterprise-level state that needs time-travel debugging, effects, and selectors.</div>
+    </div>
+
+    <div class="iq-item">
+      <div class="iq-q">Q16. What happens if you mutate an object passed as <code>@Input()</code> instead of replacing it? <span class="iq-tag">PITFALL</span></div>
+      <div class="iq-a">If the child mutates the object (e.g. <code>this.user.name = 'New'</code>), Angular's change detection for the <strong>parent</strong> may not detect the change because the object reference didn't change. With <code>OnPush</code>, the child won't re-render either because its input reference is the same. Always treat inputs as <strong>immutable</strong> — create new objects/arrays: <code>this.user = { ...this.user, name: 'New' }</code>. With signal inputs, you can use <code>effect()</code> to react to any value change regardless.</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══ SLIDE 15 — CHEAT SHEET ══ -->
+<div class="slide" id="s15">
+  <div class="slide-header"><span class="topic-badge">15</span><h1>Quick Reference Cheat Sheet</h1></div>
+  <div class="content">
+    <div class="two-col">
+      <div class="code-block"><pre><span class="cmt">// ── Complete Component API (Angular v22) ─────────</span>
+<span class="kw">import</span> {
+  <span class="cls">Component</span>,
+  <span class="fn">input</span>,           <span class="cmt">// InputSignal (read-only)</span>
+  <span class="fn">output</span>,          <span class="cmt">// OutputEmitterRef</span>
+  <span class="fn">model</span>,           <span class="cmt">// ModelSignal (read/write)</span>
+  <span class="fn">viewChild</span>,       <span class="cmt">// Signal of child in template</span>
+  <span class="fn">viewChildren</span>,   <span class="cmt">// Signal of all matching children</span>
+  <span class="fn">contentChild</span>,   <span class="cmt">// Signal of projected child</span>
+  <span class="fn">signal</span>,          <span class="cmt">// writable local state</span>
+  <span class="fn">computed</span>,        <span class="cmt">// derived state</span>
+  <span class="fn">effect</span>,          <span class="cmt">// side-effect on signal change</span>
+  <span class="fn">inject</span>,          <span class="cmt">// inject dependency</span>
+  <span class="fn">afterNextRender</span>, <span class="cmt">// browser-only (replaces ngAfterViewInit)</span>
+  <span class="fn">booleanAttribute</span>, <span class="fn">numberAttribute</span>  <span class="cmt">// transforms</span>
+} <span class="kw">from</span> <span class="str">'@angular/core'</span>;
+
+<span class="dec">@Component</span>({
+  <span class="var">selector</span>: <span class="str">'app-example'</span>,
+  <span class="var">standalone</span>: <span class="kw">true</span>,     <span class="cmt">// default in v19+</span>
+  <span class="var">imports</span>: [...],       <span class="cmt">// child components</span>
+  <span class="var">templateUrl</span>: <span class="str">'...'</span>,
+  <span class="var">styleUrl</span>: <span class="str">'...'</span>      <span class="cmt">// singular (v17+)</span>
+})
+<span class="kw">export class</span> <span class="cls">ExampleComponent</span> {
+  <span class="cmt">// Inputs</span>
+  <span class="var">name</span>    = <span class="fn">input</span>.<span class="fn">required</span>&lt;<span class="typ">string</span>&gt;();
+  <span class="var">count</span>   = <span class="fn">input</span>(<span class="num">0</span>);
+  <span class="var">active</span>  = <span class="fn">input</span>(<span class="kw">false</span>, { <span class="var">transform</span>: <span class="fn">booleanAttribute</span> });
+
+  <span class="cmt">// Outputs</span>
+  <span class="var">clicked</span> = <span class="fn">output</span>&lt;<span class="kw">void</span>&gt;();
+  <span class="var">changed</span> = <span class="fn">output</span>&lt;<span class="typ">string</span>&gt;();
+
+  <span class="cmt">// Two-way</span>
+  <span class="var">value</span>   = <span class="fn">model</span>(<span class="num">0</span>);
+
+  <span class="cmt">// Local state</span>
+  <span class="var">data</span>    = <span class="fn">signal</span>&lt;<span class="typ">any</span>[]&gt;([]);
+  <span class="var">label</span>   = <span class="fn">computed</span>(() => <span class="str">`</span><span class="tpl">${this.name()} (${this.count()})</span><span class="str">`</span>);
+
+  <span class="cmt">// Queries</span>
+  <span class="var">child</span>   = <span class="fn">viewChild</span>.<span class="fn">required</span>(<span class="cls">ChildComponent</span>);
+}</pre></div>
+
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div class="card accent-blue">
+          <h3>📋 Lifecycle Order (Quick)</h3>
+          <ul>
+            <li><code>constructor</code> → DI</li>
+            <li><code>ngOnChanges</code> → input changed</li>
+            <li><code>ngOnInit</code> → init logic</li>
+            <li><code>ngAfterContentInit</code> → ng-content ready</li>
+            <li><code>ngAfterViewInit</code> → template DOM ready</li>
+            <li><code>ngOnDestroy</code> → cleanup</li>
+          </ul>
+        </div>
+        <div class="card accent-green">
+          <h3>📋 Data Sharing (Quick)</h3>
+          <ul>
+            <li>↓ Parent→Child: <code>input()</code></li>
+            <li>↑ Child→Parent: <code>output()</code></li>
+            <li>↕ 2-way: <code>model()</code></li>
+            <li>↔ Sibling: shared service</li>
+            <li>🌐 Global: NgRx</li>
+          </ul>
+        </div>
+        <div class="mem-box">
+          <div class="mem-hdr">🧠 Memory — "I O M V C"</div>
+          <p><strong>I</strong>nput · <strong>O</strong>utput · <strong>M</strong>odel · <strong>V</strong>iewChild · <strong>C</strong>ontentChild — the 5 component communication signals</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /deck -->
+
+<nav id="nav">
+  <button id="btn-first" onclick="goTo(0)">&#8676;</button>
+  <button id="btn-prev"  onclick="move(-1)">&#8592;</button>
+  <span id="counter">1 / 16</span>
+  <button id="btn-next"  onclick="move(1)">&#8594;</button>
+  <button id="btn-last"  onclick="goTo(total-1)">&#8677;</button>
+</nav>
+<div id="hint">← → arrow keys</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const total  = slides.length;
+  let cur = 0;
+
+  function goTo(n) {
+    slides[cur].classList.remove('active');
+    cur = Math.max(0, Math.min(n, total - 1));
+    slides[cur].classList.add('active');
+    slides[cur].scrollTop = 0;
+    document.getElementById('counter').textContent = `${cur + 1} / ${total}`;
+    document.getElementById('btn-prev').disabled  = cur === 0;
+    document.getElementById('btn-first').disabled = cur === 0;
+    document.getElementById('btn-next').disabled  = cur === total - 1;
+    document.getElementById('btn-last').disabled  = cur === total - 1;
+    document.getElementById('progress-bar').style.width = `${((cur + 1) / total) * 100}%`;
+  }
+
+  function move(d) { goTo(cur + d); }
+
+  function switchTab(e, slideId, panelId) {
+    const slide = document.getElementById(slideId);
+    slide.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    slide.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(slideId + '-' + panelId).classList.add('active');
+    e.target.classList.add('active');
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') move(1);
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   move(-1);
+    if (e.key === 'Home') goTo(0);
+    if (e.key === 'End')  goTo(total - 1);
+  });
+
+  goTo(0);
+</script>
+</body>
+</html>
