@@ -1363,9 +1363,79 @@ On [🔄 Reset]: volume back to 80%  (parent calls child.setVolume(80))</pre>
 
 Console: Header icon: 📦</pre>
       </div>
-    </div>
 
-    <!-- DIFF TAB -->
+      <!-- ── LIVE UI PREVIEW — contentChild ── -->
+      <div style="background:#0d1117;border:1px solid #30363d;border-radius:10px;padding:14px 16px;margin-top:4px;">
+        <div style="font-size:10px;font-weight:700;color:#ff6eb4;letter-spacing:1px;text-transform:uppercase;margin-bottom:12px;">📦 LIVE DEMO — contentChild() detecting projected content</div>
+        <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start;">
+
+          <!-- Panel 1 — WITH projected header -->
+          <div style="flex:1;min-width:220px;">
+            <div style="font-size:11px;color:#8b949e;margin-bottom:6px;">Panel 1 — <strong style="color:#3fb950;">With</strong> <code style="font-size:11px;">&lt;app-panel-header&gt;</code> projected</div>
+            <div style="border:1px solid #30363d;border-radius:8px;overflow:hidden;">
+              <div onclick="ccToggle('cc-p1-body','cc-p1-arrow','cc-p1-signal')"
+                   style="background:#161b22;padding:10px 14px;cursor:pointer;display:flex;align-items:center;gap:8px;user-select:none;">
+                <span style="font-size:14px;">📦</span>
+                <span style="font-size:13px;color:#e6edf3;flex:1;">What is Angular SSR?</span>
+                <span id="cc-p1-arrow" style="color:#8b949e;font-size:12px;">▼</span>
+              </div>
+              <div id="cc-p1-body" style="display:none;padding:12px 14px;background:#0d1117;font-size:12.5px;color:#c9d1d9;border-top:1px solid #21262d;">
+                SSR renders your Angular app on the server for faster first paint and SEO.
+              </div>
+            </div>
+            <div style="margin-top:8px;background:#1a2a10;border:1px solid #3fb950;border-radius:6px;padding:8px 10px;font-size:11px;font-family:Consolas,monospace;">
+              <div style="color:#484f58;">// contentChild() signal value:</div>
+              <div id="cc-p1-signal" style="color:#3fb950;">header() = PanelHeaderComponent ✅</div>
+              <div style="color:#56d364;">header().icon() = '📦'</div>
+            </div>
+          </div>
+
+          <!-- Panel 2 — WITHOUT projected header -->
+          <div style="flex:1;min-width:220px;">
+            <div style="font-size:11px;color:#8b949e;margin-bottom:6px;">Panel 2 — <strong style="color:#f85149;">Without</strong> <code style="font-size:11px;">&lt;app-panel-header&gt;</code> projected</div>
+            <div style="border:1px solid #30363d;border-radius:8px;overflow:hidden;">
+              <div onclick="ccToggle('cc-p2-body','cc-p2-arrow',null)"
+                   style="background:#161b22;padding:10px 14px;cursor:pointer;display:flex;align-items:center;gap:8px;user-select:none;">
+                <span style="font-size:13px;color:#8b949e;flex:1;">Click to expand</span>
+                <span id="cc-p2-arrow" style="color:#8b949e;font-size:12px;">▼</span>
+              </div>
+              <div id="cc-p2-body" style="display:none;padding:12px 14px;background:#0d1117;font-size:12.5px;color:#c9d1d9;border-top:1px solid #21262d;">
+                This panel has no custom header.
+              </div>
+            </div>
+            <div style="margin-top:8px;background:#2a1212;border:1px solid #f85149;border-radius:6px;padding:8px 10px;font-size:11px;font-family:Consolas,monospace;">
+              <div style="color:#484f58;">// contentChild() signal value:</div>
+              <div style="color:#ff7b72;">header() = undefined ❌</div>
+              <div style="color:#ff7b72;">@if (!header()) → fallback shown</div>
+            </div>
+          </div>
+
+          <!-- Explanation -->
+          <div style="width:100%;background:#161b22;border:1px solid #30363d;border-radius:8px;padding:10px 14px;font-size:12px;color:#c9d1d9;">
+            <span style="color:#ffa657;font-weight:600;">How it works: </span>
+            <code style="font-size:11px;">contentChild(PanelHeaderComponent)</code> returns a Signal. When Panel 1 renders, Angular finds the projected <code>&lt;app-panel-header&gt;</code> and sets the signal to the component instance. Panel 2 has no projected header — signal stays <code>undefined</code> — so <code>@if (!header())</code> shows the fallback text.
+          </div>
+
+        </div>
+      </div>
+
+      <script>
+        function ccToggle(bodyId, arrowId, signalId) {
+          var body  = document.getElementById(bodyId);
+          var arrow = document.getElementById(arrowId);
+          var isOpen = body.style.display !== 'none';
+          body.style.display  = isOpen ? 'none' : 'block';
+          arrow.textContent   = isOpen ? '▼' : '▲';
+          if (signalId) {
+            var sig = document.getElementById(signalId);
+            sig.textContent = isOpen
+              ? 'header() = PanelHeaderComponent ✅'
+              : 'header() = PanelHeaderComponent ✅ (open)';
+          }
+        }
+      </script>
+
+    </div>
     <div class="tab-panel" id="s10-diff">
       <table>
         <thead><tr><th>Question</th><th>viewChild()</th><th>contentChild()</th></tr></thead>
