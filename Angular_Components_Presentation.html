@@ -155,7 +155,7 @@
     <span class="chip">contentChild()</span>
     <span class="chip">Interview Q&amp;A</span>
   </div>
-  <p style="margin-top:28px;font-size:12px;color:#484f58;">Angular v22 (v22.0.6) &nbsp;·&nbsp; Source: angular.dev &nbsp;·&nbsp; 17 Slides</p>
+  <p style="margin-top:28px;font-size:12px;color:#484f58;">Angular v22 (v22.0.6) &nbsp;·&nbsp; Source: angular.dev &nbsp;·&nbsp; 18 Slides</p>
 </div>
 
 <!-- ══ SLIDE 1 — ANATOMY ══ -->
@@ -1253,9 +1253,186 @@ CartIcon:     🛒 1    ← auto-updated, no event needed ✅</pre>
   </div>
 </div>
 
-<!-- ══ SLIDE 16 — CHEAT SHEET ══ -->
+<!-- ══ SLIDE 16 — DYNAMIC COMPONENTS ══ -->
 <div class="slide" id="s16">
-  <div class="slide-header"><span class="topic-badge">16</span><h1>Quick Reference Cheat Sheet</h1></div>
+  <div class="slide-header"><span class="topic-badge">16</span><h1>Dynamic Components — Runtime Rendering</h1></div>
+  <div class="content">
+    <p style="font-size:13px;color:#8b949e;">Dynamic components are created and inserted into the DOM at <strong>runtime</strong> — not declared in any template. Essential for modals, toasts, dynamic dashboards, and plugin architectures.</p>
+
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab(event,'s16','vcr')">🔧 ViewContainerRef (Programmatic)</button>
+      <button class="tab-btn"        onclick="switchTab(event,'s16','outlet')">📋 NgComponentOutlet (Declarative)</button>
+      <button class="tab-btn"        onclick="switchTab(event,'s16','modal')">🎯 Real Example — Toast Service</button>
+    </div>
+
+    <!-- ViewContainerRef -->
+    <div class="tab-panel active" id="s16-vcr">
+      <div class="two-col">
+        <div class="card accent-blue">
+          <h3>How it works</h3>
+          <ul>
+            <li>Get a <code>ViewContainerRef</code> — a reference to a location in the DOM</li>
+            <li>Call <code>.createComponent(MyComponent)</code> — Angular instantiates it</li>
+            <li>Set inputs via <code>instance.myInput.set(value)</code> or <code>setInput()</code></li>
+            <li>Subscribe to outputs via <code>instance.myOutput.subscribe()</code></li>
+            <li>Call <code>.destroy()</code> to remove it from the DOM</li>
+          </ul>
+        </div>
+        <div class="card accent-green">
+          <h3>Where to anchor — 3 options</h3>
+          <ul>
+            <li><code>viewChild(ViewContainerRef)</code> on a <code>&lt;ng-container&gt;</code></li>
+            <li><code>inject(ViewContainerRef)</code> — uses the component itself as anchor</li>
+            <li>A dedicated <code>&lt;ng-container #host&gt;&lt;/ng-container&gt;</code> in template</li>
+          </ul>
+        </div>
+      </div>
+      <div class="code-block"><pre><span class="cmt">// ── alert.component.ts — the dynamic component ──────────────────────────</span>
+<span class="dec">@Component</span>({
+  <span class="var">selector</span>: <span class="str">'app-alert'</span>,
+  <span class="var">template</span>: <span class="tpl">`&lt;div class="alert"&gt;{{ message() }} &lt;button (click)="close()"&gt;✕&lt;/button&gt;&lt;/div&gt;`</span>
+})
+<span class="kw">export class</span> <span class="cls">AlertComponent</span> {
+  <span class="var">message</span> = <span class="fn">input</span>.<span class="fn">required</span>&lt;<span class="typ">string</span>&gt;();
+  <span class="var">closed</span>  = <span class="fn">output</span>&lt;<span class="kw">void</span>&gt;();
+  <span class="fn">close</span>() { <span class="kw">this</span>.<span class="var">closed</span>.<span class="fn">emit</span>(); }
+}
+
+<span class="cmt">// ── host.component.ts — creates the dynamic component ─────────────────────</span>
+<span class="dec">@Component</span>({
+  <span class="var">template</span>: <span class="tpl">`
+    &lt;button (click)="showAlert()"&gt;Show Alert&lt;/button&gt;
+    &lt;ng-container #alertHost /&gt;
+  `</span>
+})
+<span class="kw">export class</span> <span class="cls">HostComponent</span> {
+  <span class="cmt">// Get a reference to the ng-container location in the DOM</span>
+  <span class="var">alertHost</span> = <span class="fn">viewChild</span>.<span class="fn">required</span>(<span class="str">'alertHost'</span>, { <span class="var">read</span>: <span class="cls">ViewContainerRef</span> });
+
+  <span class="fn">showAlert</span>() {
+    <span class="kw">const</span> <span class="var">vcr</span> = <span class="kw">this</span>.<span class="var">alertHost</span>();           <span class="cmt">// read the signal</span>
+    <span class="var">vcr</span>.<span class="fn">clear</span>();                               <span class="cmt">// remove any previous</span>
+
+    <span class="cmt">// ① Create the component dynamically</span>
+    <span class="kw">const</span> <span class="var">ref</span> = <span class="var">vcr</span>.<span class="fn">createComponent</span>(<span class="cls">AlertComponent</span>);
+
+    <span class="cmt">// ② Pass inputs via setInput() (works with both signal and decorator inputs)</span>
+    <span class="var">ref</span>.<span class="fn">setInput</span>(<span class="str">'message'</span>, <span class="str">'File saved successfully! ✅'</span>);
+
+    <span class="cmt">// ③ Listen to outputs</span>
+    <span class="var">ref</span>.<span class="var">instance</span>.<span class="var">closed</span>.<span class="fn">subscribe</span>(() => <span class="var">ref</span>.<span class="fn">destroy</span>());
+  }
+}</pre></div>
+      <div class="output-box">
+        <div class="out-hdr">▶ After clicking “Show Alert”</div>
+        <pre>[ File saved successfully! ✅  ✕ ]
+(clicking ✕ → component removed from DOM)</pre>
+      </div>
+    </div>
+
+    <!-- NgComponentOutlet -->
+    <div class="tab-panel" id="s16-outlet">
+      <div class="card accent-purple">
+        <h3>NgComponentOutlet — declarative dynamic components</h3>
+        <p>Cleaner template-based approach. Angular handles creation/destruction automatically. Best when the component type is determined by data (e.g. rendering different widget types from a config array).</p>
+      </div>
+      <div class="code-block"><pre><span class="cmt">// ── Three widget components ─────────────────────────────────────────────────────────</span>
+<span class="kw">export class</span> <span class="cls">ChartWidgetComponent</span>  { <span class="var">title</span> = <span class="fn">input</span>(<span class="str">'Chart'</span>); }
+<span class="kw">export class</span> <span class="cls">TableWidgetComponent</span>  { <span class="var">title</span> = <span class="fn">input</span>(<span class="str">'Table'</span>); }
+<span class="kw">export class</span> <span class="cls">MetricWidgetComponent</span> { <span class="var">title</span> = <span class="fn">input</span>(<span class="str">'Metric'</span>); }
+
+<span class="cmt">// ── dashboard.component.ts — renders widgets dynamically from config ──────</span>
+<span class="dec">@Component</span>({
+  <span class="var">imports</span>: [<span class="cls">NgComponentOutlet</span>],
+  <span class="var">template</span>: <span class="tpl">`
+    @for (widget of widgets(); track widget.id) {
+      &lt;!-- NgComponentOutlet creates the component from a class reference --&gt;
+      &lt;ng-container
+        [ngComponentOutlet]="widget.component"
+        [ngComponentOutletInputs]="{ title: widget.title }"
+      /&gt;
+    }
+  `</span>
+})
+<span class="kw">export class</span> <span class="cls">DashboardComponent</span> {
+  <span class="var">widgets</span> = <span class="fn">signal</span>([
+    { <span class="var">id</span>: <span class="num">1</span>, <span class="var">component</span>: <span class="cls">ChartWidgetComponent</span>,  <span class="var">title</span>: <span class="str">'Sales Chart'</span>  },
+    { <span class="var">id</span>: <span class="num">2</span>, <span class="var">component</span>: <span class="cls">TableWidgetComponent</span>,  <span class="var">title</span>: <span class="str">'User Table'</span>   },
+    { <span class="var">id</span>: <span class="num">3</span>, <span class="var">component</span>: <span class="cls">MetricWidgetComponent</span>, <span class="var">title</span>: <span class="str">'Revenue KPI'</span>  },
+  ]);
+
+  <span class="fn">addWidget</span>() {
+    <span class="cmt">// Add a new widget at runtime — NgComponentOutlet auto-creates it</span>
+    <span class="kw">this</span>.<span class="var">widgets</span>.<span class="fn">update</span>(<span class="var">w</span> => [...<span class="var">w</span>, { <span class="var">id</span>: <span class="num">4</span>, <span class="var">component</span>: <span class="cls">ChartWidgetComponent</span>, <span class="var">title</span>: <span class="str">'New Chart'</span> }]);
+  }
+}</pre></div>
+      <div class="output-box">
+        <div class="out-hdr">▶ Dashboard renders dynamically</div>
+        <pre>[ChartWidget:  Sales Chart ]
+[TableWidget:  User Table  ]
+[MetricWidget: Revenue KPI ]
+(addWidget() → new ChartWidget appears instantly ✅)</pre>
+      </div>
+    </div>
+
+    <!-- Modal Toast example -->
+    <div class="tab-panel" id="s16-modal">
+      <div class="code-block"><pre><span class="cmt">// ── toast.service.ts — global dynamic component service ────────────────────</span>
+<span class="dec">@Injectable</span>({ <span class="var">providedIn</span>: <span class="str">'root'</span> })
+<span class="kw">export class</span> <span class="cls">ToastService</span> {
+  <span class="kw">private</span> <span class="var">vcr</span>!: <span class="cls">ViewContainerRef</span>;
+
+  <span class="cmt">// Called once from AppComponent to register the root container</span>
+  <span class="fn">setContainer</span>(<span class="var">vcr</span>: <span class="cls">ViewContainerRef</span>) { <span class="kw">this</span>.<span class="var">vcr</span> = <span class="var">vcr</span>; }
+
+  <span class="fn">show</span>(<span class="var">message</span>: <span class="typ">string</span>, <span class="var">type</span>: <span class="str">'success'</span> | <span class="str">'error'</span> = <span class="str">'success'</span>) {
+    <span class="kw">const</span> <span class="var">ref</span> = <span class="kw">this</span>.<span class="var">vcr</span>.<span class="fn">createComponent</span>(<span class="cls">ToastComponent</span>);
+    <span class="var">ref</span>.<span class="fn">setInput</span>(<span class="str">'message'</span>, <span class="var">message</span>);
+    <span class="var">ref</span>.<span class="fn">setInput</span>(<span class="str">'type'</span>, <span class="var">type</span>);
+
+    <span class="cmt">// Auto-destroy after 3 seconds</span>
+    <span class="fn">setTimeout</span>(() => <span class="var">ref</span>.<span class="fn">destroy</span>(), <span class="num">3000</span>);
+  }
+}
+
+<span class="cmt">// ── app.component.ts — register the container ─────────────────────────────</span>
+<span class="dec">@Component</span>({
+  <span class="var">template</span>: <span class="tpl">`&lt;router-outlet /&gt; &lt;ng-container #toastHost /&gt;`</span>
+})
+<span class="kw">export class</span> <span class="cls">AppComponent</span> {
+  <span class="var">toastHost</span> = <span class="fn">viewChild</span>.<span class="fn">required</span>(<span class="str">'toastHost'</span>, { <span class="var">read</span>: <span class="cls">ViewContainerRef</span> });
+  <span class="kw">private</span> <span class="var">toast</span> = <span class="fn">inject</span>(<span class="cls">ToastService</span>);
+
+  <span class="fn">constructor</span>() {
+    <span class="fn">afterNextRender</span>(() => <span class="kw">this</span>.<span class="var">toast</span>.<span class="fn">setContainer</span>(<span class="kw">this</span>.<span class="var">toastHost</span>()));
+  }
+}
+
+<span class="cmt">// ── any.component.ts — use the service anywhere ─────────────────────────</span>
+<span class="kw">export class</span> <span class="cls">SaveButtonComponent</span> {
+  <span class="kw">private</span> <span class="var">toast</span> = <span class="fn">inject</span>(<span class="cls">ToastService</span>);
+
+  <span class="fn">save</span>() {
+    <span class="cmt">// ... save logic</span>
+    <span class="kw">this</span>.<span class="var">toast</span>.<span class="fn">show</span>(<span class="str">'Saved successfully ✅'</span>, <span class="str">'success'</span>);
+    <span class="cmt">// ToastComponent appears in DOM, auto-destroys after 3s</span>
+  }
+}</pre></div>
+      <div class="output-box">
+        <div class="out-hdr">▶ After save()</div>
+        <pre>╔═════════════════════════════╗
+║  Saved successfully ✅       ║
+╚═════════════════════════════╝
+(disappears after 3 seconds)</pre>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══ SLIDE 17 — CHEAT SHEET ══ -->
+<div class="slide" id="s17">
+  <div class="slide-header"><span class="topic-badge">17</span><h1>Quick Reference Cheat Sheet</h1></div>
   <div class="content">
     <div class="two-col">
       <div class="code-block"><pre><span class="cmt">// ── Complete Component API (Angular v22) ─────────</span>
@@ -1339,7 +1516,7 @@ CartIcon:     🛒 1    ← auto-updated, no event needed ✅</pre>
 <nav id="nav">
   <button id="btn-first" onclick="goTo(0)">&#8676;</button>
   <button id="btn-prev"  onclick="move(-1)">&#8592;</button>
-  <span id="counter">1 / 17</span>
+  <span id="counter">1 / 18</span>
   <button id="btn-next"  onclick="move(1)">&#8594;</button>
   <button id="btn-last"  onclick="goTo(total-1)">&#8677;</button>
 </nav>
