@@ -1,0 +1,1246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Angular Material – Deep Dive</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; overflow: hidden; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0d1117; color: #e6edf3; }
+
+    #deck { width: 100vw; height: 100vh; position: relative; }
+    .slide {
+      display: none; flex-direction: column; justify-content: flex-start;
+      padding: 44px 58px 76px; width: 100%; height: 100%;
+      overflow-y: auto; gap: 14px; animation: fadeIn .35s ease;
+    }
+    .slide.active { display: flex; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+
+    .slide-header { display: flex; align-items: center; gap: 14px; border-bottom: 2px solid #21262d; padding-bottom: 12px; flex-shrink: 0; }
+    .topic-badge { background: #1a0a3e; color: #bb86fc; font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; padding: 4px 10px; border-radius: 20px; white-space: nowrap; }
+    h1 { font-size: 27px; font-weight: 700; color: #bb86fc; }
+    h3 { font-size: 14px; font-weight: 600; color: #ffa657; margin-bottom: 4px; }
+    p  { font-size: 13.5px; line-height: 1.75; color: #c9d1d9; }
+    li { font-size: 13px; line-height: 1.9; color: #c9d1d9; margin-left: 18px; }
+    ul { padding-left: 4px; }
+    strong { color: #f0f6fc; }
+    code { font-family: 'Consolas', monospace; font-size: 12px; background: #1c2128; color: #bb86fc; padding: 2px 6px; border-radius: 4px; }
+
+    /* ── Title Slide ── */
+    .title-slide { justify-content: center; align-items: center; text-align: center; background: radial-gradient(ellipse at 50% 0%, #1a0a3e 0%, #0d1117 70%); }
+    .title-slide h1 { font-size: 46px; margin-bottom: 12px; color: #bb86fc; }
+    .title-slide .subtitle { font-size: 16px; color: #8b949e; max-width: 740px; line-height: 1.7; }
+    .logo { font-size: 64px; margin-bottom: 14px; }
+    .topic-chips { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 22px; }
+    .chip { background: #161b22; border: 1px solid #30363d; border-radius: 20px; padding: 5px 14px; font-size: 12.5px; color: #8b949e; }
+
+    /* ── Layout ── */
+    .content { flex: 1; display: flex; flex-direction: column; gap: 14px; }
+    .two-col   { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+    .four-col  { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 12px; }
+
+    /* ── Cards ── */
+    .card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 14px 16px; }
+    .card.accent-purple { border-left: 4px solid #bb86fc; }
+    .card.accent-blue   { border-left: 4px solid #1f6feb; }
+    .card.accent-green  { border-left: 4px solid #3fb950; }
+    .card.accent-orange { border-left: 4px solid #ffa657; }
+    .card.accent-teal   { border-left: 4px solid #03dac6; }
+    .card.accent-red    { border-left: 4px solid #f85149; }
+    .card.accent-yellow { border-left: 4px solid #e3b341; }
+    .card.accent-pink   { border-left: 4px solid #ff6eb4; }
+
+    /* ── Code ── */
+    .code-block { background: #1c2128; border: 1px solid #30363d; border-radius: 8px; padding: 14px 16px; overflow-x: auto; flex-shrink: 0; }
+    .code-block pre { font-family: 'Consolas', monospace; font-size: 12.5px; line-height: 1.7; color: #e6edf3; white-space: pre; margin: 0; }
+    .kw  { color: #ff7b72; }
+    .fn  { color: #d2a8ff; }
+    .str { color: #a5d6ff; }
+    .cmt { color: #8b949e; font-style: italic; }
+    .var { color: #ffa657; }
+    .tag { color: #7ee787; }
+    .att { color: #79c0ff; }
+    .val { color: #a5d6ff; }
+    .typ { color: #bb86fc; }
+
+    /* ── Table ── */
+    table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+    th { background: #161b22; color: #bb86fc; text-align: left; padding: 8px 12px; border-bottom: 2px solid #30363d; font-weight: 600; }
+    td { padding: 7px 12px; border-bottom: 1px solid #21262d; color: #c9d1d9; vertical-align: top; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #161b22; }
+
+    /* ── Badges ── */
+    .badge { display: inline-block; padding: 2px 9px; border-radius: 12px; font-size: 11px; font-weight: 700; white-space: nowrap; }
+    .badge-purple { background: #1a0a3e; color: #bb86fc; }
+    .badge-blue   { background: #0d2340; color: #58a6ff; }
+    .badge-green  { background: #1a3c1a; color: #3fb950; }
+    .badge-orange { background: #3a2000; color: #ffa657; }
+    .badge-teal   { background: #003333; color: #03dac6; }
+    .badge-red    { background: #3a1818; color: #f85149; }
+
+    /* ── Tip / Warn / Info boxes ── */
+    .tip-box  { background: #1c2a1c; border: 1px solid #3fb950; border-left: 4px solid #3fb950; border-radius: 8px; padding: 10px 14px; }
+    .tip-box .tip-hdr { font-size: 11px; font-weight: 700; color: #3fb950; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 5px; }
+    .tip-box p, .tip-box li { font-size: 12.5px; color: #c9d1d9; }
+
+    .warn-box { background: #2a1a00; border: 1px solid #e3b341; border-left: 4px solid #e3b341; border-radius: 8px; padding: 10px 14px; }
+    .warn-box .warn-hdr { font-size: 11px; font-weight: 700; color: #e3b341; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 5px; }
+    .warn-box p, .warn-box li { font-size: 12.5px; color: #c9d1d9; }
+
+    .info-box { background: #1a0a3e; border: 1px solid #bb86fc; border-left: 4px solid #bb86fc; border-radius: 8px; padding: 10px 14px; }
+    .info-box .info-hdr { font-size: 11px; font-weight: 700; color: #bb86fc; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 5px; }
+    .info-box p, .info-box li { font-size: 12.5px; color: #c9d1d9; }
+
+    /* ── Flow ── */
+    .flow { display: flex; align-items: center; gap: 0; flex-wrap: nowrap; overflow-x: auto; padding: 6px 0; }
+    .flow-box { background: #1c2128; border: 1px solid #30363d; border-radius: 6px; padding: 7px 14px; font-size: 12px; color: #e6edf3; white-space: nowrap; flex-shrink: 0; text-align: center; }
+    .flow-box.purple { border-color: #bb86fc; color: #bb86fc; }
+    .flow-box.teal   { border-color: #03dac6; color: #03dac6; }
+    .flow-box.orange { border-color: #ffa657; color: #ffa657; }
+    .flow-box.green  { border-color: #3fb950; color: #56d364; }
+    .flow-box.blue   { border-color: #1f6feb; color: #79c0ff; }
+    .flow-arrow { color: #484f58; font-size: 18px; padding: 0 6px; flex-shrink: 0; }
+
+    /* ── Component pill grid ── */
+    .pill-grid { display: flex; flex-wrap: wrap; gap: 7px; }
+    .pill { background: #1a0a3e; border: 1px solid #3d1f7a; color: #bb86fc; border-radius: 20px; padding: 4px 13px; font-size: 12px; font-weight: 600; }
+    .pill.green  { background: #1a3c1a; border-color: #2d6a2d; color: #3fb950; }
+    .pill.blue   { background: #0d2340; border-color: #1f4080; color: #58a6ff; }
+    .pill.orange { background: #3a2000; border-color: #7a4400; color: #ffa657; }
+    .pill.teal   { background: #003333; border-color: #006666; color: #03dac6; }
+    .pill.red    { background: #3a1818; border-color: #7a3030; color: #f85149; }
+
+    /* ── IQ items ── */
+    .iq-item { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 12px 15px; margin-bottom: 8px; }
+    .iq-q { font-size: 13.5px; font-weight: 600; color: #bb86fc; margin-bottom: 6px; }
+    .iq-a { font-size: 12.5px; color: #c9d1d9; line-height: 1.7; }
+
+    /* ── Mat component preview boxes ── */
+    .mat-preview { background: #1c2128; border: 1px solid #30363d; border-radius: 8px; padding: 14px 16px; }
+    .mat-preview-title { font-size: 11px; color: #8b949e; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 10px; font-weight: 700; }
+    .mat-btn { display: inline-block; padding: 7px 18px; border-radius: 4px; font-size: 13px; font-weight: 600; margin: 3px; cursor: default; }
+    .mat-btn-basic    { background: #bb86fc; color: #1a0a3e; }
+    .mat-btn-stroked  { background: transparent; border: 1px solid #bb86fc; color: #bb86fc; }
+    .mat-btn-flat     { background: #03dac6; color: #000; }
+    .mat-btn-icon     { background: transparent; color: #bb86fc; border: none; font-size: 18px; padding: 6px 10px; }
+    .mat-chip-demo { display: inline-flex; align-items: center; gap: 5px; background: #2a1a3e; border: 1px solid #bb86fc; border-radius: 16px; padding: 3px 10px; font-size: 12px; color: #bb86fc; margin: 3px; }
+    .mat-form-demo { border-bottom: 2px solid #bb86fc; padding: 4px 0; margin: 6px 0; font-size: 13px; color: #c9d1d9; display: flex; flex-direction: column; gap: 2px; }
+    .mat-form-label { font-size: 10px; color: #bb86fc; font-weight: 700; letter-spacing: 0.5px; }
+    .mat-card-demo { background: #0d1117; border-radius: 8px; border: 1px solid #30363d; padding: 12px; }
+    .mat-card-title-demo { font-size: 14px; font-weight: 700; color: #e6edf3; margin-bottom: 4px; }
+    .mat-card-sub-demo { font-size: 11px; color: #8b949e; margin-bottom: 8px; }
+    .mat-progress-bar { height: 4px; background: #2a1a3e; border-radius: 2px; overflow: hidden; margin: 6px 0; }
+    .mat-progress-fill { height: 100%; background: #bb86fc; border-radius: 2px; }
+    .mat-badge-demo { position: relative; display: inline-flex; }
+    .mat-badge-dot { position: absolute; top: -4px; right: -8px; background: #f85149; color: #fff; border-radius: 10px; font-size: 10px; padding: 1px 5px; font-weight: 700; }
+
+    /* ── Navigation ── */
+    #nav {
+      position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%);
+      display: flex; align-items: center; gap: 10px; z-index: 100;
+      background: #161b22cc; backdrop-filter: blur(8px);
+      border: 1px solid #30363d; border-radius: 30px; padding: 8px 18px;
+    }
+    #nav button { background: none; border: none; color: #8b949e; font-size: 22px; cursor: pointer; padding: 2px 8px; border-radius: 6px; transition: color .2s; }
+    #nav button:hover { color: #bb86fc; }
+    #counter { font-size: 13px; color: #6e7681; min-width: 54px; text-align: center; }
+    #progress { position: fixed; top: 0; left: 0; height: 3px; background: #bb86fc; transition: width .3s ease; z-index: 200; }
+    #slide-num { position: fixed; top: 16px; right: 22px; font-size: 12px; color: #3a4a5a; z-index: 100; }
+  </style>
+</head>
+<body>
+<div id="progress"></div>
+<div id="slide-num"></div>
+<div id="deck">
+
+<!-- ══════════════════════════════ SLIDE 1 – Title ══════════════════════════════ -->
+<div class="slide title-slide active">
+  <div class="logo">🎨</div>
+  <h1>Angular Material</h1>
+  <p class="subtitle">Material Design components built for Angular — covering installation, theming, all component categories, CDK, and interview questions.</p>
+  <div class="topic-chips">
+    <span class="chip">🔧 Installation & Setup</span>
+    <span class="chip">🎨 Theming System</span>
+    <span class="chip">📝 Form Components</span>
+    <span class="chip">🧭 Navigation</span>
+    <span class="chip">🗃️ Data Display</span>
+    <span class="chip">💬 Overlays & Feedback</span>
+    <span class="chip">🛠️ Angular CDK</span>
+    <span class="chip">❓ Interview Q&amp;A</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════════ SLIDE 2 – What is Angular Material ══════════════════════════════ -->
+<div class="slide">
+  <div class="slide-header">
+    <span class="topic-badge">Overview</span>
+    <h1>What is Angular Material?</h1>
+  </div>
+  <div class="content">
+    <div class="two-col">
+      <div>
+        <div class="card accent-purple" style="margin-bottom:12px">
+          <h3>📖 Definition</h3>
+          <p>Angular Material is the <strong>official UI component library</strong> for Angular, built by the Angular team at Google. It implements <strong>Google's Material Design</strong> specification — a visual language that combines classic principles of good design with innovation of technology.</p>
+        </div>
+        <div class="card accent-teal">
+          <h3>🌐 Official Resource</h3>
+          <p style="margin-bottom:6px">Website: <code>material.angular.dev</code></p>
+          <p style="margin-bottom:6px">GitHub: <code>github.com/angular/components</code></p>
+          <p>Package: <code>@angular/material</code></p>
+        </div>
+      </div>
+      <div>
+        <div class="card accent-green" style="margin-bottom:12px">
+          <h3>✅ Key Qualities</h3>
+          <ul>
+            <li><strong>High Quality</strong> — Internationalized (i18n) and accessible (a11y) by default</li>
+            <li><strong>Versatile</strong> — Customizable within Material Design bounds; tools to build your own components</li>
+            <li><strong>Frictionless</strong> — Built by Angular team; integrates seamlessly with Angular ecosystem</li>
+            <li><strong>Well Tested</strong> — Each component has component harnesses for reliable testing</li>
+          </ul>
+        </div>
+        <div class="card accent-orange">
+          <h3>📦 What's Included</h3>
+          <ul>
+            <li><strong>60+ UI components</strong> — forms, navigation, layout, data display, overlays</li>
+            <li><strong>Angular CDK</strong> — Component Dev Kit for building custom components</li>
+            <li><strong>Theming system</strong> — Design token-based custom theming</li>
+            <li><strong>Schematics</strong> — Auto-generate views with Material components</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="flow" style="justify-content:center">
+      <div class="flow-box purple">Material Design Spec<br><small>(Google)</small></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box teal">@angular/material<br><small>(Component Library)</small></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box orange">@angular/cdk<br><small>(Building Blocks)</small></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box green">Your Angular App<br><small>(Custom UI)</small></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════ SLIDE 3 – Installation ══════════════════════════════ -->
+<div class="slide">
+  <div class="slide-header">
+    <span class="topic-badge">Setup</span>
+    <h1>Installation &amp; Setup</h1>
+  </div>
+  <div class="content">
+    <div class="two-col">
+      <div>
+        <div class="card accent-purple" style="margin-bottom:12px">
+          <h3>⚡ Install via Schematic (Recommended)</h3>
+          <p>Use the Angular CLI schematic to automatically configure everything:</p>
+        </div>
+        <div class="code-block" style="margin-bottom:12px">
+<pre><span class="cmt"># Installs + configures Angular Material automatically</span>
+<span class="tag">ng add @angular/material</span>
+
+<span class="cmt"># Prompts you to choose:</span>
+<span class="cmt"># 1. Pre-built theme (Azure/Blue, Rose/Red,</span>
+<span class="cmt">#    Cyan/Orange, Purple/Green)</span>
+<span class="cmt"># 2. Set up global typography styles?</span>
+<span class="cmt"># 3. Set up browser animations?</span></pre>
+        </div>
+        <div class="card accent-teal">
+          <h3>📦 Manual Installation</h3>
+        </div>
+        <div class="code-block" style="margin-top:8px">
+<pre><span class="cmt"># Step 1: Install packages</span>
+<span class="tag">npm install @angular/material @angular/cdk</span>
+
+<span class="cmt"># Step 2: Add pre-built theme in styles.scss</span>
+<span class="str">@use '@angular/material' as mat;</span>
+
+<span class="cmt"># Step 3: Import BrowserAnimationsModule</span>
+<span class="kw">import</span> { <span class="typ">BrowserAnimationsModule</span> }
+  <span class="kw">from</span> <span class="str">'@angular/platform-browser/animations'</span>;</pre>
+        </div>
+      </div>
+      <div>
+        <div class="card accent-orange" style="margin-bottom:12px">
+          <h3>📁 What Gets Auto-Configured</h3>
+          <ul>
+            <li>Theme CSS added to <code>angular.json</code> styles array</li>
+            <li><code>BrowserAnimationsModule</code> added to <code>app.module.ts</code></li>
+            <li>Material icons font added to <code>index.html</code></li>
+            <li>Typography styles added to <code>styles.scss</code></li>
+          </ul>
+        </div>
+        <div class="card accent-green" style="margin-bottom:12px">
+          <h3>🧩 Importing Individual Modules</h3>
+          <p style="margin-bottom:6px">Each component has its own module — import only what you use:</p>
+        </div>
+        <div class="code-block">
+<pre><span class="cmt">// In your component or shared module</span>
+<span class="kw">import</span> { <span class="typ">MatButtonModule</span> }
+  <span class="kw">from</span> <span class="str">'@angular/material/button'</span>;
+<span class="kw">import</span> { <span class="typ">MatInputModule</span> }
+  <span class="kw">from</span> <span class="str">'@angular/material/input'</span>;
+<span class="kw">import</span> { <span class="typ">MatTableModule</span> }
+  <span class="kw">from</span> <span class="str">'@angular/material/table'</span>;
+
+<span class="cmt">// Standalone (Angular 14+)</span>
+<span class="kw">@Component</span>({
+  imports: [<span class="typ">MatButtonModule</span>, <span class="typ">MatInputModule</span>]
+})</pre>
+        </div>
+        <div class="tip-box" style="margin-top:10px">
+          <div class="tip-hdr">Best Practice</div>
+          <p>Create a <strong>SharedMaterialModule</strong> that imports and re-exports all Material modules your app uses — avoids repetitive imports.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════ SLIDE 4 – Theming ══════════════════════════════ -->
+<div class="slide">
+  <div class="slide-header">
+    <span class="topic-badge">Theming</span>
+    <h1>Theming System</h1>
+  </div>
+  <div class="content">
+    <div class="two-col">
+      <div>
+        <div class="card accent-purple" style="margin-bottom:12px">
+          <h3>🎨 Material 3 Theming (Design Tokens)</h3>
+          <p>Angular Material uses a <strong>SASS-based theming system</strong> powered by design tokens. Define a custom theme with primary, accent, and warn palettes.</p>
+        </div>
+        <div class="code-block" style="margin-bottom:12px">
+<pre><span class="cmt">// styles.scss</span>
+<span class="str">@use '@angular/material' as mat;</span>
+
+<span class="cmt">// Include core styles once</span>
+<span class="fn">@include mat.core</span>();
+
+<span class="cmt">// Define your theme</span>
+<span class="var">$my-theme</span>: <span class="fn">mat.define-theme</span>((
+  color: (
+    theme-type: <span class="str">dark</span>,
+    primary: <span class="typ">mat.$violet-palette</span>,
+    tertiary: <span class="typ">mat.$orange-palette</span>,
+  ),
+  typography: (
+    brand-family: <span class="str">'Roboto'</span>,
+  ),
+  density: (
+    scale: <span class="str">0</span>
+  )
+));
+
+<span class="cmt">// Apply the theme</span>
+<span class="str">html</span> {
+  <span class="fn">@include mat.all-component-themes</span>(<span class="var">$my-theme</span>);
+}</pre>
+        </div>
+      </div>
+      <div>
+        <div class="card accent-teal" style="margin-bottom:12px">
+          <h3>🌈 Pre-built Themes</h3>
+          <table>
+            <thead><tr><th>Theme</th><th>Colors</th></tr></thead>
+            <tbody>
+              <tr><td><code>azure-blue</code></td><td>Azure primary, Blue accent</td></tr>
+              <tr><td><code>rose-red</code></td><td>Rose primary, Red accent</td></tr>
+              <tr><td><code>cyan-orange</code></td><td>Cyan primary, Orange accent</td></tr>
+              <tr><td><code>magenta-violet</code></td><td>Magenta primary, Violet accent</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="card accent-orange" style="margin-bottom:10px">
+          <h3>🔠 Typography</h3>
+          <p style="margin-bottom:6px">Material typography config defines font families and sizes for all text levels:</p>
+          <div class="pill-grid">
+            <span class="pill">display-large</span>
+            <span class="pill">headline-large</span>
+            <span class="pill">title-large</span>
+            <span class="pill">body-large</span>
+            <span class="pill">body-medium</span>
+            <span class="pill">label-large</span>
+          </div>
+        </div>
+        <div class="tip-box">
+          <div class="tip-hdr">Dark Mode</div>
+          <p>Set <code>theme-type: dark</code> in the theme config or use <code>@include mat.all-component-color-themes($dark-theme)</code> scoped to a CSS class for toggle.</p>
+        </div>
+      </div>
+    </div>
+    <div class="info-box">
+      <div class="info-hdr">Material 2 vs Material 3</div>
+      <p>Angular Material supports both <strong>M2 (Material 2)</strong> using <code>mat.define-light-theme()</code> and <strong>M3 (Material 3)</strong> using <code>mat.define-theme()</code>. M3 is the current recommended approach with design tokens for better customization.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════ SLIDE 5 – Form Components ══════════════════════════════ -->
+<div class="slide">
+  <div class="slide-header">
+    <span class="topic-badge">Forms</span>
+    <h1>Form Components</h1>
+  </div>
+  <div class="content">
+    <div class="two-col">
+      <div>
+        <div class="card accent-purple" style="margin-bottom:10px">
+          <h3>📝 mat-form-field</h3>
+          <p style="margin-bottom:8px">The wrapper for most form controls — provides label, prefix/suffix, hint, error display.</p>
+          <div class="mat-preview">
+            <div class="mat-preview-title">Preview</div>
+            <div class="mat-form-demo">
+              <span class="mat-form-label">Email Address</span>
+              <span>user@example.com</span>
+            </div>
+            <div class="mat-form-demo">
+              <span class="mat-form-label">Password</span>
+              <span>••••••••</span>
+            </div>
+          </div>
+        </div>
+        <div class="code-block" style="margin-bottom:10px">
+<pre><span class="tag">&lt;mat-form-field</span> <span class="att">appearance</span>=<span class="val">"outline"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;mat-label&gt;</span>Email<span class="tag">&lt;/mat-label&gt;</span>
+  <span class="tag">&lt;input</span> <span class="att">matInput</span>
+         <span class="att">[formControl]</span>=<span class="val">"email"</span>
+         <span class="att">type</span>=<span class="val">"email"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;mat-icon</span> <span class="att">matSuffix</span><span class="tag">&gt;</span>email<span class="tag">&lt;/mat-icon&gt;</span>
+  <span class="tag">&lt;mat-error</span> <span class="att">*ngIf</span>=<span class="val">"email.invalid"</span><span class="tag">&gt;</span>
+    Invalid email
+  <span class="tag">&lt;/mat-error&gt;</span>
+<span class="tag">&lt;/mat-form-field&gt;</span></pre>
+        </div>
+        <div class="card accent-teal">
+          <h3>📅 mat-datepicker</h3>
+        </div>
+        <div class="code-block" style="margin-top:8px">
+<pre><span class="tag">&lt;mat-form-field&gt;</span>
+  <span class="tag">&lt;mat-label&gt;</span>Choose date<span class="tag">&lt;/mat-label&gt;</span>
+  <span class="tag">&lt;input</span> <span class="att">matInput</span>
+         <span class="att">[matDatepicker]</span>=<span class="val">"picker"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;mat-datepicker-toggle</span>
+    <span class="att">matIconSuffix</span>
+    <span class="att">[for]</span>=<span class="val">"picker"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;/mat-datepicker-toggle&gt;</span>
+  <span class="tag">&lt;mat-datepicker</span> <span class="att">#picker</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;/mat-datepicker&gt;</span>
+<span class="tag">&lt;/mat-form-field&gt;</span></pre>
+        </div>
+      </div>
+      <div>
+        <div class="three-col" style="margin-bottom:10px">
+          <div class="card accent-green">
+            <h3>✅ Checkbox</h3>
+            <div class="code-block" style="margin-top:6px">
+<pre><span class="tag">&lt;mat-checkbox</span>
+  <span class="att">[(ngModel)]</span>=<span class="val">"checked"</span><span class="tag">&gt;</span>
+  Accept Terms
+<span class="tag">&lt;/mat-checkbox&gt;</span></pre>
+            </div>
+          </div>
+          <div class="card accent-orange">
+            <h3>🔘 Radio</h3>
+            <div class="code-block" style="margin-top:6px">
+<pre><span class="tag">&lt;mat-radio-group</span>
+  <span class="att">[(ngModel)]</span>=<span class="val">"opt"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;mat-radio-button</span>
+    <span class="att">value</span>=<span class="val">"a"</span><span class="tag">&gt;</span>
+    Option A
+  <span class="tag">&lt;/mat-radio-button&gt;</span>
+<span class="tag">&lt;/mat-radio-group&gt;</span></pre>
+            </div>
+          </div>
+          <div class="card accent-purple">
+            <h3>🔄 Slide Toggle</h3>
+            <div class="code-block" style="margin-top:6px">
+<pre><span class="tag">&lt;mat-slide-toggle</span>
+  <span class="att">[(ngModel)]</span>=<span class="val">"darkMode"</span><span class="tag">&gt;</span>
+  Dark Mode
+<span class="tag">&lt;/mat-slide-toggle&gt;</span></pre>
+            </div>
+          </div>
+        </div>
+        <div class="card accent-blue" style="margin-bottom:10px">
+          <h3>🔽 Select &amp; Autocomplete</h3>
+        </div>
+        <div class="code-block" style="margin-bottom:10px">
+<pre><span class="tag">&lt;mat-form-field&gt;</span>
+  <span class="tag">&lt;mat-label&gt;</span>Country<span class="tag">&lt;/mat-label&gt;</span>
+  <span class="tag">&lt;mat-select</span> <span class="att">[(ngModel)]</span>=<span class="val">"country"</span><span class="tag">&gt;</span>
+    <span class="tag">&lt;mat-option</span> <span class="att">value</span>=<span class="val">"in"</span><span class="tag">&gt;</span>India<span class="tag">&lt;/mat-option&gt;</span>
+    <span class="tag">&lt;mat-option</span> <span class="att">value</span>=<span class="val">"us"</span><span class="tag">&gt;</span>USA<span class="tag">&lt;/mat-option&gt;</span>
+  <span class="tag">&lt;/mat-select&gt;</span>
+<span class="tag">&lt;/mat-form-field&gt;</span></pre>
+        </div>
+        <div class="pill-grid">
+          <span class="pill">mat-form-field</span>
+          <span class="pill">matInput</span>
+          <span class="pill">mat-select</span>
+          <span class="pill">mat-checkbox</span>
+          <span class="pill">mat-radio-group</span>
+          <span class="pill">mat-slide-toggle</span>
+          <span class="pill">mat-slider</span>
+          <span class="pill">mat-datepicker</span>
+          <span class="pill">mat-autocomplete</span>
+          <span class="pill">mat-chips</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════ SLIDE 6 – Buttons ══════════════════════════════ -->
+<div class="slide">
+  <div class="slide-header">
+    <span class="topic-badge">Buttons</span>
+    <h1>Button Components</h1>
+  </div>
+  <div class="content">
+    <div class="two-col">
+      <div>
+        <div class="card accent-purple" style="margin-bottom:12px">
+          <h3>🖱️ Button Variants</h3>
+          <div class="mat-preview" style="margin-top:8px">
+            <div class="mat-preview-title">Visual Preview</div>
+            <div style="margin-bottom:10px">
+              <button class="mat-btn mat-btn-basic">mat-button (basic)</button>
+            </div>
+            <div style="margin-bottom:10px">
+              <button class="mat-btn mat-btn-stroked">mat-stroked-button</button>
+            </div>
+            <div style="margin-bottom:10px">
+              <button class="mat-btn mat-btn-flat">mat-flat-button</button>
+            </div>
+            <div>
+              <button class="mat-btn mat-btn-icon">⭐</button>
+              <span style="font-size:12px; color:#8b949e">mat-icon-button</span>
+            </div>
+          </div>
+        </div>
+        <div class="code-block">
+<pre><span class="tag">&lt;button</span> <span class="att">mat-button</span><span class="tag">&gt;</span>Basic<span class="tag">&lt;/button&gt;</span>
+<span class="tag">&lt;button</span> <span class="att">mat-raised-button</span>
+        <span class="att">color</span>=<span class="val">"primary"</span><span class="tag">&gt;</span>
+  Raised
+<span class="tag">&lt;/button&gt;</span>
+<span class="tag">&lt;button</span> <span class="att">mat-flat-button</span>
+        <span class="att">color</span>=<span class="val">"accent"</span><span class="tag">&gt;</span>
+  Flat
+<span class="tag">&lt;/button&gt;</span>
+<span class="tag">&lt;button</span> <span class="att">mat-stroked-button</span>
+        <span class="att">color</span>=<span class="val">"warn"</span><span class="tag">&gt;</span>
+  Stroked
+<span class="tag">&lt;/button&gt;</span>
+<span class="tag">&lt;button</span> <span class="att">mat-icon-button</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;mat-icon&gt;</span>favorite<span class="tag">&lt;/mat-icon&gt;</span>
+<span class="tag">&lt;/button&gt;</span>
+<span class="tag">&lt;button</span> <span class="att">mat-fab</span>
+        <span class="att">color</span>=<span class="val">"primary"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;mat-icon&gt;</span>add<span class="tag">&lt;/mat-icon&gt;</span>
+<span class="tag">&lt;/button&gt;</span></pre>
+        </div>
+      </div>
+      <div>
+        <div class="card accent-teal" style="margin-bottom:12px">
+          <h3>🔀 Button Toggle</h3>
+          <p style="margin-bottom:6px">Group of on/off toggles — like a segmented control:</p>
+        </div>
+        <div class="code-block" style="margin-bottom:12px">
+<pre><span class="tag">&lt;mat-button-toggle-group</span>
+  <span class="att">[(ngModel)]</span>=<span class="val">"view"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;mat-button-toggle</span> <span class="att">value</span>=<span class="val">"list"</span><span class="tag">&gt;</span>
+    <span class="tag">&lt;mat-icon&gt;</span>list<span class="tag">&lt;/mat-icon&gt;</span>
+  <span class="tag">&lt;/mat-button-toggle&gt;</span>
+  <span class="tag">&lt;mat-button-toggle</span> <span class="att">value</span>=<span class="val">"grid"</span><span class="tag">&gt;</span>
+    <span class="tag">&lt;mat-icon&gt;</span>grid_on<span class="tag">&lt;/mat-icon&gt;</span>
+  <span class="tag">&lt;/mat-button-toggle&gt;</span>
+<span class="tag">&lt;/mat-button-toggle-group&gt;</span></pre>
+        </div>
+        <div class="card accent-orange" style="margin-bottom:12px">
+          <h3>🎨 Color Palette</h3>
+          <table>
+            <thead><tr><th>Value</th><th>Maps To</th></tr></thead>
+            <tbody>
+              <tr><td><code>color="primary"</code></td><td>Primary palette color</td></tr>
+              <tr><td><code>color="accent"</code></td><td>Accent/secondary palette color</td></tr>
+              <tr><td><code>color="warn"</code></td><td>Warning/error palette (usually red)</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="card accent-green">
+          <h3>♿ Accessibility</h3>
+          <ul>
+            <li>All buttons have proper <code>role</code> and <code>aria-label</code></li>
+            <li>Icon-only buttons: always add <code>aria-label</code></li>
+            <li>Disabled state via <code>[disabled]="true"</code></li>
+            <li>Supports keyboard navigation natively</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════ SLIDE 7 – Navigation ══════════════════════════════ -->
+<div class="slide">
+  <div class="slide-header">
+    <span class="topic-badge">Navigation</span>
+    <h1>Navigation Components</h1>
+  </div>
+  <div class="content">
+    <div class="two-col">
+      <div>
+        <div class="card accent-purple" style="margin-bottom:10px">
+          <h3>🔝 mat-toolbar</h3>
+          <p style="margin-bottom:6px">App header/top bar with support for multiple rows:</p>
+        </div>
+        <div class="code-block" style="margin-bottom:10px">
+<pre><span class="tag">&lt;mat-toolbar</span> <span class="att">color</span>=<span class="val">"primary"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;button</span> <span class="att">mat-icon-button</span><span class="tag">&gt;</span>
+    <span class="tag">&lt;mat-icon&gt;</span>menu<span class="tag">&lt;/mat-icon&gt;</span>
+  <span class="tag">&lt;/button&gt;</span>
+  <span class="tag">&lt;span&gt;</span>My App<span class="tag">&lt;/span&gt;</span>
+  <span class="tag">&lt;span</span> <span class="att">class</span>=<span class="val">"spacer"</span><span class="tag">&gt;&lt;/span&gt;</span>
+  <span class="tag">&lt;button</span> <span class="att">mat-button</span><span class="tag">&gt;</span>Login<span class="tag">&lt;/button&gt;</span>
+<span class="tag">&lt;/mat-toolbar&gt;</span></pre>
+        </div>
+        <div class="card accent-teal" style="margin-bottom:10px">
+          <h3>📑 mat-tabs</h3>
+        </div>
+        <div class="code-block" style="margin-bottom:10px">
+<pre><span class="tag">&lt;mat-tab-group&gt;</span>
+  <span class="tag">&lt;mat-tab</span> <span class="att">label</span>=<span class="val">"Dashboard"</span><span class="tag">&gt;</span>
+    Dashboard content
+  <span class="tag">&lt;/mat-tab&gt;</span>
+  <span class="tag">&lt;mat-tab</span> <span class="att">label</span>=<span class="val">"Settings"</span><span class="tag">&gt;</span>
+    Settings content
+  <span class="tag">&lt;/mat-tab&gt;</span>
+<span class="tag">&lt;/mat-tab-group&gt;</span></pre>
+        </div>
+        <div class="card accent-blue">
+          <h3>🍔 mat-menu</h3>
+        </div>
+        <div class="code-block" style="margin-top:8px">
+<pre><span class="tag">&lt;button</span> <span class="att">mat-button</span>
+        <span class="att">[matMenuTriggerFor]</span>=<span class="val">"menu"</span><span class="tag">&gt;</span>
+  Options
+<span class="tag">&lt;/button&gt;</span>
+<span class="tag">&lt;mat-menu</span> <span class="att">#menu</span>=<span class="val">"matMenu"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;button</span> <span class="att">mat-menu-item</span><span class="tag">&gt;</span>
+    <span class="tag">&lt;mat-icon&gt;</span>edit<span class="tag">&lt;/mat-icon&gt;</span>Edit
+  <span class="tag">&lt;/button&gt;</span>
+  <span class="tag">&lt;button</span> <span class="att">mat-menu-item</span><span class="tag">&gt;</span>
+    <span class="tag">&lt;mat-icon&gt;</span>delete<span class="tag">&lt;/mat-icon&gt;</span>Delete
+  <span class="tag">&lt;/button&gt;</span>
+<span class="tag">&lt;/mat-menu&gt;</span></pre>
+        </div>
+      </div>
+      <div>
+        <div class="card accent-orange" style="margin-bottom:10px">
+          <h3>◀ mat-sidenav</h3>
+          <p style="margin-bottom:6px">Slide-in navigation panel — perfect for app shell layouts:</p>
+        </div>
+        <div class="code-block" style="margin-bottom:10px">
+<pre><span class="tag">&lt;mat-sidenav-container&gt;</span>
+
+  <span class="tag">&lt;mat-sidenav</span>
+    <span class="att">#sidenav</span>
+    <span class="att">mode</span>=<span class="val">"side"</span><span class="tag">&gt;</span>
+    <span class="tag">&lt;mat-nav-list&gt;</span>
+      <span class="tag">&lt;a</span> <span class="att">mat-list-item</span>
+         <span class="att">routerLink</span>=<span class="val">"/home"</span><span class="tag">&gt;</span>
+        Home
+      <span class="tag">&lt;/a&gt;</span>
+    <span class="tag">&lt;/mat-nav-list&gt;</span>
+  <span class="tag">&lt;/mat-sidenav&gt;</span>
+
+  <span class="tag">&lt;mat-sidenav-content&gt;</span>
+    <span class="tag">&lt;router-outlet&gt;&lt;/router-outlet&gt;</span>
+  <span class="tag">&lt;/mat-sidenav-content&gt;</span>
+
+<span class="tag">&lt;/mat-sidenav-container&gt;</span></pre>
+        </div>
+        <div class="card accent-green">
+          <h3>Sidenav Modes</h3>
+          <table>
+            <thead><tr><th>Mode</th><th>Behaviour</th></tr></thead>
+            <tbody>
+              <tr><td><code>over</code></td><td>Floats over content, content stays behind</td></tr>
+              <tr><td><code>push</code></td><td>Pushes content to the side</td></tr>
+              <tr><td><code>side</code></td><td>Side-by-side with content (desktop)</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pill-grid" style="margin-top:10px">
+          <span class="pill">mat-toolbar</span>
+          <span class="pill">mat-sidenav</span>
+          <span class="pill">mat-tab-group</span>
+          <span class="pill">mat-menu</span>
+          <span class="pill">mat-nav-list</span>
+          <span class="pill">mat-paginator</span>
+          <span class="pill">mat-stepper</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════ SLIDE 8 – Layout ══════════════════════════════ -->
+<div class="slide">
+  <div class="slide-header">
+    <span class="topic-badge">Layout</span>
+    <h1>Layout Components</h1>
+  </div>
+  <div class="content">
+    <div class="two-col">
+      <div>
+        <div class="card accent-purple" style="margin-bottom:10px">
+          <h3>🃏 mat-card</h3>
+          <div class="mat-card-demo" style="margin-top:8px">
+            <div class="mat-card-title-demo">Equipment Status</div>
+            <div class="mat-card-sub-demo">Pump Unit A · Active</div>
+            <p style="font-size:11.5px;color:#8b949e;margin-bottom:8px">Last maintenance: 3 days ago. Next service due in 12 days.</p>
+            <button class="mat-btn mat-btn-stroked" style="font-size:11px;padding:4px 12px">View Details</button>
+          </div>
+        </div>
+        <div class="code-block" style="margin-bottom:10px">
+<pre><span class="tag">&lt;mat-card&gt;</span>
+  <span class="tag">&lt;mat-card-header&gt;</span>
+    <span class="tag">&lt;mat-card-title&gt;</span>
+      Equipment Status
+    <span class="tag">&lt;/mat-card-title&gt;</span>
+    <span class="tag">&lt;mat-card-subtitle&gt;</span>
+      Pump Unit A
+    <span class="tag">&lt;/mat-card-subtitle&gt;</span>
+  <span class="tag">&lt;/mat-card-header&gt;</span>
+  <span class="tag">&lt;mat-card-content&gt;</span>
+    Last maintenance: 3 days ago
+  <span class="tag">&lt;/mat-card-content&gt;</span>
+  <span class="tag">&lt;mat-card-actions&gt;</span>
+    <span class="tag">&lt;button</span> <span class="att">mat-button</span><span class="tag">&gt;</span>
+      VIEW
+    <span class="tag">&lt;/button&gt;</span>
+  <span class="tag">&lt;/mat-card-actions&gt;</span>
+<span class="tag">&lt;/mat-card&gt;</span></pre>
+        </div>
+      </div>
+      <div>
+        <div class="card accent-orange" style="margin-bottom:10px">
+          <h3>⬇️ mat-expansion-panel</h3>
+          <p style="margin-bottom:6px">Collapsible accordion panels — great for FAQs, settings sections:</p>
+        </div>
+        <div class="code-block" style="margin-bottom:10px">
+<pre><span class="tag">&lt;mat-accordion&gt;</span>
+  <span class="tag">&lt;mat-expansion-panel&gt;</span>
+    <span class="tag">&lt;mat-expansion-panel-header&gt;</span>
+      <span class="tag">&lt;mat-panel-title&gt;</span>
+        PM Schedule
+      <span class="tag">&lt;/mat-panel-title&gt;</span>
+    <span class="tag">&lt;/mat-expansion-panel-header&gt;</span>
+    <span class="tag">&lt;p&gt;</span>Details here...<span class="tag">&lt;/p&gt;</span>
+  <span class="tag">&lt;/mat-expansion-panel&gt;</span>
+<span class="tag">&lt;/mat-accordion&gt;</span></pre>
+        </div>
+        <div class="card accent-teal" style="margin-bottom:10px">
+          <h3>📏 mat-divider &amp; mat-list</h3>
+        </div>
+        <div class="code-block">
+<pre><span class="tag">&lt;mat-list&gt;</span>
+  <span class="tag">&lt;mat-list-item&gt;</span>
+    <span class="tag">&lt;mat-icon</span> <span class="att">matListItemIcon</span><span class="tag">&gt;</span>
+      build
+    <span class="tag">&lt;/mat-icon&gt;</span>
+    <span class="tag">&lt;span</span> <span class="att">matListItemTitle</span><span class="tag">&gt;</span>
+      Maintenance Log
+    <span class="tag">&lt;/span&gt;</span>
+  <span class="tag">&lt;/mat-list-item&gt;</span>
+  <span class="tag">&lt;mat-divider&gt;&lt;/mat-divider&gt;</span>
+<span class="tag">&lt;/mat-list&gt;</span></pre>
+        </div>
+      </div>
+    </div>
+    <div class="pill-grid">
+      <span class="pill">mat-card</span>
+      <span class="pill">mat-list</span>
+      <span class="pill">mat-expansion-panel</span>
+      <span class="pill">mat-accordion</span>
+      <span class="pill">mat-divider</span>
+      <span class="pill">mat-grid-list</span>
+      <span class="pill">mat-stepper</span>
+      <span class="pill">mat-tree</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════ SLIDE 9 – Data Table ══════════════════════════════ -->
+<div class="slide">
+  <div class="slide-header">
+    <span class="topic-badge">Data Display</span>
+    <h1>mat-table — Data Table</h1>
+  </div>
+  <div class="content">
+    <div class="two-col">
+      <div>
+        <div class="card accent-purple" style="margin-bottom:10px">
+          <h3>📊 mat-table (CDK-Based)</h3>
+          <p>Angular Material table is built on top of <strong>CDK data table</strong> — uses a declarative column definition pattern with powerful sorting, pagination, and filtering.</p>
+        </div>
+        <div class="code-block">
+<pre><span class="cmt">// Component</span>
+<span class="var">displayedColumns</span> = [
+  <span class="str">'name'</span>, <span class="str">'status'</span>, <span class="str">'lastService'</span>
+];
+<span class="var">dataSource</span> = <span class="kw">new</span> <span class="typ">MatTableDataSource</span>(
+  <span class="var">this</span>.equipmentList
+);
+
+<span class="fn">ngAfterViewInit</span>() {
+  <span class="var">this</span>.dataSource.sort =
+    <span class="var">this</span>.sort;
+  <span class="var">this</span>.dataSource.paginator =
+    <span class="var">this</span>.paginator;
+}
+
+<span class="cmt">// Filter</span>
+<span class="fn">applyFilter</span>(event: <span class="typ">Event</span>) {
+  <span class="kw">const</span> <span class="var">val</span> = (event.target
+    <span class="kw">as</span> <span class="typ">HTMLInputElement</span>).value;
+  <span class="var">this</span>.dataSource.filter =
+    val.trim().toLowerCase();
+}</pre>
+        </div>
+      </div>
+      <div>
+        <div class="code-block" style="margin-bottom:10px">
+<pre><span class="cmt">&lt;!-- Template --&gt;</span>
+<span class="tag">&lt;mat-form-field&gt;</span>
+  <span class="tag">&lt;input</span> <span class="att">matInput</span>
+    <span class="att">(keyup)</span>=<span class="val">"applyFilter($event)"</span>
+    <span class="att">placeholder</span>=<span class="val">"Search..."</span><span class="tag">&gt;</span>
+<span class="tag">&lt;/mat-form-field&gt;</span>
+
+<span class="tag">&lt;table</span> <span class="att">mat-table</span>
+       <span class="att">[dataSource]</span>=<span class="val">"dataSource"</span>
+       <span class="att">matSort</span><span class="tag">&gt;</span>
+
+  <span class="cmt">&lt;!-- Column Definition --&gt;</span>
+  <span class="tag">&lt;ng-container</span>
+    <span class="att">matColumnDef</span>=<span class="val">"name"</span><span class="tag">&gt;</span>
+    <span class="tag">&lt;th</span> <span class="att">mat-header-cell</span>
+        <span class="att">*matHeaderCellDef</span>
+        <span class="att">mat-sort-header</span><span class="tag">&gt;</span>
+      Name
+    <span class="tag">&lt;/th&gt;</span>
+    <span class="tag">&lt;td</span> <span class="att">mat-cell</span>
+        <span class="att">*matCellDef</span>=<span class="val">"let row"</span><span class="tag">&gt;</span>
+      {{row.name}}
+    <span class="tag">&lt;/td&gt;</span>
+  <span class="tag">&lt;/ng-container&gt;</span>
+
+  <span class="tag">&lt;tr</span> <span class="att">mat-header-row</span>
+      <span class="att">*matHeaderRowDef</span>=<span class="val">"displayedColumns"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;/tr&gt;</span>
+  <span class="tag">&lt;tr</span> <span class="att">mat-row</span>
+      <span class="att">*matRowDef</span>=<span class="val">"let row; columns: displayedColumns"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;/tr&gt;</span>
+<span class="tag">&lt;/table&gt;</span>
+
+<span class="tag">&lt;mat-paginator</span>
+  <span class="att">[pageSizeOptions]</span>=<span class="val">"[5,10,25]"</span>
+  <span class="att">showFirstLastButtons</span><span class="tag">&gt;</span>
+<span class="tag">&lt;/mat-paginator&gt;</span></pre>
+        </div>
+        <div class="tip-box">
+          <div class="tip-hdr">MatTableDataSource Powers</div>
+          <ul>
+            <li>Built-in <strong>client-side sorting</strong> via <code>matSort</code></li>
+            <li>Built-in <strong>client-side filtering</strong> via <code>dataSource.filter</code></li>
+            <li>Built-in <strong>pagination</strong> via <code>MatPaginator</code></li>
+            <li>For server-side: implement <strong>custom DataSource</strong> extending <code>DataSource&lt;T&gt;</code></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════ SLIDE 10 – Overlays & Feedback ══════════════════════════════ -->
+<div class="slide">
+  <div class="slide-header">
+    <span class="topic-badge">Overlays</span>
+    <h1>Overlays &amp; Feedback Components</h1>
+  </div>
+  <div class="content">
+    <div class="two-col">
+      <div>
+        <div class="card accent-purple" style="margin-bottom:10px">
+          <h3>💬 MatDialog</h3>
+          <p style="margin-bottom:6px">Open a component in an overlay dialog:</p>
+        </div>
+        <div class="code-block" style="margin-bottom:10px">
+<pre><span class="cmt">// Inject and open</span>
+<span class="fn">constructor</span>(<span class="kw">private</span> <span class="var">dialog</span>: <span class="typ">MatDialog</span>) {}
+
+<span class="fn">openDialog</span>() {
+  <span class="kw">const</span> <span class="var">ref</span> = <span class="var">this</span>.dialog.<span class="fn">open</span>(
+    <span class="typ">ConfirmDialogComponent</span>, {
+    width: <span class="str">'400px'</span>,
+    data: { title: <span class="str">'Confirm'</span> }
+  });
+
+  ref.afterClosed().<span class="fn">subscribe</span>(
+    <span class="var">result</span> => {
+      <span class="kw">if</span> (result) <span class="var">this</span>.<span class="fn">doAction</span>();
+  });
+}
+
+<span class="cmt">// In dialog component</span>
+<span class="fn">constructor</span>(
+  <span class="kw">public</span> <span class="var">dialogRef</span>: <span class="typ">MatDialogRef</span>,
+  <span class="kw">@Inject</span>(<span class="typ">MAT_DIALOG_DATA</span>)
+  <span class="kw">public</span> <span class="var">data</span>: <span class="typ">DialogData</span>
+) {}</pre>
+        </div>
+        <div class="card accent-teal" style="margin-bottom:10px">
+          <h3>🍞 MatSnackBar</h3>
+        </div>
+        <div class="code-block">
+<pre><span class="fn">constructor</span>(
+  <span class="kw">private</span> <span class="var">snackBar</span>: <span class="typ">MatSnackBar</span>
+) {}
+
+<span class="fn">showMessage</span>() {
+  <span class="var">this</span>.snackBar.<span class="fn">open</span>(
+    <span class="str">'Record saved!'</span>,
+    <span class="str">'Dismiss'</span>, {
+      duration: <span class="str">3000</span>,
+      horizontalPosition: <span class="str">'end'</span>,
+      verticalPosition: <span class="str">'bottom'</span>
+  });
+}</pre>
+        </div>
+      </div>
+      <div>
+        <div class="card accent-orange" style="margin-bottom:10px">
+          <h3>💡 MatTooltip</h3>
+        </div>
+        <div class="code-block" style="margin-bottom:10px">
+<pre><span class="tag">&lt;button</span> <span class="att">mat-icon-button</span>
+  <span class="att">matTooltip</span>=<span class="val">"Edit equipment"</span>
+  <span class="att">matTooltipPosition</span>=<span class="val">"above"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;mat-icon&gt;</span>edit<span class="tag">&lt;/mat-icon&gt;</span>
+<span class="tag">&lt;/button&gt;</span></pre>
+        </div>
+        <div class="card accent-green" style="margin-bottom:10px">
+          <h3>⏳ Progress Indicators</h3>
+          <div class="mat-preview" style="margin-top:8px">
+            <div style="margin-bottom:8px;font-size:11px;color:#8b949e">mat-progress-bar (determinate)</div>
+            <div class="mat-progress-bar"><div class="mat-progress-fill" style="width:70%"></div></div>
+            <div style="margin-top:10px;margin-bottom:8px;font-size:11px;color:#8b949e">mat-progress-bar (buffer)</div>
+            <div class="mat-progress-bar"><div class="mat-progress-fill" style="width:50%;opacity:0.6"></div></div>
+          </div>
+        </div>
+        <div class="code-block" style="margin-bottom:10px">
+<pre><span class="tag">&lt;mat-progress-bar</span>
+  <span class="att">mode</span>=<span class="val">"determinate"</span>
+  <span class="att">[value]</span>=<span class="val">"progress"</span><span class="tag">&gt;</span>
+<span class="tag">&lt;/mat-progress-bar&gt;</span>
+
+<span class="tag">&lt;mat-progress-spinner</span>
+  <span class="att">mode</span>=<span class="val">"indeterminate"</span>
+  <span class="att">diameter</span>=<span class="val">"40"</span><span class="tag">&gt;</span>
+<span class="tag">&lt;/mat-progress-spinner&gt;</span></pre>
+        </div>
+        <div class="pill-grid">
+          <span class="pill">MatDialog</span>
+          <span class="pill">MatSnackBar</span>
+          <span class="pill">MatTooltip</span>
+          <span class="pill">MatBottomSheet</span>
+          <span class="pill">MatProgressBar</span>
+          <span class="pill">MatProgressSpinner</span>
+          <span class="pill">MatBadge</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════ SLIDE 11 – Angular CDK ══════════════════════════════ -->
+<div class="slide">
+  <div class="slide-header">
+    <span class="topic-badge">CDK</span>
+    <h1>Angular CDK — Component Dev Kit</h1>
+  </div>
+  <div class="content">
+    <div class="card accent-purple" style="margin-bottom:14px">
+      <h3>🛠️ What is CDK?</h3>
+      <p>CDK = <strong>Component Dev Kit</strong>. It is the <strong>foundation layer</strong> of Angular Material — a set of behaviour primitives that help you build your own custom components without being tied to Material Design's visual style.</p>
+    </div>
+    <div class="three-col">
+      <div class="card accent-teal">
+        <h3>🖐️ Drag &amp; Drop</h3>
+        <p style="font-size:12px;margin-bottom:6px">Full drag-and-drop with reorder support:</p>
+        <div class="code-block" style="margin-top:6px">
+<pre><span class="tag">&lt;div</span> <span class="att">cdkDropList</span>
+  <span class="att">(cdkDropListDropped)</span>=<span class="val">"drop($event)"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;div</span> <span class="att">*ngFor</span>=<span class="val">"let item of list"</span>
+       <span class="att">cdkDrag</span><span class="tag">&gt;</span>
+    {{item}}
+  <span class="tag">&lt;/div&gt;</span>
+<span class="tag">&lt;/div&gt;</span></pre>
+        </div>
+      </div>
+      <div class="card accent-orange">
+        <h3>🔲 Overlay</h3>
+        <p style="font-size:12px;margin-bottom:6px">Position panels relative to any element:</p>
+        <div class="code-block" style="margin-top:6px">
+<pre><span class="kw">const</span> <span class="var">overlayRef</span> =
+  <span class="var">this</span>.overlay.<span class="fn">create</span>({
+    positionStrategy:
+      <span class="var">this</span>.overlay
+        .<span class="fn">position</span>()
+        .<span class="fn">flexibleConnectedTo</span>(
+          <span class="var">this</span>.origin
+        )
+  });
+<span class="var">overlayRef</span>.<span class="fn">attach</span>(
+  <span class="kw">new</span> <span class="typ">TemplatePortal</span>(...)
+);</pre>
+        </div>
+      </div>
+      <div class="card accent-green">
+        <h3>♿ Accessibility (a11y)</h3>
+        <p style="font-size:12px;margin-bottom:6px">ARIA utilities and focus management:</p>
+        <div class="code-block" style="margin-top:6px">
+<pre><span class="cmt">// FocusTrap — trap focus</span>
+<span class="cmt">// inside a dialog/modal</span>
+<span class="var">this</span>.focusTrap =
+  <span class="var">this</span>.ftf.<span class="fn">create</span>(
+    <span class="var">this</span>.el.nativeElement
+  );
+<span class="var">this</span>.focusTrap
+  .<span class="fn">focusInitialElement</span>();
+
+<span class="cmt">// LiveAnnouncer — screen readers</span>
+<span class="var">this</span>.announcer.<span class="fn">announce</span>(
+  <span class="str">'Record saved'</span>
+);</pre>
+        </div>
+      </div>
+      <div class="card accent-blue">
+        <h3>📜 Virtual Scroll</h3>
+        <p style="font-size:12px;margin-bottom:6px">Render only visible items — ideal for large lists:</p>
+        <div class="code-block" style="margin-top:6px">
+<pre><span class="tag">&lt;cdk-virtual-scroll-viewport</span>
+  <span class="att">itemSize</span>=<span class="val">"48"</span>
+  <span class="att">style</span>=<span class="val">"height:300px"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;div</span> <span class="att">*cdkVirtualFor</span>=
+    <span class="val">"let item of items"</span><span class="tag">&gt;</span>
+    {{item}}
+  <span class="tag">&lt;/div&gt;</span>
+<span class="tag">&lt;/cdk-virtual-scroll-viewport&gt;</span></pre>
+        </div>
+      </div>
+      <div class="card accent-yellow">
+        <h3>⌨️ Platform &amp; Clipboard</h3>
+        <p style="font-size:12px;margin-bottom:6px">Detect platform, copy to clipboard:</p>
+        <div class="code-block" style="margin-top:6px">
+<pre><span class="cmt">// Platform detection</span>
+<span class="kw">if</span> (<span class="var">this</span>.platform.isBrowser) {
+  <span class="cmt">// browser-specific code</span>
+}
+
+<span class="cmt">// Clipboard</span>
+<span class="tag">&lt;button</span>
+  <span class="att">[cdkCopyToClipboard]</span>=
+    <span class="val">"textToCopy"</span><span class="tag">&gt;</span>
+  Copy
+<span class="tag">&lt;/button&gt;</span></pre>
+        </div>
+      </div>
+      <div class="card accent-red">
+        <h3>🏗️ Portal</h3>
+        <p style="font-size:12px;margin-bottom:6px">Render content dynamically into a different DOM location:</p>
+        <div class="code-block" style="margin-top:6px">
+<pre><span class="tag">&lt;ng-template</span>
+  <span class="att">cdkPortal</span>
+  <span class="att">#myPortal</span>=<span class="val">"cdkPortal"</span><span class="tag">&gt;</span>
+  Portal Content
+<span class="tag">&lt;/ng-template&gt;</span>
+
+<span class="tag">&lt;ng-template</span>
+  <span class="att">[cdkPortalOutlet]</span>=<span class="val">"myPortal"</span><span class="tag">&gt;</span>
+<span class="tag">&lt;/ng-template&gt;</span></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════ SLIDE 12 – Interview Q&A ══════════════════════════════ -->
+<div class="slide">
+  <div class="slide-header">
+    <span class="topic-badge">Interview</span>
+    <h1>Interview Questions &amp; Answers</h1>
+  </div>
+  <div class="content">
+    <div class="iq-item">
+      <div class="iq-q">Q1. What is the difference between mat-button, mat-raised-button, mat-flat-button, and mat-stroked-button?</div>
+      <div class="iq-a"><strong>mat-button</strong> — text-only, no background/border. <strong>mat-raised-button</strong> — elevated with shadow. <strong>mat-flat-button</strong> — filled background, no shadow. <strong>mat-stroked-button</strong> — outlined border, transparent background. All accept <code>color="primary|accent|warn"</code>.</div>
+    </div>
+    <div class="iq-item">
+      <div class="iq-q">Q2. What is MatTableDataSource and what does it provide out of the box?</div>
+      <div class="iq-a"><code>MatTableDataSource</code> is a data source wrapper that provides <strong>client-side filtering</strong> (via <code>.filter</code> property), <strong>sorting</strong> (connect a <code>MatSort</code>), and <strong>pagination</strong> (connect a <code>MatPaginator</code>). For server-side operations, implement a custom class extending <code>DataSource&lt;T&gt;</code>.</div>
+    </div>
+    <div class="iq-item">
+      <div class="iq-q">Q3. How does Angular Material theming work?</div>
+      <div class="iq-a">Angular Material uses a <strong>SASS-based theming system</strong>. You define a theme using <code>mat.define-theme()</code> with primary/accent/warn palettes and include it via <code>mat.all-component-themes($theme)</code>. M3 (Material 3) uses design tokens. Multiple themes can be scoped to CSS classes for dark mode support.</div>
+    </div>
+    <div class="iq-item">
+      <div class="iq-q">Q4. What is the difference between Angular Material and Angular CDK?</div>
+      <div class="iq-a"><strong>Angular CDK</strong> provides behaviour primitives (overlay, drag-drop, virtual scroll, a11y) with no visual styling. <strong>Angular Material</strong> uses CDK internally and adds Material Design visual styles. You use CDK when building custom components that need these behaviours without Material Design's look.</div>
+    </div>
+    <div class="iq-item">
+      <div class="iq-q">Q5. How do you pass data to and receive data from MatDialog?</div>
+      <div class="iq-a">Pass data via the <code>data</code> property in <code>dialog.open(Component, { data: {...} })</code>. Inject it in the dialog component using <code>@Inject(MAT_DIALOG_DATA)</code>. Receive result via <code>dialogRef.afterClosed().subscribe(result => ...)</code>. Close with data using <code>dialogRef.close(returnValue)</code>.</div>
+    </div>
+    <div class="iq-item">
+      <div class="iq-q">Q6. What are the three sidenav modes and when would you use each?</div>
+      <div class="iq-a"><strong>over</strong> — sidenav floats over content (mobile, temporary). <strong>push</strong> — sidenav pushes content sideways (tablet). <strong>side</strong> — sidenav sits beside content permanently (desktop). Typically combine all three with responsive breakpoints using <code>BreakpointObserver</code> from CDK.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════ SLIDE 13 – All Components Reference ══════════════════════════════ -->
+<div class="slide">
+  <div class="slide-header">
+    <span class="topic-badge">Reference</span>
+    <h1>All Components — Quick Reference</h1>
+  </div>
+  <div class="content">
+    <div class="two-col">
+      <div>
+        <div class="card" style="margin-bottom:10px">
+          <h3 style="margin-bottom:8px">📝 Form Controls</h3>
+          <div class="pill-grid">
+            <span class="pill">Autocomplete</span>
+            <span class="pill">Checkbox</span>
+            <span class="pill">Datepicker</span>
+            <span class="pill">Form Field</span>
+            <span class="pill">Input</span>
+            <span class="pill">Radio Button</span>
+            <span class="pill">Select</span>
+            <span class="pill">Slide Toggle</span>
+            <span class="pill">Slider</span>
+          </div>
+        </div>
+        <div class="card" style="margin-bottom:10px">
+          <h3 style="margin-bottom:8px">🧭 Navigation</h3>
+          <div class="pill-grid">
+            <span class="pill green">Menu</span>
+            <span class="pill green">Sidenav</span>
+            <span class="pill green">Toolbar</span>
+            <span class="pill green">Tabs</span>
+            <span class="pill green">Paginator</span>
+            <span class="pill green">Stepper</span>
+          </div>
+        </div>
+        <div class="card" style="margin-bottom:10px">
+          <h3 style="margin-bottom:8px">🗃️ Layout</h3>
+          <div class="pill-grid">
+            <span class="pill blue">Card</span>
+            <span class="pill blue">Divider</span>
+            <span class="pill blue">Expansion Panel</span>
+            <span class="pill blue">Grid List</span>
+            <span class="pill blue">List</span>
+            <span class="pill blue">Tree</span>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="card" style="margin-bottom:10px">
+          <h3 style="margin-bottom:8px">📊 Data Display</h3>
+          <div class="pill-grid">
+            <span class="pill orange">Badge</span>
+            <span class="pill orange">Chips</span>
+            <span class="pill orange">Icon</span>
+            <span class="pill orange">Progress Bar</span>
+            <span class="pill orange">Progress Spinner</span>
+            <span class="pill orange">Table</span>
+          </div>
+        </div>
+        <div class="card" style="margin-bottom:10px">
+          <h3 style="margin-bottom:8px">💬 Popups &amp; Modals</h3>
+          <div class="pill-grid">
+            <span class="pill teal">Bottom Sheet</span>
+            <span class="pill teal">Dialog</span>
+            <span class="pill teal">Snack Bar</span>
+            <span class="pill teal">Tooltip</span>
+          </div>
+        </div>
+        <div class="card">
+          <h3 style="margin-bottom:8px">🛠️ CDK Modules</h3>
+          <div class="pill-grid">
+            <span class="pill red">Drag &amp; Drop</span>
+            <span class="pill red">Overlay</span>
+            <span class="pill red">Virtual Scroll</span>
+            <span class="pill red">Portal</span>
+            <span class="pill red">Accessibility (a11y)</span>
+            <span class="pill red">Platform</span>
+            <span class="pill red">Clipboard</span>
+            <span class="pill red">Layout</span>
+            <span class="pill red">Stepper (CdkStepper)</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="tip-box">
+      <div class="tip-hdr">Pro Tip</div>
+      <p>All components support <strong>component harnesses</strong> for testing — use <code>HarnessLoader</code> from <code>@angular/cdk/testing</code> to write reliable tests without relying on DOM selectors.</p>
+    </div>
+  </div>
+</div>
+
+</div><!-- /#deck -->
+
+<div id="nav">
+  <button id="btn-prev">&#8592;</button>
+  <span id="counter">1 / 13</span>
+  <button id="btn-next">&#8594;</button>
+</div>
+
+<script>
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const counter = document.getElementById('counter');
+  const progress = document.getElementById('progress');
+  const slideNum = document.getElementById('slide-num');
+  let cur = 0;
+
+  function show(n) {
+    slides[cur].classList.remove('active');
+    cur = (n + slides.length) % slides.length;
+    slides[cur].classList.add('active');
+    counter.textContent = `${cur + 1} / ${slides.length}`;
+    slideNum.textContent = `${cur + 1} / ${slides.length}`;
+    progress.style.width = ((cur + 1) / slides.length * 100) + '%';
+  }
+
+  document.getElementById('btn-prev').addEventListener('click', () => show(cur - 1));
+  document.getElementById('btn-next').addEventListener('click', () => show(cur + 1));
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') show(cur + 1);
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   show(cur - 1);
+  });
+
+  show(0);
+</script>
+</body>
+</html>
