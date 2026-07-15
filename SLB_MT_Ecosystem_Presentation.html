@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SLB – MT Ecosystem Overview</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; overflow: hidden; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: #05090f; color: #e6edf3; }
+
+    #deck { width: 100vw; height: 100vh; position: relative; }
+    .slide {
+      display: none; flex-direction: column; justify-content: flex-start;
+      padding: 44px 58px 76px; width: 100%; height: 100%;
+      overflow-y: auto; gap: 14px; animation: fadeIn .35s ease;
+    }
+    .slide.active { display: flex; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+
+    /* ── Header ── */
+    .slide-header { display: flex; align-items: center; gap: 14px; border-bottom: 2px solid #1a2535; padding-bottom: 12px; flex-shrink: 0; }
+    .topic-badge { background: #052a2a; color: #00c8b4; font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; padding: 4px 10px; border-radius: 20px; white-space: nowrap; }
+    h1 { font-size: 27px; font-weight: 700; color: #00c8b4; }
+    h3 { font-size: 14px; font-weight: 600; color: #ffa657; margin-bottom: 4px; }
+    p  { font-size: 13.5px; line-height: 1.75; color: #c9d1d9; }
+    li { font-size: 13px; line-height: 1.9; color: #c9d1d9; margin-left: 18px; }
+    ul { padding-left: 4px; }
+    strong { color: #f0f6fc; }
+    code { font-family: 'Consolas', monospace; font-size: 12px; background: #0d1f2d; color: #00c8b4; padding: 2px 6px; border-radius: 4px; }
+
+    /* ── Title Slide ── */
+    .title-slide {
+      justify-content: center; align-items: center; text-align: center;
+      background: radial-gradient(ellipse at 50% 0%, #051820 0%, #05090f 70%);
+    }
+    .title-slide h1 { font-size: 46px; margin-bottom: 12px; color: #00c8b4; }
+    .title-slide .subtitle { font-size: 16px; color: #8b949e; max-width: 740px; line-height: 1.7; }
+    .logo-area { margin-bottom: 18px; display: flex; align-items: center; justify-content: center; gap: 14px; }
+    .slb-logo { font-size: 54px; font-weight: 900; color: #00c8b4; letter-spacing: -2px; font-style: italic; }
+    .slb-tagline { font-size: 13px; color: #58a6ff; font-style: italic; margin-top: 6px; }
+    .topic-chips { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 22px; }
+    .chip { background: #0d1a24; border: 1px solid #1a3040; border-radius: 20px; padding: 5px 14px; font-size: 12.5px; color: #8b949e; }
+
+    /* ── Cards ── */
+    .content { flex: 1; display: flex; flex-direction: column; gap: 14px; }
+    .two-col   { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+    .four-col  { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 12px; }
+
+    .card { background: #0d1520; border: 1px solid #1a2535; border-radius: 10px; padding: 14px 16px; }
+    .card.accent-teal   { border-left: 4px solid #00c8b4; }
+    .card.accent-blue   { border-left: 4px solid #1f6feb; }
+    .card.accent-green  { border-left: 4px solid #3fb950; }
+    .card.accent-orange { border-left: 4px solid #ffa657; }
+    .card.accent-purple { border-left: 4px solid #d2a8ff; }
+    .card.accent-yellow { border-left: 4px solid #e3b341; }
+    .card.accent-red    { border-left: 4px solid #f85149; }
+    .card.accent-cyan   { border-left: 4px solid #39d0d8; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+    th { background: #0d1520; color: #00c8b4; text-align: left; padding: 8px 12px; border-bottom: 2px solid #1a2535; font-weight: 600; }
+    td { padding: 7px 12px; border-bottom: 1px solid #1a2535; color: #c9d1d9; vertical-align: top; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #0d1520; }
+
+    .badge { display: inline-block; padding: 2px 9px; border-radius: 12px; font-size: 11px; font-weight: 700; white-space: nowrap; }
+    .badge-teal   { background: #052a2a; color: #00c8b4; }
+    .badge-blue   { background: #0d2340; color: #58a6ff; }
+    .badge-green  { background: #1a3c1a; color: #3fb950; }
+    .badge-orange { background: #3a2000; color: #ffa657; }
+    .badge-purple { background: #2a1a3e; color: #d2a8ff; }
+    .badge-yellow { background: #2e2200; color: #e3b341; }
+    .badge-red    { background: #3a1818; color: #f85149; }
+
+    .tip-box { background: #061e1e; border: 1px solid #00c8b4; border-left: 4px solid #00c8b4; border-radius: 8px; padding: 10px 14px; }
+    .tip-box .tip-hdr { font-size: 11px; font-weight: 700; color: #00c8b4; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 5px; }
+    .tip-box p, .tip-box li { font-size: 12.5px; color: #c9d1d9; }
+
+    .warn-box { background: #2a1a00; border: 1px solid #e3b341; border-left: 4px solid #e3b341; border-radius: 8px; padding: 10px 14px; }
+    .warn-box .warn-hdr { font-size: 11px; font-weight: 700; color: #e3b341; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 5px; }
+    .warn-box p, .warn-box li { font-size: 12.5px; color: #c9d1d9; }
+
+    .info-box { background: #0d1f30; border: 1px solid #1f6feb; border-left: 4px solid #1f6feb; border-radius: 8px; padding: 10px 14px; }
+    .info-box .info-hdr { font-size: 11px; font-weight: 700; color: #58a6ff; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 5px; }
+    .info-box p, .info-box li { font-size: 12.5px; color: #c9d1d9; }
+
+    /* ── Flow ── */
+    .flow { display: flex; align-items: center; gap: 0; flex-wrap: nowrap; overflow-x: auto; padding: 6px 0; }
+    .flow-box { background: #0d1520; border: 1px solid #1a2535; border-radius: 6px; padding: 7px 14px; font-size: 12px; color: #e6edf3; white-space: nowrap; flex-shrink: 0; text-align: center; }
+    .flow-box.teal   { border-color: #00c8b4; color: #00c8b4; }
+    .flow-box.blue   { border-color: #1f6feb; color: #79c0ff; }
+    .flow-box.green  { border-color: #3fb950; color: #56d364; }
+    .flow-box.orange { border-color: #ffa657; color: #ffa657; }
+    .flow-box.purple { border-color: #d2a8ff; color: #d2a8ff; }
+    .flow-arrow { color: #3a4a5a; font-size: 20px; padding: 0 6px; flex-shrink: 0; }
+
+    /* ── Stat cards ── */
+    .stat-card { background: #0d1520; border: 1px solid #1a2535; border-radius: 10px; padding: 20px 16px; text-align: center; }
+    .stat-num { font-size: 36px; font-weight: 800; color: #00c8b4; line-height: 1; }
+    .stat-label { font-size: 12px; color: #8b949e; margin-top: 6px; }
+
+    /* ── Arch block ── */
+    .arch-row { display: flex; gap: 10px; align-items: stretch; }
+    .arch-label { writing-mode: vertical-rl; text-orientation: mixed; transform: rotate(180deg); font-size: 11px; font-weight: 700; color: #00c8b4; letter-spacing: 1px; text-transform: uppercase; display: flex; align-items: center; padding: 4px; background: #052a2a; border-radius: 6px 0 0 6px; }
+    .arch-content { flex: 1; }
+
+    /* ── Nav ── */
+    #nav {
+      position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%);
+      display: flex; align-items: center; gap: 10px; z-index: 100;
+      background: #0d1520cc; backdrop-filter: blur(8px);
+      border: 1px solid #1a2535; border-radius: 30px; padding: 8px 18px;
+    }
+    #nav button {
+      background: none; border: none; color: #8b949e; font-size: 22px; cursor: pointer;
+      padding: 2px 8px; border-radius: 6px; transition: color .2s, background .2s;
+    }
+    #nav button:hover { color: #00c8b4; background: #061e1e; }
+    #counter { font-size: 13px; color: #6e7681; min-width: 54px; text-align: center; font-variant-numeric: tabular-nums; }
+
+    /* ── Progress ── */
+    #progress { position: fixed; top: 0; left: 0; height: 3px; background: #00c8b4; transition: width .3s ease; z-index: 200; }
+
+    /* ── Slide number ── */
+    #slide-num { position: fixed; top: 16px; right: 22px; font-size: 12px; color: #3a4a5a; z-index: 100; }
+
+    /* ── Icon row ── */
+    .icon-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+    .icon-item { background: #0d1520; border: 1px solid #1a2535; border-radius: 10px; padding: 16px 12px; text-align: center; }
+    .icon-item .ico { font-size: 30px; margin-bottom: 8px; }
+    .icon-item .ico-title { font-size: 12.5px; font-weight: 700; color: #f0f6fc; margin-bottom: 4px; }
+    .icon-item .ico-desc { font-size: 11.5px; color: #8b949e; line-height: 1.5; }
+
+    /* ── Divider ── */
+    .divider { height: 1px; background: #1a2535; margin: 2px 0; }
+
+    /* ── Setup table ── */
+    .setup-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+    .setup-card { background: #0d1520; border: 1px solid #1a2535; border-radius: 10px; padding: 14px; }
+    .setup-card .sc-title { font-size: 13px; font-weight: 700; color: #00c8b4; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid #1a2535; }
+    .setup-card li { font-size: 12px; }
+  </style>
+</head>
+<body>
+
+<div id="progress"></div>
+<div id="slide-num"></div>
+
+<div id="deck">
+
+  <!-- ═══════════════════════════════════════════ SLIDE 1 – Title ═══ -->
+  <div class="slide title-slide active">
+    <div class="logo-area">
+      <div>
+        <div class="slb-logo">slb</div>
+        <div class="slb-tagline">A century of driving energy innovation.</div>
+      </div>
+    </div>
+    <h1>MT Ecosystem – KT Overview</h1>
+    <p class="subtitle">
+      A knowledge-transfer guide to understanding SLB, the MT (Maintenance Tool) Ecosystem,
+      its architecture, applications, and how it fits into the global TLM organisation.
+    </p>
+    <div class="topic-chips">
+      <span class="chip">🏢 SLB Company Overview</span>
+      <span class="chip">⚙️ MT Ecosystem</span>
+      <span class="chip">🏗️ Field Architectures</span>
+      <span class="chip">📱 Mobile Apps</span>
+      <span class="chip">📡 Data Streaming</span>
+      <span class="chip">🔧 TLM & Maintenance</span>
+      <span class="chip">🌐 Dashboard & CMMS</span>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ SLIDE 2 – About SLB ═══ -->
+  <div class="slide">
+    <div class="slide-header">
+      <span class="topic-badge">Company</span>
+      <h1>What is SLB?</h1>
+    </div>
+    <div class="content">
+      <div class="two-col">
+        <div>
+          <div class="card accent-teal" style="margin-bottom:12px">
+            <h3>🌍 Global Energy Technology Company</h3>
+            <p>SLB (formerly Schlumberger) has over <strong>a century</strong> of experience driving energy innovation. It provides products, services, and digital solutions that help bring energy to the world — responsibly and efficiently.</p>
+          </div>
+          <div class="card accent-blue">
+            <h3>🎯 Mission</h3>
+            <p>Accelerate decarbonization and innovate across the entire energy landscape with leading <strong>science, engineering, and digital expertise</strong> — ensuring progress for people and the planet on the journey to net zero and beyond.</p>
+          </div>
+        </div>
+        <div>
+          <div class="card accent-orange" style="margin-bottom:12px">
+            <h3>📊 Scale</h3>
+            <ul>
+              <li>Operations in <strong>100+ countries</strong></li>
+              <li>Tens of thousands of employees worldwide</li>
+              <li>Offices, shops, and field sites across every major basin</li>
+              <li>Listed on NYSE: <strong>SLB</strong></li>
+            </ul>
+          </div>
+          <div class="card accent-green">
+            <h3>🔬 Focus Areas</h3>
+            <ul>
+              <li>Innovating in Oil &amp; Gas</li>
+              <li>Delivering Digital &amp; AI at Scale (<strong>Lumi</strong>, <strong>Tela AI</strong>)</li>
+              <li>Decarbonizing Industry</li>
+              <li>Scaling New Energy Systems (Geothermal, Lithium, CCS)</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="tip-box">
+        <div class="tip-hdr">Key Context for New Joiners</div>
+        <p>SLB is <strong>not just an oil &amp; gas company</strong> — it is actively investing in digital, AI, and new energy. The MT ecosystem you'll be working on sits within the digital/operational technology layer that keeps SLB's global equipment running.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ SLIDE 3 – Business Divisions ═══ -->
+  <div class="slide">
+    <div class="slide-header">
+      <span class="topic-badge">Structure</span>
+      <h1>SLB Business Divisions</h1>
+    </div>
+    <div class="content">
+      <div class="three-col">
+        <div class="card accent-teal">
+          <h3>🏗️ Well Construction</h3>
+          <p style="font-size:12px;margin-bottom:8px">Getting oil &amp; gas from the earth — the <strong>first phase</strong> of operations.</p>
+          <ul>
+            <li>Drilling</li>
+            <li>Evaluation &amp; Logging</li>
+            <li>Cementing &amp; Casing</li>
+            <li>Wellbore Integrity</li>
+          </ul>
+          <div style="margin-top:10px"><span class="badge badge-teal">Phase 1</span></div>
+        </div>
+        <div class="card accent-blue">
+          <h3>⛽ Production Systems</h3>
+          <p style="font-size:12px;margin-bottom:8px">Optimizing output from <strong>producing wells</strong> — maximising recovery.</p>
+          <ul>
+            <li>Artificial Lift (ESPs, rod pumps)</li>
+            <li>Flow Assurance</li>
+            <li>Chemical Solutions</li>
+            <li>Surface Equipment</li>
+          </ul>
+          <div style="margin-top:10px"><span class="badge badge-blue">Phase 2</span></div>
+        </div>
+        <div class="card accent-orange">
+          <h3>📈 Reservoir Performance</h3>
+          <p style="font-size:12px;margin-bottom:8px">Evaluating &amp; optimizing the <strong>reservoir itself</strong> for long-term performance.</p>
+          <ul>
+            <li>Well Intervention</li>
+            <li>Stimulation (fracturing)</li>
+            <li>Reservoir Evaluation</li>
+            <li>Coiled Tubing</li>
+          </ul>
+          <div style="margin-top:10px"><span class="badge badge-orange">Phase 3</span></div>
+        </div>
+      </div>
+
+      <div class="flow" style="justify-content:center; margin:4px 0">
+        <div class="flow-box teal">Well Construction</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box blue">Production Systems</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box orange">Reservoir Performance</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box green">TLM (Maintenance)</div>
+      </div>
+
+      <div class="two-col">
+        <div class="info-box">
+          <div class="info-hdr">TLM – Technology Lifecycle Management</div>
+          <p>A <strong>cross-division support function</strong> that manages all technologies from inception to retirement. Each business line hosts its own TLM organisation. MT is one of the key tools that supports TLM teams globally.</p>
+        </div>
+        <div class="warn-box">
+          <div class="warn-hdr">All divisions share something in common</div>
+          <p>Every division has <strong>shops and field sites</strong> where equipment must be maintained. This is why MT is relevant to <em>all</em> three business lines — not just one.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ SLIDE 4 – What is MT ═══ -->
+  <div class="slide">
+    <div class="slide-header">
+      <span class="topic-badge">MT Basics</span>
+      <h1>What is MT (Maintenance Tool)?</h1>
+    </div>
+    <div class="content">
+      <div class="two-col">
+        <div>
+          <div class="card accent-teal" style="margin-bottom:12px">
+            <h3>📋 Definition</h3>
+            <p>MT = <strong>Maintenance Tool</strong>. It is SLB's proprietary ecosystem of applications designed to <strong>manage the maintenance lifecycle</strong> of field equipment — from pumps and engines to coiled tubing units and stimulation fleets.</p>
+          </div>
+          <div class="card accent-purple">
+            <h3>🔗 Where MT Sits</h3>
+            <div class="flow" style="flex-direction:column; gap:6px; align-items:flex-start">
+              <div class="flow-box blue" style="width:100%">📱 Field Apps / Mobile Users</div>
+              <div style="color:#3a4a5a; padding-left:20px; font-size:18px">↓</div>
+              <div class="flow-box teal" style="width:100%">⚙️ MT Ecosystem (Intermediate Layer)</div>
+              <div style="color:#3a4a5a; padding-left:20px; font-size:18px">↓</div>
+              <div class="flow-box orange" style="width:100%">🗄️ CMMS – Maximo (IBM) or SAP</div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="card accent-green" style="margin-bottom:12px">
+            <h3>🎯 Why MT Exists</h3>
+            <ul>
+              <li>Field locations are <strong>remote &amp; offline-prone</strong></li>
+              <li>Commercial CMMS apps aren't designed for rugged field use</li>
+              <li>Different business lines have different workflows</li>
+              <li>Need for <strong>real-time data streaming</strong> from equipment</li>
+              <li>Single entry point for all maintenance records before reaching CMMS</li>
+            </ul>
+          </div>
+          <div class="card accent-orange">
+            <h3>🏪 CMMS Split by Business Line</h3>
+            <table>
+              <thead><tr><th>CMMS</th><th>Business Lines</th></tr></thead>
+              <tbody>
+                <tr><td><strong>Maximo (IBM)</strong></td><td>Some divisions</td></tr>
+                <tr><td><strong>SAP</strong></td><td>Other divisions</td></tr>
+              </tbody>
+            </table>
+            <p style="font-size:11.5px;margin-top:8px;color:#8b949e">MT handles both — acting as a flexible intermediary regardless of which CMMS is used downstream.</p>
+          </div>
+        </div>
+      </div>
+      <div class="tip-box">
+        <div class="tip-hdr">Think of MT like this</div>
+        <p>Imagine every SLB field location is a restaurant chain. MT is the <strong>kitchen management system</strong> — it tracks all the equipment in every kitchen (restaurant), ensures preventive maintenance is scheduled, records defects, and reports upward to the corporate ERP (Maximo/SAP).</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ SLIDE 5 – Two Core Products ═══ -->
+  <div class="slide">
+    <div class="slide-header">
+      <span class="topic-badge">Products</span>
+      <h1>MT – Two Core Offerings</h1>
+    </div>
+    <div class="content">
+      <div class="two-col">
+
+        <!-- Product 1 -->
+        <div>
+          <div class="card accent-teal" style="margin-bottom:12px">
+            <h3>📱 Product 1 — Mobile &amp; Web Applications</h3>
+            <p style="margin-bottom:10px">Apps that help maintenance technicians and operators <strong>record, track, and manage</strong> equipment activities in the field.</p>
+          </div>
+          <div class="card" style="margin-bottom:10px">
+            <h3>Key App Functions</h3>
+            <ul>
+              <li>Record maintenance tasks performed</li>
+              <li>Report defective / inefficient equipment</li>
+              <li>Track preventive maintenance schedules (PM Cal)</li>
+              <li>View equipment health summaries</li>
+              <li>Plan interventions and repairs</li>
+              <li>Work <strong>offline</strong> — sync when connected</li>
+            </ul>
+          </div>
+          <div class="tip-box">
+            <div class="tip-hdr">Offline-first Design</div>
+            <p>Because field sites can have <strong>no internet</strong>, apps connect to a local server (Mac Mini) on-site. Data syncs to cloud when connectivity is restored.</p>
+          </div>
+        </div>
+
+        <!-- Product 2 -->
+        <div>
+          <div class="card accent-blue" style="margin-bottom:12px">
+            <h3>📡 Product 2 — Real-Time Data Streaming</h3>
+            <p style="margin-bottom:10px">Continuous streaming of <strong>operational data from equipment</strong> (pumps, engines) to SLB servers for monitoring and analysis by data science teams.</p>
+          </div>
+          <div class="card" style="margin-bottom:10px">
+            <h3>What Gets Streamed?</h3>
+            <ul>
+              <li>Pump pressure &amp; RPM</li>
+              <li>Engine voltage &amp; temperature</li>
+              <li>Operational hours (active / idle / offline)</li>
+              <li>Real-time equipment status signals</li>
+            </ul>
+          </div>
+          <div class="info-box">
+            <div class="info-hdr">Business Value</div>
+            <p>Data science teams use streamed data to trigger <strong>early failure alerts</strong> — enabling predictive maintenance before equipment breaks down completely, reducing costly downtime and improving safety.</p>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="four-col" style="margin-top:4px">
+        <div class="stat-card"><div class="stat-num">24/7</div><div class="stat-label">Continuous monitoring</div></div>
+        <div class="stat-card"><div class="stat-num">100+</div><div class="stat-label">Countries with presence</div></div>
+        <div class="stat-card"><div class="stat-num">2</div><div class="stat-label">CMMS integrations (Maximo &amp; SAP)</div></div>
+        <div class="stat-card"><div class="stat-num">3+</div><div class="stat-label">Business lines covered</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ SLIDE 6 – Field Architectures ═══ -->
+  <div class="slide">
+    <div class="slide-header">
+      <span class="topic-badge">Architecture</span>
+      <h1>Field Setup Architectures</h1>
+    </div>
+    <div class="content">
+      <p style="margin-bottom:4px">MT supports <strong>multiple deployment architectures</strong> depending on the field scenario and connectivity available at the location.</p>
+
+      <div class="setup-grid">
+        <div class="setup-card">
+          <div class="sc-title">🏭 Standard Shop / Remote Site</div>
+          <ul>
+            <li><strong>Mobile devices</strong> (tablets / phones)</li>
+            <li><strong>Network equipment</strong> (Wi-Fi / LAN)</li>
+            <li><strong>Local Server (Mac Mini)</strong> on-site</li>
+            <li>Apps talk <em>only</em> to local server</li>
+            <li>Local server syncs to cloud backend</li>
+          </ul>
+          <div style="margin-top:10px">
+            <span class="badge badge-teal">Offline-capable</span>
+            <span class="badge badge-green" style="margin-left:4px">Most common</span>
+          </div>
+        </div>
+        <div class="setup-card">
+          <div class="sc-title">🛢️ Offshore / Desert Well Sites</div>
+          <ul>
+            <li>Same as standard + <strong>Satellite / Starlink</strong></li>
+            <li>Or <strong>4G / 5G</strong> depending on region</li>
+            <li>Internet is unreliable — local server is critical</li>
+            <li>Mac Mini buffers all data until stable connection</li>
+            <li>Flexible ISP support (Starlink, commercial 4G/5G)</li>
+          </ul>
+          <div style="margin-top:10px">
+            <span class="badge badge-orange">Low connectivity</span>
+            <span class="badge badge-teal" style="margin-left:4px">Offline-first</span>
+          </div>
+        </div>
+        <div class="setup-card">
+          <div class="sc-title">🌐 Online-Only (Simple)</div>
+          <ul>
+            <li>Mobile devices only</li>
+            <li><strong>No local server</strong> required</li>
+            <li>Direct connection to internet / backend</li>
+            <li>Works like a standard commercial app</li>
+            <li>Limited offline capability</li>
+          </ul>
+          <div style="margin-top:10px">
+            <span class="badge badge-blue">Online required</span>
+            <span class="badge badge-yellow" style="margin-left:4px">Limited offline</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card accent-teal">
+        <h3>🖥️ The Mac Mini — Local Server Role</h3>
+        <div class="flow">
+          <div class="flow-box teal">📱 Mobile Apps</div>
+          <div class="flow-arrow">→ Wi-Fi →</div>
+          <div class="flow-box orange">🖥️ Mac Mini<br><small style="font-size:10px">(Local Server)</small></div>
+          <div class="flow-arrow">→ Internet (when available) →</div>
+          <div class="flow-box blue">☁️ MT Backend Servers</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-box purple">🗄️ CMMS<br><small style="font-size:10px">(Maximo / SAP)</small></div>
+        </div>
+        <p style="font-size:12px;margin-top:8px;color:#8b949e">All apps communicate <em>only</em> with the Mac Mini locally. The Mac Mini is responsible for syncing data to the backend when internet is available. This makes operations fully independent of internet availability.</p>
+      </div>
+
+      <div class="warn-box">
+        <div class="warn-hdr">Your Team's Responsibility</div>
+        <p>The MT team is responsible for <strong>both app development AND on-site hardware</strong> (Mac Minis, network devices). You support the deployment and ensure the full setup is operational at each field location.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ SLIDE 7 – Users ═══ -->
+  <div class="slide">
+    <div class="slide-header">
+      <span class="topic-badge">Users</span>
+      <h1>Who Uses MT?</h1>
+    </div>
+    <div class="content">
+      <div class="two-col">
+        <div class="card accent-teal">
+          <h3>🔧 TLM — Technology Lifecycle Management</h3>
+          <p style="margin-bottom:8px"><strong>Primary users.</strong> These are the maintenance technicians and TLM engineers on-site.</p>
+          <ul>
+            <li>Record maintenance tasks completed</li>
+            <li>Validate automated alerts from data streaming</li>
+            <li>Plan preventive &amp; corrective interventions</li>
+            <li>Monitor equipment health dashboards</li>
+            <li>Manage full maintenance records for CMMS</li>
+          </ul>
+          <div style="margin-top:10px"><span class="badge badge-teal">Main Client</span></div>
+        </div>
+        <div class="card accent-blue">
+          <h3>⚙️ PSD — Production &amp; Service Delivery (Operations)</h3>
+          <p style="margin-bottom:8px"><strong>Secondary users.</strong> These are the operators who use the equipment day-to-day.</p>
+          <ul>
+            <li>Raise issues / deficiency reports when equipment behaves abnormally</li>
+            <li>Report efficiency losses (e.g. pump not performing as expected)</li>
+            <li>Trigger TLM to investigate and act</li>
+            <li>Check upcoming maintenance schedules for their equipment</li>
+          </ul>
+          <div style="margin-top:10px"><span class="badge badge-blue">Contributing User</span></div>
+        </div>
+      </div>
+
+      <div class="card accent-orange">
+        <h3>🤝 How TLM and PSD Work Together in MT</h3>
+        <div class="flow">
+          <div class="flow-box blue">⚙️ PSD Operator<br><small>notices pump issue</small></div>
+          <div class="flow-arrow">→ raises issue in app →</div>
+          <div class="flow-box orange">📋 MT System<br><small>logs deficiency report</small></div>
+          <div class="flow-arrow">→ notifies →</div>
+          <div class="flow-box teal">🔧 TLM Technician<br><small>validates &amp; plans action</small></div>
+          <div class="flow-arrow">→ records fix →</div>
+          <div class="flow-box purple">🗄️ CMMS<br><small>Maximo / SAP</small></div>
+        </div>
+      </div>
+
+      <div class="icon-grid">
+        <div class="icon-item">
+          <div class="ico">🏗️</div>
+          <div class="ico-title">Well Construction</div>
+          <div class="ico-desc">Shops supporting drilling equipment &amp; rig tools</div>
+        </div>
+        <div class="icon-item">
+          <div class="ico">⛽</div>
+          <div class="ico-title">Production Systems</div>
+          <div class="ico-desc">ESP pumps, artificial lift, surface equipment</div>
+        </div>
+        <div class="icon-item">
+          <div class="ico">💥</div>
+          <div class="ico-title">Stimulation</div>
+          <div class="ico-desc">Fracturing fleets, pump trucks, coiled tubing units</div>
+        </div>
+        <div class="icon-item">
+          <div class="ico">🌊</div>
+          <div class="ico-title">Offshore</div>
+          <div class="ico-desc">Offshore rig equipment with satellite connectivity</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ SLIDE 8 – Applications ═══ -->
+  <div class="slide">
+    <div class="slide-header">
+      <span class="topic-badge">Applications</span>
+      <h1>MT Applications Overview</h1>
+    </div>
+    <div class="content">
+      <p>MT is not one app — it is an <strong>ecosystem of applications</strong>. The same apps can be embedded in different business line workflows. The goal is to <strong>consolidate</strong> apps over time to reduce end-user confusion.</p>
+
+      <div class="three-col">
+        <div class="card accent-teal">
+          <h3>📅 PM Cal (Preventive Maintenance Calendar)</h3>
+          <p style="font-size:12.5px">Shows when preventive maintenance is due for each piece of equipment. Used by both operators and TLM technicians to plan and schedule work before failures occur.</p>
+          <div style="margin-top:8px"><span class="badge badge-teal">All Business Lines</span></div>
+        </div>
+        <div class="card accent-blue">
+          <h3>⚠️ Issues &amp; Deficiency Reporting</h3>
+          <p style="font-size:12.5px">Operators and technicians log equipment issues. Each issue is categorised as a <strong>Deferred Maintenance</strong> (not stopping operations) or <strong>Failed Asset</strong> (major failure requiring stop).</p>
+          <div style="margin-top:8px"><span class="badge badge-blue">PSD + TLM</span></div>
+        </div>
+        <div class="card accent-orange">
+          <h3>👥 Crew &amp; People Management</h3>
+          <p style="font-size:12.5px">Track how many people are on-site, their roles, and activity. Helps supervisors manage shift coverage and accountability for each field crew.</p>
+          <div style="margin-top:8px"><span class="badge badge-orange">TLM Supervisors</span></div>
+        </div>
+        <div class="card accent-green">
+          <h3>📊 Real-Time Equipment Dashboard</h3>
+          <p style="font-size:12.5px">Web dashboard summarising live status of all equipment at a crew location — showing active/idle/offline time, pump activity charts, and streaming data health.</p>
+          <div style="margin-top:8px"><span class="badge badge-green">Web App</span></div>
+        </div>
+        <div class="card accent-purple">
+          <h3>📡 Data Streaming Monitor</h3>
+          <p style="font-size:12.5px">Shows which equipment is actively streaming real-time data to SLB servers. Data science teams use this to monitor sensor feeds and detect early failure signals.</p>
+          <div style="margin-top:8px"><span class="badge badge-purple">Data Team</span></div>
+        </div>
+        <div class="card accent-yellow">
+          <h3>🗂️ Asset Management</h3>
+          <p style="font-size:12.5px">Full equipment profile — location, type, history, open issues, and service records. Provides a single source of truth for each piece of equipment across its full lifecycle.</p>
+          <div style="margin-top:8px"><span class="badge badge-yellow">Full Lifecycle</span></div>
+        </div>
+      </div>
+
+      <div class="warn-box">
+        <div class="warn-hdr">Ongoing Consolidation Initiative</div>
+        <p>Currently there are <strong>many apps</strong> across business lines with overlapping functions. A key goal for the team is to <strong>reduce and consolidate</strong> these into fewer, more powerful apps that cover multiple workflows — reducing confusion for end users.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ SLIDE 9 – Dashboard & CMMS ═══ -->
+  <div class="slide">
+    <div class="slide-header">
+      <span class="topic-badge">Dashboard</span>
+      <h1>MT Website Dashboard &amp; CMMS Integration</h1>
+    </div>
+    <div class="content">
+      <div class="two-col">
+        <div>
+          <div class="card accent-teal" style="margin-bottom:12px">
+            <h3>🌐 MT Web Dashboard</h3>
+            <p style="margin-bottom:8px">The central web interface for monitoring all field crews and equipment. Organised by <strong>Business Line → Crew → Equipment</strong>.</p>
+            <ul>
+              <li><strong>Crew List View</strong> – see all active and inactive field crews</li>
+              <li><strong>Crew Detail</strong> – equipment at a location, PM status, issues, personnel</li>
+              <li><strong>Equipment Activity Charts</strong> – pump active/idle time graphs</li>
+              <li><strong>Data Streaming Status</strong> – which equipment is online and streaming</li>
+            </ul>
+          </div>
+          <div class="info-box">
+            <div class="info-hdr">Legacy vs New Website</div>
+            <p>MT is currently in a <strong>transition period</strong>: a Legacy website and a New website coexist. The Legacy site is being phased out as new features are migrated to the modern platform.</p>
+          </div>
+        </div>
+        <div>
+          <div class="card accent-orange" style="margin-bottom:12px">
+            <h3>🗄️ CMMS Integration</h3>
+            <p style="margin-bottom:8px">MT feeds all maintenance records downstream to one of two CMMS platforms:</p>
+            <table>
+              <thead><tr><th>Platform</th><th>Vendor</th><th>Used by</th></tr></thead>
+              <tbody>
+                <tr><td><strong>Maximo</strong></td><td>IBM</td><td>Some business lines</td></tr>
+                <tr><td><strong>SAP PM</strong></td><td>SAP</td><td>Other business lines</td></tr>
+              </tbody>
+            </table>
+            <p style="font-size:11.5px;margin-top:8px;color:#8b949e">The choice of CMMS is an enterprise-level decision per business line. MT handles both transparently.</p>
+          </div>
+          <div class="card accent-purple">
+            <h3>📊 Crew View Concept</h3>
+            <p style="font-size:12.5px;margin-bottom:6px">Each "Crew" = one field location with a set of equipment to manage. Think of it like individual branches of a restaurant chain — each with its own inventory of equipment and staff.</p>
+            <ul>
+              <li><span class="badge badge-green">Active</span> – currently operational, crew on-site</li>
+              <li><span class="badge badge-yellow">Inactive</span> – previously active, now standby</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="flow" style="justify-content:center">
+        <div class="flow-box teal">📱 Field Apps<br><small>Mobile / Offline</small></div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box orange">🖥️ Mac Mini<br><small>Local Server</small></div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box blue">☁️ MT Servers<br><small>Backend</small></div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box teal">🌐 MT Dashboard<br><small>Web UI</small></div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box purple">🗄️ CMMS<br><small>Maximo / SAP</small></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ SLIDE 10 – Key Takeaways ═══ -->
+  <div class="slide">
+    <div class="slide-header">
+      <span class="topic-badge">Summary</span>
+      <h1>Key Takeaways for New Joiners</h1>
+    </div>
+    <div class="content">
+      <div class="three-col">
+        <div class="card accent-teal">
+          <h3>1️⃣ MT is an Ecosystem</h3>
+          <p>Not a single app — it's a <strong>suite of apps</strong> covering multiple workflows across multiple business lines. Each business line has slightly different workflows but uses the same core apps.</p>
+        </div>
+        <div class="card accent-blue">
+          <h3>2️⃣ Architecture Varies by Location</h3>
+          <p>Setup depends on the <strong>type of field location</strong>. Remote/offshore sites need a Mac Mini local server. Online-only sites connect directly. Know which architecture applies before supporting a deployment.</p>
+        </div>
+        <div class="card accent-orange">
+          <h3>3️⃣ Offline-First is a Core Feature</h3>
+          <p>Many SLB field sites are in deserts, offshore, or remote regions. The <strong>local server design</strong> means MT works without internet — a key differentiator over commercial solutions.</p>
+        </div>
+        <div class="card accent-green">
+          <h3>4️⃣ You Own Both App &amp; Hardware</h3>
+          <p>The team is responsible for <strong>developing apps AND supporting on-site hardware</strong> (Mac Minis, network gear). This makes you a full-stack field technology team, not just developers.</p>
+        </div>
+        <div class="card accent-purple">
+          <h3>5️⃣ MT Bridges Field to CMMS</h3>
+          <p>MT is the <strong>intermediate layer</strong> between field operations and enterprise CMMS (Maximo or SAP). All maintenance records flow through MT before reaching the corporate system of record.</p>
+        </div>
+        <div class="card accent-yellow">
+          <h3>6️⃣ Consolidation is Ongoing</h3>
+          <p>The team is actively working to <strong>reduce the number of apps</strong> and consolidate workflows. Understanding which apps overlap across business lines is important for this initiative.</p>
+        </div>
+      </div>
+
+      <div class="tip-box">
+        <div class="tip-hdr">Where to Start as a New Joiner</div>
+        <ul>
+          <li>Review the <strong>MT Dashboard</strong> (production site) to understand crew and equipment organisation</li>
+          <li>Understand the <strong>field architecture</strong> for the business line you're supporting first</li>
+          <li>Reach out to <strong>Domingo Díaz</strong> (Product Owner) or your team lead for business-line-specific walkthroughs</li>
+          <li>Watch the full KT recording series — each session covers a specific app or business line in detail</li>
+        </ul>
+      </div>
+
+      <div style="text-align:center; padding: 10px 0; color:#3a4a5a; font-size:12px">
+        <span style="font-size:16px; font-weight:800; color:#00c8b4; font-style:italic">slb</span>
+        &nbsp;|&nbsp; MT Ecosystem KT Presentation &nbsp;|&nbsp; CG Transition Nov–Dec 2025
+      </div>
+    </div>
+  </div>
+
+</div><!-- /#deck -->
+
+<!-- Navigation -->
+<div id="nav">
+  <button id="btn-prev" title="Previous (←)">&#8592;</button>
+  <span id="counter">1 / 10</span>
+  <button id="btn-next" title="Next (→)">&#8594;</button>
+</div>
+
+<script>
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const counter = document.getElementById('counter');
+  const progress = document.getElementById('progress');
+  const slideNum = document.getElementById('slide-num');
+  let cur = 0;
+
+  function show(n) {
+    slides[cur].classList.remove('active');
+    cur = (n + slides.length) % slides.length;
+    slides[cur].classList.add('active');
+    counter.textContent = `${cur + 1} / ${slides.length}`;
+    slideNum.textContent = `${cur + 1} / ${slides.length}`;
+    const pct = ((cur + 1) / slides.length) * 100;
+    progress.style.width = pct + '%';
+  }
+
+  document.getElementById('btn-prev').addEventListener('click', () => show(cur - 1));
+  document.getElementById('btn-next').addEventListener('click', () => show(cur + 1));
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') show(cur + 1);
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   show(cur - 1);
+  });
+
+  // init
+  show(0);
+</script>
+</body>
+</html>
