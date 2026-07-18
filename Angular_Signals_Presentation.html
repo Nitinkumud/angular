@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Angular Signals – Complete Guide</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+
+  :root {
+    --bg: #0b0f1a;
+    --surface: #111827;
+    --surface2: #1a2235;
+    --border: #1f2d45;
+    --accent: #f97316;
+    --accent2: #3b82f6;
+    --accent3: #a855f7;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --green: #22c55e;
+    --red: #ef4444;
+    --yellow: #eab308;
+    --font: 'Space Grotesk', sans-serif;
+    --mono: 'JetBrains Mono', monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .deck { width: 100%; max-width: 1000px; position: relative; padding: 0 16px 80px; }
+
+  .slide {
+    display: none;
+    min-height: 560px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 52px 56px;
+    position: relative;
+    overflow: hidden;
+    animation: fadeIn .35s ease;
+  }
+  .slide.active { display: block; }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+  .slide::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2), var(--accent3));
+  }
+
+  .slide-num {
+    position: absolute;
+    top: 28px; right: 36px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    color: var(--muted);
+    font-family: var(--mono);
+  }
+
+  .eyebrow {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 14px;
+    font-family: var(--mono);
+  }
+
+  h1 { font-size: 2.6rem; font-weight: 700; line-height: 1.15; color: #fff; margin-bottom: 18px; }
+  h2 { font-size: 1.7rem; font-weight: 600; color: #fff; margin-bottom: 22px; line-height: 1.2; }
+  h3 { font-size: 1.05rem; font-weight: 600; color: var(--accent2); margin-bottom: 10px; margin-top: 24px; }
+
+  p { font-size: 0.97rem; line-height: 1.75; color: #94a3b8; margin-bottom: 12px; }
+
+  .hero-subtitle {
+    font-size: 1.05rem;
+    color: #94a3b8;
+    line-height: 1.7;
+    max-width: 600px;
+    margin-bottom: 36px;
+  }
+  .hero-tags { display: flex; flex-wrap: wrap; gap: 10px; }
+  .tag {
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    font-family: var(--mono);
+    border: 1px solid;
+    cursor: pointer;
+    transition: background .2s;
+  }
+  .tag-orange { color: var(--accent); border-color: var(--accent); }
+  .tag-blue   { color: var(--accent2); border-color: var(--accent2); }
+  .tag-purple { color: var(--accent3); border-color: var(--accent3); }
+  .tag-green  { color: var(--green); border-color: var(--green); }
+  .tag:hover { background: rgba(255,255,255,.06); }
+
+  .hero-gfx {
+    position: absolute;
+    right: 40px; top: 50%;
+    transform: translateY(-50%);
+    font-size: 100px;
+    opacity: 0.07;
+    user-select: none;
+  }
+
+  pre {
+    background: #0d1117;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px 22px;
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    line-height: 1.7;
+    overflow-x: auto;
+    color: #cdd9e5;
+    margin: 14px 0;
+  }
+  .kw  { color: #f97316; }
+  .fn  { color: #3b82f6; }
+  .str { color: #22c55e; }
+  .cm  { color: #475569; font-style: italic; }
+  .tp  { color: #a855f7; }
+  .num { color: #eab308; }
+
+  .cols  { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .cols3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 18px; }
+
+  .card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 22px;
+  }
+  .card h3 { margin-top: 0; }
+
+  .callout {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 14px 18px;
+    border-radius: 10px;
+    font-size: 0.88rem;
+    line-height: 1.65;
+    margin: 14px 0;
+  }
+  .callout-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
+  .tip  { background: rgba(34,197,94,.08);  border-left: 3px solid var(--green);  color: #86efac; }
+  .warn { background: rgba(234,179,8,.08);  border-left: 3px solid var(--yellow); color: #fde68a; }
+  .info { background: rgba(59,130,246,.08); border-left: 3px solid var(--accent2);color: #93c5fd; }
+  .imp  { background: rgba(239,68,68,.08);  border-left: 3px solid var(--red);    color: #fca5a5; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin: 14px 0; }
+  th { text-align: left; padding: 10px 14px; background: var(--surface2); color: var(--accent2); font-weight: 600; border-bottom: 1px solid var(--border); }
+  td { padding: 10px 14px; border-bottom: 1px solid var(--border); color: #94a3b8; vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  td:first-child { color: #e2e8f0; font-family: var(--mono); font-size: 0.8rem; }
+
+  .flow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin: 18px 0;
+    font-size: 0.82rem;
+  }
+  .flow-box {
+    padding: 8px 16px;
+    border-radius: 8px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    font-family: var(--mono);
+    white-space: nowrap;
+  }
+  .flow-arrow { color: var(--muted); font-size: 1.1rem; }
+  .flow-box.hl  { border-color: var(--accent2); color: var(--accent2); }
+  .flow-box.hl2 { border-color: var(--green);   color: var(--green); }
+  .flow-box.hl3 { border-color: var(--accent);  color: var(--accent); }
+
+  .badge {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-family: var(--mono);
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+  .badge-green  { background: rgba(34,197,94,.15);  color: var(--green); }
+  .badge-orange { background: rgba(249,115,22,.15); color: var(--accent); }
+  .badge-red    { background: rgba(239,68,68,.15);  color: var(--red); }
+  .badge-purple { background: rgba(168,85,247,.15); color: var(--accent3); }
+
+  ul.bullets { list-style: none; padding: 0; margin: 10px 0; }
+  ul.bullets li { padding: 7px 0 7px 22px; position: relative; color: #94a3b8; font-size: 0.9rem; line-height: 1.6; border-bottom: 1px solid var(--border); }
+  ul.bullets li:last-child { border-bottom: none; }
+  ul.bullets li::before { content: '▸'; position: absolute; left: 0; color: var(--accent); }
+  ul.bullets li strong { color: var(--text); }
+
+  /* status pills */
+  .status-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 14px 0; }
+  .status-pill {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 0.8rem;
+  }
+  .status-pill .s-name { font-family: var(--mono); font-weight: 600; margin-bottom: 4px; }
+  .status-pill .s-val  { color: var(--muted); font-size: 0.75rem; margin-bottom: 4px; }
+  .status-pill .s-desc { color: #64748b; font-size: 0.75rem; line-height: 1.5; }
+  .s-idle     { border-color: #475569; }  .s-idle .s-name     { color: #94a3b8; }
+  .s-loading  { border-color: var(--yellow); } .s-loading .s-name  { color: var(--yellow); }
+  .s-reload   { border-color: var(--accent2); } .s-reload .s-name   { color: var(--accent2); }
+  .s-resolved { border-color: var(--green); }  .s-resolved .s-name { color: var(--green); }
+  .s-error    { border-color: var(--red); }    .s-error .s-name    { color: var(--red); }
+  .s-local    { border-color: var(--accent3); } .s-local .s-name    { color: var(--accent3); }
+
+  .nav {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 10px 24px;
+    z-index: 99;
+    box-shadow: 0 8px 32px rgba(0,0,0,.5);
+  }
+  .nav button {
+    background: none;
+    border: none;
+    color: var(--text);
+    cursor: pointer;
+    font-size: 1.3rem;
+    padding: 4px 8px;
+    border-radius: 8px;
+    transition: background .15s;
+  }
+  .nav button:hover { background: var(--surface2); }
+  .nav button:disabled { opacity: .3; cursor: default; }
+  .nav-label { font-size: 0.82rem; color: var(--muted); font-family: var(--mono); min-width: 52px; text-align: center; }
+
+  .progress { position: fixed; top: 0; left: 0; right: 0; height: 3px; background: var(--border); z-index: 200; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width .3s ease; }
+
+  code {
+    font-family: var(--mono);
+    font-size: 0.82em;
+    background: rgba(59,130,246,.12);
+    color: var(--accent2);
+    padding: 1px 6px;
+    border-radius: 4px;
+  }
+
+  .qa-item { margin-bottom: 18px; }
+  .qa-q { color: var(--accent); font-weight: 600; font-size: 0.9rem; margin-bottom: 6px; }
+  .qa-a { color: #94a3b8; font-size: 0.87rem; line-height: 1.65; }
+  .divider { border: none; border-top: 1px solid var(--border); margin: 18px 0; }
+
+  /* toc slide */
+  .toc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px; }
+  .toc-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: border-color .2s, background .2s;
+  }
+  .toc-item:hover { border-color: var(--accent2); background: rgba(59,130,246,.07); }
+  .toc-num { font-family: var(--mono); font-size: 0.75rem; color: var(--muted); min-width: 24px; }
+  .toc-title { color: var(--text); }
+  .toc-new { font-size: 0.65rem; font-weight: 700; background: rgba(168,85,247,.2); color: var(--accent3); padding: 2px 6px; border-radius: 4px; margin-left: auto; }
+
+  @media (max-width: 640px) {
+    .slide { padding: 36px 24px; }
+    h1 { font-size: 1.9rem; }
+    .cols, .cols3, .toc-grid, .status-grid { grid-template-columns: 1fr; }
+    .hero-gfx { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="progress"><div class="progress-fill" id="progress"></div></div>
+
+<div class="deck">
+
+  <!-- ───── SLIDE 01: HERO ───── -->
+  <div class="slide active" id="slide-1">
+    <div class="slide-num">01 / 14</div>
+    <div class="eyebrow">Angular · Reactivity</div>
+    <h1>Angular<br/><span style="color:var(--accent)">Signals</span></h1>
+    <p class="hero-subtitle">A fine-grained reactivity system that tracks exactly how and where your state is used — enabling Angular to optimize rendering with surgical precision.</p>
+    <div class="hero-tags">
+      <span class="tag tag-orange">signal()</span>
+      <span class="tag tag-blue">computed()</span>
+      <span class="tag tag-purple">effect()</span>
+      <span class="tag tag-green">linkedSignal()</span>
+      <span class="tag tag-orange">resource()</span>
+      <span class="tag tag-blue">debounced()</span>
+      <span class="tag tag-purple">untracked()</span>
+      <span class="tag tag-green">OnPush</span>
+    </div>
+    <div class="hero-gfx">⚡</div>
+  </div>
+
+  <!-- ───── SLIDE 02: TABLE OF CONTENTS ───── -->
+  <div class="slide" id="slide-2">
+    <div class="slide-num">02 / 14</div>
+    <div class="eyebrow">Navigation</div>
+    <h2>What's Inside</h2>
+    <div class="toc-grid">
+      <div class="toc-item" onclick="goTo(3)"><span class="toc-num">03</span><span class="toc-title">What are Signals?</span></div>
+      <div class="toc-item" onclick="goTo(4)"><span class="toc-num">04</span><span class="toc-title">Computed Signals</span></div>
+      <div class="toc-item" onclick="goTo(5)"><span class="toc-num">05</span><span class="toc-title">Reactive Contexts</span></div>
+      <div class="toc-item" onclick="goTo(6)"><span class="toc-num">06</span><span class="toc-title">untracked()</span></div>
+      <div class="toc-item" onclick="goTo(7)"><span class="toc-num">07</span><span class="toc-title">effect() & afterRenderEffect()</span></div>
+      <div class="toc-item" onclick="goTo(8)"><span class="toc-num">08</span><span class="toc-title">linkedSignal() — Basics</span></div>
+      <div class="toc-item" onclick="goTo(9)"><span class="toc-num">09</span><span class="toc-title">linkedSignal() — Advanced <span class="toc-new">NEW</span></span></div>
+      <div class="toc-item" onclick="goTo(10)"><span class="toc-num">10</span><span class="toc-title">resource() & Status Lifecycle <span class="toc-new">NEW</span></span></div>
+      <div class="toc-item" onclick="goTo(11)"><span class="toc-num">11</span><span class="toc-title">debounced() <span class="toc-new">NEW</span></span></div>
+      <div class="toc-item" onclick="goTo(12)"><span class="toc-num">12</span><span class="toc-title">OnPush + Equality Functions</span></div>
+      <div class="toc-item" onclick="goTo(13)"><span class="toc-num">13</span><span class="toc-title">RxJS Interop & Type Utils</span></div>
+      <div class="toc-item" onclick="goTo(14)"><span class="toc-num">14</span><span class="toc-title">Memory Tips & Interview Q&A</span></div>
+    </div>
+  </div>
+
+  <!-- ───── SLIDE 03: WHAT ARE SIGNALS ───── -->
+  <div class="slide" id="slide-3">
+    <div class="slide-num">03 / 14</div>
+    <div class="eyebrow">Foundation</div>
+    <h2>What are Signals?</h2>
+    <p>A <strong>signal</strong> is a reactive wrapper around a value. It notifies all interested consumers whenever that value changes. Angular tracks where each signal is read and automatically re-evaluates consumers on update.</p>
+    <div class="cols">
+      <div class="card">
+        <h3>✍️ Writable Signal</h3>
+        <pre><span class="kw">const</span> count = <span class="fn">signal</span>(<span class="num">0</span>);
+
+<span class="cm">// read — also registers dependency</span>
+console.<span class="fn">log</span>(count());      <span class="cm">// 0</span>
+
+<span class="cm">// set a new value directly</span>
+count.<span class="fn">set</span>(<span class="num">3</span>);
+
+<span class="cm">// derive from the current value</span>
+count.<span class="fn">update</span>(v => v + <span class="num">1</span>);</pre>
+      </div>
+      <div class="card">
+        <h3>🔒 Readonly Signal</h3>
+        <pre><span class="kw">class</span> CounterState {
+  <span class="kw">private</span> _count = <span class="fn">signal</span>(<span class="num">0</span>);
+
+  <span class="cm">// expose as read-only to consumers</span>
+  count = <span class="kw">this</span>._count.<span class="fn">asReadonly</span>();
+
+  <span class="fn">increment</span>() {
+    <span class="kw">this</span>._count.<span class="fn">update</span>(v => v + <span class="num">1</span>);
+  }
+}</pre>
+      </div>
+    </div>
+    <div class="callout tip">
+      <span class="callout-icon">💡</span>
+      <span>Signals are <strong>getter functions</strong> — calling <code>count()</code> reads the value AND registers the caller as a consumer inside any active reactive context.</span>
+    </div>
+    <div class="callout imp">
+      <span class="callout-icon">⚠️</span>
+      <span>Readonly signals do <strong>not</strong> prevent deep-mutation of their value — they only prevent calling <code>.set()</code> or <code>.update()</code>.</span>
+    </div>
+  </div>
+
+  <!-- ───── SLIDE 04: COMPUTED ───── -->
+  <div class="slide" id="slide-4">
+    <div class="slide-num">04 / 14</div>
+    <div class="eyebrow">Derivation</div>
+    <h2>Computed Signals</h2>
+    <p>Read-only signals that automatically derive their value from one or more other signals. <strong>Lazy</strong> and <strong>memoized</strong> by design.</p>
+    <pre><span class="kw">const</span> count = <span class="fn">signal</span>(<span class="num">0</span>);
+<span class="kw">const</span> doubleCount = <span class="fn">computed</span>(() => count() * <span class="num">2</span>);
+
+<span class="cm">// Dynamic dependencies — count is only tracked when showCount is true</span>
+<span class="kw">const</span> showCount   = <span class="fn">signal</span>(<span class="kw">false</span>);
+<span class="kw">const</span> conditional = <span class="fn">computed</span>(() => {
+  <span class="kw">if</span> (<span class="fn">showCount</span>()) <span class="kw">return</span> <span class="str">`Count: ${<span class="fn">count</span>()}`</span>;
+  <span class="kw">return</span> <span class="str">'Nothing to see here!'</span>;  <span class="cm">// count NOT tracked here</span>
+});</pre>
+    <div class="cols3" style="margin-top:18px">
+      <div class="card">
+        <h3>🦥 Lazy</h3>
+        <p style="font-size:.85rem">Value not calculated until first read — no wasted work on startup.</p>
+      </div>
+      <div class="card">
+        <h3>📦 Memoized</h3>
+        <p style="font-size:.85rem">Result is cached and reused until a dependency changes. Safe for expensive operations like array filtering.</p>
+      </div>
+      <div class="card">
+        <h3>🔗 Dynamic deps</h3>
+        <p style="font-size:.85rem">Only signals actually read during the derivation are tracked. Deps can be added or removed per-run.</p>
+      </div>
+    </div>
+    <div class="callout warn">
+      <span class="callout-icon">⚠️</span>
+      <span>You cannot <code>.set()</code> a computed signal — it produces a compile error since <code>computed()</code> returns a read-only <code>Signal&lt;T&gt;</code>, not a <code>WritableSignal&lt;T&gt;</code>.</span>
+    </div>
+  </div>
+
+  <!-- ───── SLIDE 05: REACTIVE CONTEXTS ───── -->
+  <div class="slide" id="slide-5">
+    <div class="slide-num">05 / 14</div>
+    <div class="eyebrow">Core Concept</div>
+    <h2>Reactive Contexts</h2>
+    <p>A <strong>reactive context</strong> is a runtime scope where Angular intercepts signal reads to build a live dependency graph. Angular enters one automatically in these scenarios:</p>
+    <div class="cols">
+      <div>
+        <ul class="bullets">
+          <li><strong>effect()</strong> / <strong>afterRenderEffect()</strong> callback</li>
+          <li><strong>computed()</strong> signal evaluation</li>
+          <li><strong>linkedSignal()</strong> evaluation</li>
+          <li><strong>resource()</strong> params or loader function</li>
+          <li>Component <strong>template rendering</strong> (incl. host bindings)</li>
+        </ul>
+        <div class="callout imp" style="margin-top:16px">
+          <span class="callout-icon">🚨</span>
+          <span>The reactive context is <strong>synchronous only</strong>. Signal reads that occur <em>after</em> an <code>await</code> are outside the context and go untracked.</span>
+        </div>
+      </div>
+      <div>
+        <h3>❌ Avoid — reads after await</h3>
+        <pre><span class="fn">effect</span>(<span class="kw">async</span> () => {
+  <span class="kw">const</span> data = <span class="kw">await</span> <span class="fn">fetchUser</span>();
+  <span class="cm">// theme() read AFTER await — not tracked!</span>
+  console.<span class="fn">log</span>(<span class="fn">theme</span>());
+});</pre>
+        <h3>✅ Prefer — read before await</h3>
+        <pre><span class="fn">effect</span>(<span class="kw">async</span> () => {
+  <span class="kw">const</span> t = <span class="fn">theme</span>(); <span class="cm">// tracked ✓</span>
+  <span class="kw">const</span> data = <span class="kw">await</span> <span class="fn">fetchUser</span>();
+  console.<span class="fn">log</span>(t, data);
+});</pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- ───── SLIDE 06: UNTRACKED ───── -->
+  <div class="slide" id="slide-6">
+    <div class="slide-num">06 / 14</div>
+    <div class="eyebrow">Fine-Grained Control</div>
+    <h2>Reading Without Tracking — <code>untracked()</code></h2>
+    <p>Sometimes you need to read a signal inside a reactive context <em>without</em> creating a dependency on it. Use <code>untracked()</code> to opt out selectively.</p>
+    <pre><span class="cm">// Effect runs when currentUser changes only — counter is read but not tracked</span>
+<span class="fn">effect</span>(() => {
+  console.<span class="fn">log</span>(
+    <span class="str">`User: ${<span class="fn">currentUser</span>()} — counter: ${<span class="fn">untracked</span>(counter)}`</span>
+  );
+});
+
+<span class="cm">// Also useful when calling external code that itself reads signals</span>
+<span class="fn">effect</span>(() => {
+  <span class="kw">const</span> user = <span class="fn">currentUser</span>();       <span class="cm">// ← tracked dependency</span>
+  <span class="fn">untracked</span>(() => {
+    <span class="cm">// Any signals loggingService reads internally are NOT dependencies</span>
+    <span class="kw">this</span>.loggingService.<span class="fn">log</span>(<span class="str">`User: ${user}`</span>);
+  });
+});</pre>
+    <div class="callout tip">
+      <span class="callout-icon">💡</span>
+      <span>Use <code>assertNotInReactiveContext(fn)</code> to guard utility functions that must <em>never</em> run inside a reactive context — Angular throws a clear, actionable error pointing to the right API if violated.</span>
+    </div>
+  </div>
+
+  <!-- ───── SLIDE 07: EFFECT ───── -->
+  <div class="slide" id="slide-7">
+    <div class="slide-num">07 / 14</div>
+    <div class="eyebrow">Side Effects</div>
+    <h2>effect() & afterRenderEffect()</h2>
+    <p>Use <code>effect()</code> only when you need to bridge the reactive signal world with <strong>non-reactive APIs</strong> (DOM, localStorage, third-party libs). Prefer computed derivations for everything else.</p>
+    <div class="cols">
+      <div>
+        <h3>When to use effect()</h3>
+        <ul class="bullets">
+          <li>Logging / analytics on state change</li>
+          <li>Syncing to <code>localStorage</code> or IndexedDB</li>
+          <li>Calling third-party libraries (charts, maps)</li>
+          <li>DOM manipulation outside Angular templates</li>
+        </ul>
+        <div class="callout warn" style="margin-top:14px">
+          <span class="callout-icon">⚠️</span>
+          <span>Never use <code>effect()</code> to synchronise signals with each other. Use <code>computed()</code> or <code>linkedSignal()</code> instead — they stay in the reactive graph.</span>
+        </div>
+      </div>
+      <div>
+        <pre><span class="cm">// effect() — runs on every change to count()</span>
+<span class="fn">effect</span>(() => {
+  document.title = <span class="str">`Count: ${<span class="fn">count</span>()}`</span>;
+});
+
+<span class="cm">// afterRenderEffect — runs after each
+// render cycle finishes (good for DOM reads)</span>
+<span class="fn">afterRenderEffect</span>(() => {
+  <span class="kw">const</span> el = <span class="kw">this</span>.ref.nativeElement;
+  el.scrollTop = el.scrollHeight;
+});</pre>
+        <div class="callout info" style="margin-top:10px">
+          <span class="callout-icon">ℹ️</span>
+          <span>Every tracked signal read inside <code>effect()</code> automatically becomes a dependency — the effect re-runs when any of them change.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ───── SLIDE 08: LINKED SIGNAL BASICS ───── -->
+  <div class="slide" id="slide-8">
+    <div class="slide-num">08 / 14</div>
+    <div class="eyebrow">Advanced Derivation</div>
+    <h2>linkedSignal() — Basics</h2>
+    <p>A <strong>writable</strong> signal whose default value is computed from other signals. When the dependency changes, the signal resets to the new computed value — but users can still override it manually.</p>
+    <div class="cols">
+      <div>
+        <h3>The Problem</h3>
+        <pre><span class="cm">// ❌ selectedOption may become stale
+// when shippingOptions signal changes</span>
+selectedOption = <span class="fn">signal</span>(
+  <span class="kw">this</span>.<span class="fn">shippingOptions</span>()[<span class="num">0</span>]
+);</pre>
+        <h3>The Fix — linkedSignal()</h3>
+        <pre><span class="cm">// ✅ resets to first option whenever
+// shippingOptions signal changes</span>
+selectedOption = <span class="fn">linkedSignal</span>(
+  () => <span class="kw">this</span>.<span class="fn">shippingOptions</span>()[<span class="num">0</span>]
+);
+
+<span class="cm">// user can still override it</span>
+selectedOption.<span class="fn">set</span>(<span class="str">'Sea'</span>);</pre>
+      </div>
+      <div>
+        <h3>How it behaves</h3>
+        <pre><span class="kw">const</span> options  = <span class="fn">signal</span>([<span class="str">'Ground'</span>,<span class="str">'Air'</span>,<span class="str">'Sea'</span>]);
+<span class="kw">const</span> selected = <span class="fn">linkedSignal</span>(() => <span class="fn">options</span>()[<span class="num">0</span>]);
+
+console.<span class="fn">log</span>(<span class="fn">selected</span>()); <span class="cm">// 'Ground'</span>
+
+selected.<span class="fn">set</span>(<span class="fn">options</span>()[<span class="num">2</span>]);
+console.<span class="fn">log</span>(<span class="fn">selected</span>()); <span class="cm">// 'Sea'</span>
+
+<span class="cm">// upstream change → resets to new first item</span>
+options.<span class="fn">set</span>([<span class="str">'Email'</span>,<span class="str">'Will Call'</span>,<span class="str">'Post'</span>]);
+console.<span class="fn">log</span>(<span class="fn">selected</span>()); <span class="cm">// 'Email' ← reset!</span></pre>
+        <div class="callout tip" style="margin-top:10px">
+          <span class="callout-icon">💡</span>
+          <span><code>linkedSignal()</code> = <code>computed()</code> + writable. Unlike <code>computed()</code>, consumers can call <code>.set()</code> or <code>.update()</code> on it.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ───── SLIDE 09: LINKED SIGNAL ADVANCED (NEW) ───── -->
+  <div class="slide" id="slide-9">
+    <div class="slide-num">09 / 14</div>
+    <div class="eyebrow">Advanced Derivation <span class="badge badge-purple">NEW</span></div>
+    <h2>linkedSignal() — source + computation + previous</h2>
+    <p>For cases where the reset logic needs to inspect the <em>previous</em> value, pass a <code>{ source, computation }</code> object. The computation receives both the new source value and a <code>previous</code> snapshot.</p>
+    <pre><span class="kw">interface</span> <span class="tp">ShippingMethod</span> { id: <span class="tp">number</span>; name: <span class="tp">string</span>; }
+
+selectedOption = <span class="fn">linkedSignal</span>&lt;<span class="tp">ShippingMethod</span>[], <span class="tp">ShippingMethod</span>&gt;({
+  <span class="cm">// source: the signal that triggers a reset</span>
+  source: <span class="kw">this</span>.shippingOptions,
+
+  <span class="cm">// computation: receives (newSourceValue, previous)</span>
+  computation: (newOptions, previous) => {
+    <span class="cm">// If the user's previous pick is still in the new list, keep it</span>
+    <span class="kw">return</span> newOptions.<span class="fn">find</span>(opt => opt.id === previous?.value.id)
+      ?? newOptions[<span class="num">0</span>];  <span class="cm">// otherwise fall back to first option</span>
+  },
+});</pre>
+    <div class="cols" style="margin-top: 4px">
+      <div class="card">
+        <h3>previous object properties</h3>
+        <ul class="bullets">
+          <li><strong>previous.source</strong> — the prior value of the <code>source</code> signal</li>
+          <li><strong>previous.value</strong> — the prior value of the <code>linkedSignal</code> itself</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Custom equality on linkedSignal</h3>
+        <pre style="margin:0; font-size:.72rem"><span class="fn">linkedSignal</span>(() => <span class="fn">activeUser</span>(), {
+  equal: (a, b) => a.id === b.id
+});</pre>
+        <p style="font-size:.8rem; margin-top:8px; margin-bottom:0">Custom equality works the same as with <code>signal()</code> and <code>computed()</code> — downstream consumers only re-run when the equality function returns <code>false</code>.</p>
+      </div>
+    </div>
+    <div class="callout warn">
+      <span class="callout-icon">⚠️</span>
+      <span>When using the <code>previous</code> parameter, you <strong>must</strong> provide both generic type arguments explicitly: <code>linkedSignal&lt;SourceType, OutputType&gt;()</code>.</span>
+    </div>
+  </div>
+
+  <!-- ───── SLIDE 10: RESOURCE STATUS (NEW) ───── -->
+  <div class="slide" id="slide-10">
+    <div class="slide-num">10 / 14</div>
+    <div class="eyebrow">Async Reactivity <span class="badge badge-purple">NEW</span></div>
+    <h2>resource() — Full Status Lifecycle</h2>
+    <p>Every <code>resource()</code> exposes a <code>status()</code> signal describing its current state. Understanding each status is essential for building correct loading and error UI.</p>
+    <div class="status-grid">
+      <div class="status-pill s-idle">
+        <div class="s-name">'idle'</div>
+        <div class="s-val">value() → undefined</div>
+        <div class="s-desc">params returned undefined — loader will not run.</div>
+      </div>
+      <div class="status-pill s-loading">
+        <div class="s-name">'loading'</div>
+        <div class="s-val">value() → undefined</div>
+        <div class="s-desc">Loader running because params signal changed.</div>
+      </div>
+      <div class="status-pill s-reload">
+        <div class="s-name">'reloading'</div>
+        <div class="s-val">value() → previous value</div>
+        <div class="s-desc">Loader triggered manually via <code>.reload()</code>.</div>
+      </div>
+      <div class="status-pill s-resolved">
+        <div class="s-name">'resolved'</div>
+        <div class="s-val">value() → resolved data</div>
+        <div class="s-desc">Loader completed successfully.</div>
+      </div>
+      <div class="status-pill s-error">
+        <div class="s-name">'error'</div>
+        <div class="s-val">value() → undefined</div>
+        <div class="s-desc">Loader threw. Read details via <code>.error()</code>.</div>
+      </div>
+      <div class="status-pill s-local">
+        <div class="s-name">'local'</div>
+        <div class="s-val">value() → local value</div>
+        <div class="s-desc">Value was set locally via <code>.set()</code> or <code>.update()</code>.</div>
+      </div>
+    </div>
+    <pre style="margin-top:14px"><span class="kw">const</span> userResource = <span class="fn">resource</span>({
+  params: () => ({ id: <span class="fn">userId</span>() }),
+  loader: ({ params, abortSignal }) =>
+    <span class="fn">fetch</span>(<span class="str">`/api/users/${params.id}`</span>, { signal: abortSignal }).<span class="fn">then</span>(r => r.<span class="fn">json</span>())
+});
+
+userResource.<span class="fn">status</span>()   <span class="cm">// 'idle' | 'loading' | 'reloading' | 'resolved' | 'error' | 'local'</span>
+userResource.<span class="fn">isLoading</span>() <span class="cm">// true when loading OR reloading</span>
+userResource.<span class="fn">hasValue</span>()  <span class="cm">// type-guard: strips undefined AND guards against error state</span>
+userResource.<span class="fn">reload</span>()    <span class="cm">// programmatic re-fetch → 'reloading' status</span></pre>
+  </div>
+
+  <!-- ───── SLIDE 11: DEBOUNCED (NEW) ───── -->
+  <div class="slide" id="slide-11">
+    <div class="slide-num">11 / 14</div>
+    <div class="eyebrow">Experimental API <span class="badge badge-orange">experimental</span></div>
+    <h2>debounced() — Delay Reacting to a Signal</h2>
+    <p>Wraps a signal so downstream consumers only see the value <em>after</em> it stops changing for a given duration. Returns a <code>Resource</code> whose <code>value()</code> is the debounced output.</p>
+    <pre><span class="kw">import</span> { <span class="fn">debounced</span>, <span class="fn">resource</span>, <span class="fn">signal</span> } <span class="kw">from</span> <span class="str">'@angular/core'</span>;
+
+<span class="kw">export class</span> <span class="tp">Search</span> {
+  query = <span class="fn">signal</span>(<span class="str">''</span>);
+
+  <span class="cm">// Only fires when query hasn't changed for 300 ms</span>
+  debouncedQuery = <span class="fn">debounced</span>(<span class="kw">this</span>.query, <span class="num">300</span>);
+
+  results = <span class="fn">resource</span>({
+    params: () => <span class="kw">this</span>.debouncedQuery.<span class="fn">value</span>(),
+    loader: ({ params }) => <span class="fn">fetchResults</span>(params),
+  });
+}</pre>
+    <div class="cols">
+      <div class="card">
+        <h3>Custom wait function</h3>
+        <pre style="margin:0; font-size:.72rem">debouncedQuery = <span class="fn">debounced</span>(query, (val, last) => {
+  <span class="kw">if</span> (last.status === <span class="str">'error'</span>) <span class="kw">return</span>; <span class="cm">// retry fast</span>
+  <span class="kw">const</span> ms = val.length &lt; <span class="num">3</span> ? <span class="num">500</span> : <span class="num">200</span>;
+  <span class="kw">return new</span> <span class="tp">Promise</span>(res => <span class="fn">setTimeout</span>(res, ms));
+});</pre>
+      </div>
+      <div class="card">
+        <h3>Status during debounce</h3>
+        <ul class="bullets" style="margin:0">
+          <li><strong>Timer counting down</strong> → status is <code>'loading'</code>, value is last resolved value</li>
+          <li><strong>Timer expires</strong> → status becomes <code>'resolved'</code></li>
+          <li><strong>Source throws</strong> → immediately <code>'error'</code>, no timer</li>
+        </ul>
+      </div>
+    </div>
+    <div class="callout warn">
+      <span class="callout-icon">⚠️</span>
+      <span><code>debounced()</code> must be called inside an <strong>injection context</strong>. To use it elsewhere, pass <code>{ injector }</code> as the third argument. Angular auto-destroys the resource when the injector is destroyed.</span>
+    </div>
+  </div>
+
+  <!-- ───── SLIDE 12: ONPUSH + EQUALITY ───── -->
+  <div class="slide" id="slide-12">
+    <div class="slide-num">12 / 14</div>
+    <div class="eyebrow">Performance</div>
+    <h2>OnPush Components & Equality Functions</h2>
+    <div class="cols">
+      <div>
+        <h3>Signals + OnPush</h3>
+        <p style="font-size:.87rem">Reading a signal in an <code>OnPush</code> component's template registers it as a dependency. When that signal changes, Angular automatically marks the component dirty — no manual <code>markForCheck()</code> required.</p>
+        <div class="flow" style="flex-direction:column; align-items:flex-start; gap:8px; margin-top:12px;">
+          <div class="flow-box hl3">Signal value changes</div>
+          <div class="flow-arrow">↓</div>
+          <div class="flow-box hl">Angular marks component dirty</div>
+          <div class="flow-arrow">↓</div>
+          <div class="flow-box hl2">Next CD cycle re-renders</div>
+        </div>
+      </div>
+      <div>
+        <h3>Custom Equality</h3>
+        <p style="font-size:.87rem">Provide an equality function so signals skip updates when the value hasn't meaningfully changed — perfect for objects and arrays.</p>
+        <pre><span class="kw">import</span> isEqual <span class="kw">from</span> <span class="str">'lodash/isEqual'</span>;
+
+<span class="kw">const</span> data = <span class="fn">signal</span>([<span class="str">'test'</span>], {
+  equal: isEqual
+});
+
+<span class="cm">// Same content, different array reference:
+// isEqual → true → no update fired 🎉</span>
+data.<span class="fn">set</span>([<span class="str">'test'</span>]);</pre>
+        <div class="callout tip" style="margin-top:10px">
+          <span class="callout-icon">💡</span>
+          <span>Default equality is <code>Object.is()</code> — referential. Use <code>isEqual</code> from lodash for deep comparison of objects and arrays.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ───── SLIDE 13: RXJS INTEROP ───── -->
+  <div class="slide" id="slide-13">
+    <div class="slide-num">13 / 14</div>
+    <div class="eyebrow">Ecosystem</div>
+    <h2>RxJS Interop & Type Utilities</h2>
+    <div class="cols">
+      <div>
+        <h3>Signal ↔ Observable</h3>
+        <pre><span class="kw">import</span> {
+  toSignal, toObservable
+} <span class="kw">from</span> <span class="str">'@angular/core/rxjs-interop'</span>;
+
+<span class="cm">// Observable → Signal</span>
+<span class="kw">const</span> data$ = http.<span class="fn">get</span>(<span class="str">'/api/data'</span>);
+<span class="kw">const</span> data  = <span class="fn">toSignal</span>(data$);
+
+<span class="cm">// Signal → Observable</span>
+<span class="kw">const</span> count  = <span class="fn">signal</span>(<span class="num">0</span>);
+<span class="kw">const</span> count$ = <span class="fn">toObservable</span>(count);</pre>
+      </div>
+      <div>
+        <h3>Type Checking Utilities</h3>
+        <pre><span class="kw">const</span> count   = <span class="fn">signal</span>(<span class="num">0</span>);
+<span class="kw">const</span> doubled = <span class="fn">computed</span>(() => count() * <span class="num">2</span>);
+
+<span class="fn">isSignal</span>(count);           <span class="cm">// true</span>
+<span class="fn">isSignal</span>(doubled);         <span class="cm">// true</span>
+<span class="fn">isSignal</span>(<span class="num">42</span>);              <span class="cm">// false</span>
+
+<span class="fn">isWritableSignal</span>(count);   <span class="cm">// true</span>
+<span class="fn">isWritableSignal</span>(doubled); <span class="cm">// false</span></pre>
+      </div>
+    </div>
+    <table style="margin-top:8px">
+      <tr><th>Utility</th><th>Purpose</th><th>Package</th></tr>
+      <tr><td>toSignal()</td><td>Wrap an Observable as a synchronous Signal</td><td>@angular/core/rxjs-interop</td></tr>
+      <tr><td>toObservable()</td><td>Emit signal value changes as an Observable stream</td><td>@angular/core/rxjs-interop</td></tr>
+      <tr><td>isSignal()</td><td>Type-guard: is a value any kind of Signal?</td><td>@angular/core</td></tr>
+      <tr><td>isWritableSignal()</td><td>Type-guard: is a value a WritableSignal?</td><td>@angular/core</td></tr>
+    </table>
+  </div>
+
+  <!-- ───── SLIDE 14: MEMORY TIPS + Q&A ───── -->
+  <div class="slide" id="slide-14">
+    <div class="slide-num">14 / 14</div>
+    <div class="eyebrow">Interview Prep</div>
+    <h2>Memory Tips & Senior Q&A</h2>
+    <div class="cols">
+      <div>
+        <h3>🏭 Factory Analogy</h3>
+        <ul class="bullets">
+          <li><strong>signal()</strong> = Raw material — changeable reactive state</li>
+          <li><strong>computed()</strong> = Assembly line — derived, auto-updated, read-only</li>
+          <li><strong>linkedSignal()</strong> = Resettable shelf — writable but resets on upstream change</li>
+          <li><strong>effect()</strong> = Shipping dock — reacts to change, talks to outside world</li>
+          <li><strong>resource()</strong> = Async delivery truck — brings external data into the signal world</li>
+          <li><strong>debounced()</strong> = Slow mail filter — waits for a lull before delivering</li>
+        </ul>
+        <div class="callout info" style="margin-top:10px">
+          <span class="callout-icon">⚡</span>
+          <span><strong>Rule:</strong> State → <code>signal()</code> · Derived → <code>computed()</code> · Dependent writable → <code>linkedSignal()</code> · Async → <code>resource()</code> · Side-effects → <code>effect()</code></span>
+        </div>
+      </div>
+      <div>
+        <div class="qa-item">
+          <div class="qa-q">Q1. computed() vs linkedSignal() — when to use which?</div>
+          <div class="qa-a">Use <code>computed()</code> when you only need read-only derived state. Use <code>linkedSignal()</code> when users also need to override the derived value manually — e.g. a selected option that resets when options change but can still be chosen by the user.</div>
+        </div>
+        <hr class="divider"/>
+        <div class="qa-item">
+          <div class="qa-q">Q2. What is the difference between 'loading' and 'reloading' status in resource()?</div>
+          <div class="qa-a"><code>'loading'</code> fires when the <em>params</em> signal changed, so <code>value()</code> is <code>undefined</code>. <code>'reloading'</code> fires when <code>.reload()</code> is called manually — value() still returns the <em>previous</em> resolved value, so you can show stale data while refreshing.</div>
+        </div>
+        <hr class="divider"/>
+        <div class="qa-item">
+          <div class="qa-q">Q3. What does debounced() return and how is it different from a plain signal?</div>
+          <div class="qa-a">It returns a <code>Resource</code>, not a plain signal. Its <code>value()</code> only updates after the source has been stable for the given delay. During the wait, <code>status()</code> is <code>'loading'</code> and <code>value()</code> holds the last resolved result — enabling stale-while-revalidate patterns with zero extra code.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- end deck -->
+
+<nav class="nav">
+  <button id="prev" onclick="navigate(-1)" disabled>←</button>
+  <span class="nav-label" id="nav-label">1 / 14</span>
+  <button id="next" onclick="navigate(1)">→</button>
+</nav>
+
+<script>
+  let current = 1;
+  const total = 14;
+
+  function goTo(n) {
+    document.getElementById('slide-' + current).classList.remove('active');
+    current = Math.max(1, Math.min(total, n));
+    document.getElementById('slide-' + current).classList.add('active');
+    sync();
+  }
+
+  function navigate(dir) { goTo(current + dir); }
+
+  function sync() {
+    document.getElementById('nav-label').textContent = current + ' / ' + total;
+    document.getElementById('prev').disabled = current === 1;
+    document.getElementById('next').disabled = current === total;
+    document.getElementById('progress').style.width = (current / total * 100) + '%';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') navigate(1);
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   navigate(-1);
+  });
+
+  // init
+  document.getElementById('progress').style.width = (1 / total * 100) + '%';
+</script>
+</body>
+</html>
